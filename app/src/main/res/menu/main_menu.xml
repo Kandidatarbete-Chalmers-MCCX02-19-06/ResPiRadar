@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_red"
+        android:orderInCategory="2"
+        app:showAsAction="never"
+        android:title="@string/red_string"/>
+    <item
+        android:id="@+id/menu_green"
+        android:orderInCategory="3"
+        app:showAsAction="never"
+        android:title="@string/green_string"/>
+
+    <item
+        android:id="@+id/settings"
+        android:title="@string/menu_settings"
+        android:orderInCategory="1"
+        android:icon="@drawable/ic_settings"
+        app:showAsAction="ifRoom"/>
+
+</menu>
