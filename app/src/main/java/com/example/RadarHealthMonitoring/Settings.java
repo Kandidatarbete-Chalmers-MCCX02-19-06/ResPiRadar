@@ -1,4 +1,4 @@
-package com.example.testapplication;
+package com.example.RadarHealthMonitoring;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;

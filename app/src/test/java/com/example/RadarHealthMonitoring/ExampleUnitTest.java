@@ -1,4 +1,4 @@
-package com.example.testapplication;
+package com.example.RadarHealthMonitoring;
 
 import org.junit.Test;
 

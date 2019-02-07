@@ -3,17 +3,17 @@
     <!-- These settings headers are only used on tablets. -->
 
     <header
-        android:fragment="com.example.testapplication.SettingsActivity$GeneralPreferenceFragment"
+        android:fragment="com.example.RadarHealthMonitoring.SettingsActivity$GeneralPreferenceFragment"
         android:icon="@drawable/ic_wifi_black_24dp"
         android:title="@string/pref_header_connect" />
 
     <header
-        android:fragment="com.example.testapplication.SettingsActivity$NotificationPreferenceFragment"
+        android:fragment="com.example.RadarHealthMonitoring.SettingsActivity$NotificationPreferenceFragment"
         android:icon="@drawable/ic_settings_black_24dp"
         android:title="@string/pref_header_general_settings" />
 
     <header
-        android:fragment="com.example.testapplication.SettingsActivity$DataSyncPreferenceFragment"
+        android:fragment="com.example.RadarHealthMonitoring.SettingsActivity$DataSyncPreferenceFragment"
         android:icon="@drawable/ic_developer_24dp"
         android:title="@string/pref_header_debug_settings" />
 

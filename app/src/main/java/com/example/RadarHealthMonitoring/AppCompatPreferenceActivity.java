@@ -1,4 +1,4 @@
-package com.example.testapplication;
+package com.example.RadarHealthMonitoring;
 
 import android.content.res.Configuration;
 import android.os.Bundle;

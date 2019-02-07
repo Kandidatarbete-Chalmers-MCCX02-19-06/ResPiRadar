@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.testapplication">
+    package="com.example.RadarHealthMonitoring">
 
     <application
         android:allowBackup="true"
@@ -10,18 +10,18 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".SettingsActivity"
+            android:name="com.example.RadarHealthMonitoring.SettingsActivity"
             android:label="Settings"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName="com.example.RadarHealthMonitoring.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.testapplication.MainActivity" />
+                android:value="com.example.RadarHealthMonitoring.MainActivity" />
         </activity>
         <activity
-            android:name=".Settings"
+            android:name="com.example.RadarHealthMonitoring.Settings"
             android:label="@string/title_activity_settings"
-            android:parentActivityName=".MainActivity" />
-        <activity android:name=".MainActivity">
+            android:parentActivityName="com.example.RadarHealthMonitoring.MainActivity" />
+        <activity android:name="com.example.RadarHealthMonitoring.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
