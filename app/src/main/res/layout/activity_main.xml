@@ -29,7 +29,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        android:text="Pulse: 70"
+        android:text="Pulse: 70 Test"
         android:textSize="24sp"
         app:layout_constraintBottom_toTopOf="@+id/breathValueView"
         app:layout_constraintEnd_toEndOf="parent"
