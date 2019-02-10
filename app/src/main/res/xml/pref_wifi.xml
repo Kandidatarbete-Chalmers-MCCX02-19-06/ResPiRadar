@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:key="WifiSettings">
+    <PreferenceCategory
+        android:title="Title">
+    <CheckBoxPreference
+        android:key="checkbox_preference"
+        android:title="Checkbox"
+        android:summary="Summary" />
+
+    <intent android:action="android.intent.action.VIEW"
+        android:data="http://www.android.com" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

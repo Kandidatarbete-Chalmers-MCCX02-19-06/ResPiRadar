@@ -2,17 +2,17 @@
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Skapar menyraden i main-aktiviteten -->
     <item
         android:id="@+id/menu_red"
         android:orderInCategory="2"
         app:showAsAction="never"
-        android:title="@string/red_string"/>
+        android:title="Meny 1"/>
     <item
         android:id="@+id/menu_green"
         android:orderInCategory="3"
         app:showAsAction="never"
-        android:title="@string/green_string"/>
-
+        android:title="Meny 2"/>
     <item
         android:id="@+id/settings"
         android:title="@string/menu_settings"

@@ -7,6 +7,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <!-- Startknappen för mätningarna -->
     <Button
         android:id="@+id/startStoppMeasureButton"
         android:layout_width="0dp"
@@ -21,6 +22,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <!-- Värdet på pulen -->
     <TextView
         android:id="@+id/pulseValueView"
         android:layout_width="wrap_content"
@@ -36,6 +38,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Värdet på andingsfrekvensen -->
     <TextView
         android:id="@+id/breathValueView"
         android:layout_width="wrap_content"
@@ -49,6 +52,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <!-- Grafen för andningen -->
     <View
         android:id="@+id/breathHolderView"
         android:layout_width="0dp"
@@ -65,6 +69,7 @@
         app:layout_constraintTop_toBottomOf="@+id/pulseValueView"
         app:layout_constraintVertical_bias="0.45" />
 
+    <!-- Grafen för pulsen -->
     <View
         android:id="@+id/pulseHolderView"
         android:layout_width="0dp"

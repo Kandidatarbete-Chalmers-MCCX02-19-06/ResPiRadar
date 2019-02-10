@@ -10,21 +10,20 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="com.example.RadarHealthMonitoring.SettingsActivity"
-            android:label="Settings"
-            android:parentActivityName="com.example.RadarHealthMonitoring.MainActivity">
+            android:name=".Settings"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.RadarHealthMonitoring.MainActivity" />
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
-        <activity
-            android:name="com.example.RadarHealthMonitoring.Settings"
-            android:label="@string/title_activity_settings"
-            android:parentActivityName="com.example.RadarHealthMonitoring.MainActivity" />
-        <activity android:name="com.example.RadarHealthMonitoring.MainActivity">
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
