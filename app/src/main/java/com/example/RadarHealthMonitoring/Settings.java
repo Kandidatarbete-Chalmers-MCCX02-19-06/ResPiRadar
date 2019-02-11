@@ -239,20 +239,20 @@ public class Settings extends AppCompatPreferenceActivity {
             if (preference instanceof ListPreference) {
                 ListPreference listPreference = (ListPreference) preference;
                 int index = listPreference.findIndexOfValue(stringValue);
-                if (listPreference.getKey().equals(key_pref_connection_list)) {
+                if (listPreference.getKey().equals(key_pref_connection_list)) {  // ändrar ikonen
                     switch (stringValue) {
                         case "1":
                             listPreference.setIcon(R.drawable.ic_bluetooth_black_24dp);
-                            return true;
+                            break;
                         case "0":
                             listPreference.setIcon(R.drawable.ic_wifi_black_24dp);
-                            return true;
+                            break;
                         case "-1":
                             listPreference.setIcon(R.drawable.ic_usb_black_24dp);
-                            return true;
+                            break;
                     }
                 }
-                preference.setSummary(
+                preference.setSummary(  // ändrar summary till värdet
                         index >= 0
                                 ? listPreference.getEntries()[index]
                                 : null);

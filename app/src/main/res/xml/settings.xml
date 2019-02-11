@@ -5,7 +5,6 @@
     <ListPreference
         android:key="connection_list"
         android:title="Connection"
-        android:summary="%s"
         android:defaultValue="1"
         android:icon="@drawable/ic_usb_black_24dp"
         android:entries="@array/pref_connection_list"
