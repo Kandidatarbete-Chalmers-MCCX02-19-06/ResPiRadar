@@ -56,9 +56,11 @@
     <!-- Grafen för andningen -->
     <com.jjoe64.graphview.GraphView
         android:id="@+id/graphBreathe"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toTopOf="@+id/breathValueView"
         app:layout_constraintEnd_toEndOf="parent"
@@ -68,9 +70,11 @@
     <!-- Grafen för pulsen -->
     <com.jjoe64.graphview.GraphView
         android:id="@+id/graphPulse"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toTopOf="@+id/pulseValueView"
         app:layout_constraintEnd_toEndOf="parent"
