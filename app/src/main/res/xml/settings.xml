@@ -6,7 +6,7 @@
         android:key="connection_list"
         android:title="Connection"
         android:defaultValue="1"
-        android:icon="@drawable/ic_usb_black_24dp"
+        android:icon="@drawable/ic_bluetooth_black_24dp"
         android:entries="@array/pref_connection_list"
         android:entryValues="@array/pref_connection_list_values" />
 
@@ -17,17 +17,17 @@
             android:key="bluetoothSettings"
             android:title="Bluetooth Settings"
             android:icon="@drawable/ic_bluetooth_black_24dp"
-            android:fragment="com.example.RadarHealthMonitoring.Settings$SettingsFragment$BluetoothFragment"/>
+            android:fragment="com.example.RadarHealthMonitoring.Settings$BluetoothFragment"/>
         <Preference
             android:key="wifiSettings"
             android:title="Wifi Settings"
             android:icon="@drawable/ic_wifi_black_24dp"
-            android:fragment="com.example.RadarHealthMonitoring.Settings$SettingsFragment$WifiFragment"/>
+            android:fragment="com.example.RadarHealthMonitoring.Settings$WifiFragment"/>
         <Preference
             android:key="usbSettings"
             android:title="USB Settings"
             android:icon="@drawable/ic_usb_black_24dp"
-            android:fragment="com.example.RadarHealthMonitoring.Settings$SettingsFragment$USBFragment"/>
+            android:fragment="com.example.RadarHealthMonitoring.Settings$USBFragment"/>
     </PreferenceCategory>
 
     <!-- övriga inställningar -->
@@ -37,11 +37,11 @@
             android:key="generalSettings"
             android:title="General Settings"
             android:icon="@drawable/ic_settings_black_24dp"
-            android:fragment="com.example.RadarHealthMonitoring.Settings$SettingsFragment$GeneralFragment"/>
+            android:fragment="com.example.RadarHealthMonitoring.Settings$GeneralFragment"/>
         <Preference
             android:key="developerSettings"
             android:title="Developer Settings"
             android:icon="@drawable/ic_developer_24dp"
-            android:fragment="com.example.RadarHealthMonitoring.Settings$SettingsFragment$DeveloperFragment"/>
+            android:fragment="com.example.RadarHealthMonitoring.Settings$DeveloperFragment"/>
     </PreferenceCategory>
 </PreferenceScreen>

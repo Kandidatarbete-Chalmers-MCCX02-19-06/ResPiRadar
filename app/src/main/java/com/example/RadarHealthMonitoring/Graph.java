@@ -3,7 +3,6 @@ package com.example.RadarHealthMonitoring;
 import android.content.Context;
 import android.view.View;
 import android.widget.Toast;
-
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.DataPointInterface;

@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <CheckBoxPreference
-        android:key="checkbox_preference"
-        android:title="Checkbox"
-        android:summary="Summary" />
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="bluetooth_switch"
+        android:title="Bluetooth Off"
+        android:summary="Switch Bluetooth on or off" />
+    <ListPreference
+        android:enabled="false"
+        android:key="bluetooth_list"
+        android:title="Available Bluetooth devices" />
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="search_bluetooth_device"
+        android:title="Search Bluetooth Device" />
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="bluetooth_connect"
+        android:title="Connect Bluetooth Device" />
+
 </PreferenceScreen>

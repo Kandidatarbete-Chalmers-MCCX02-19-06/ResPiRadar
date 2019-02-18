@@ -1,14 +1,15 @@
 package com.example.RadarHealthMonitoring;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
+
 import com.jjoe64.graphview.series.DataPoint;
 
 
@@ -20,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
     private double dataNumber = 0;
     private Graph graphPulse;
     private Graph graphBreathe;
+    private static final String msg = "MyActivity";
 
     /**
      * Skapar huvudfönstret
@@ -32,7 +34,31 @@ public class MainActivity extends AppCompatActivity {
         /* Graphs */
         graphPulse = new Graph(findViewById(R.id.graphPulse),getApplicationContext());
         graphBreathe = new Graph(findViewById(R.id.graphBreathe),getApplicationContext());
+        /* Bluetooth */
+
+        //Toast.makeText(this, "Connecting...", Toast.LENGTH_SHORT).show();
+
+
+        /*// Register for broadcasts when a device is discovered.
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        registerReceiver(receiver, filter);*/
+
     }
+
+    /*// Create a BroadcastReceiver for ACTION_FOUND.
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                // Discovery has found a device. Get the BluetoothDevice
+                // object and its info from the Intent.
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                String deviceName = device.getName();
+                String deviceHardwareAddress = device.getAddress(); // MAC address
+            }
+            Log.d(msg, "got to WANTED");
+        }
+    };*/
 
     /**
      * Skapar menyn i huvudfönstret
@@ -66,5 +92,28 @@ public class MainActivity extends AppCompatActivity {
         graphPulse.getSeries().appendData(dataPulse, true,100); // seriesPulse
         graphBreathe.getSeries().appendData(dataBreathe, true,100); // seriesBreathe
         dataNumber += 0.5;
+    }
+
+    public void discoverBluetoothDevice(View view) {
+        //Intent intentBlue = new Intent(this, DiscoverBluetoothDevice.class); // getBaseContext()
+        //intentBlue.
+        //startService(intentBlue);
+        startService(new Intent(getBaseContext(), DiscoverBluetoothDevice.class));
+        //Toast.makeText(this, "Service Started", Toast.LENGTH_LONG).show();
+        //bindService(intentBlue);
+        Log.d(msg, "Service Started");
+
+        /*JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+
+        JobInfo jobInfo = new JobInfo.Builder(11, new ComponentName(this, DiscoverBluetoothDevice.class))
+                // only add if network access is required
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .build();
+
+        jobScheduler.schedule(jobInfo);*/
+    }
+    // Method to stop the service
+    public void stopService(View view) {
+        stopService(new Intent(getBaseContext(), DiscoverBluetoothDevice.class));
     }
 }
