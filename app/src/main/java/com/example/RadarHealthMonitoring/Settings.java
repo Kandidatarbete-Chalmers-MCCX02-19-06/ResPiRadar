@@ -151,6 +151,8 @@ public class Settings extends AppCompatPreferenceActivity {
         static SwitchPreference bluetoothConnect;
         static ConnectThread connectThread;
 
+        // ########## ########## onCreate ########## ##########
+
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -159,7 +161,11 @@ public class Settings extends AppCompatPreferenceActivity {
             getActivity().setTitle("Bluetooth Settings");  // ändrar titeln i menyraden
             //bindPreferenceSummaryToValue(findPreference("bluetooth_list"));
             /* Start Bluetooth */
-            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // Får enhetens egna Bluetooth adapter
+            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // Får enhetens egna Bluetooth adapter TODO cleanup?
+            //final BluetoothManager bluetoothManager =
+            //        (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+            //bluetoothAdapter = bluetoothManager.getAdapter();
+
             bluetoothOn = (SwitchPreference) findPreference("bluetooth_switch");
             bluetoothConnect = (SwitchPreference) findPreference("bluetooth_connect");
             bluetoothSearch = (SwitchPreference) findPreference("search_bluetooth_device");
@@ -246,6 +252,8 @@ public class Settings extends AppCompatPreferenceActivity {
             });
         }
 
+        // ########## ########## Program ########## ##########
+
         public static void connectBluetooth() {
             int index = bluetoothList.findIndexOfValue(bluetoothList.getValue());
             Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
@@ -277,6 +285,33 @@ public class Settings extends AppCompatPreferenceActivity {
                 return true;
             }
         }
+
+        /**
+         * Fixar listan med Bluetoothenheter
+         */
+        private static void enableBluetoothList() {
+            bluetoothList.setEnabled(true);
+            Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+            if (pairedDevices.size() > 0) {
+                CharSequence[] deviceName = new CharSequence[pairedDevices.size()];
+                CharSequence[] deviceHardwareAddress = new CharSequence[pairedDevices.size()];
+                //UUID deviceUUID;
+                int i = 0;
+                for (BluetoothDevice device : pairedDevices) {
+                    deviceName[i] = device.getName();
+                    deviceHardwareAddress[i] = device.getAddress(); // MAC address
+                    //deviceUUID = device.getUuids()[0].getUuid();
+                    i++;
+                }
+                bluetoothList.setEntries(deviceName);
+                bluetoothList.setEntryValues(deviceHardwareAddress);
+                bluetoothList.setSummary(bluetoothList.getEntry());
+            }
+        }
+
+        // ########## ########## BroadcastReceivers ########## ##########
+
+        // ########## ACTION_STATE_CHANGED ##########
 
         /**
          * Create a BroadcastReceiver for ACTION_STATE_CHANGED.
@@ -312,6 +347,9 @@ public class Settings extends AppCompatPreferenceActivity {
                 }
             }
         };
+
+        // ########## ACTION_FOUND ##########
+
         public static BroadcastReceiver BluetoothBroadcastReceiverAction = new BroadcastReceiver() {
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
@@ -323,10 +361,14 @@ public class Settings extends AppCompatPreferenceActivity {
                     String deviceName = device.getName();
                     String deviceHardwareAddress = device.getAddress(); // MAC address
                     Log.d(Settingsmsg,deviceName);
-                    enableBluetoothList();
+                    //enableBluetoothList(); TODO fixa så att listan uppdateras
+                    Toast.makeText(context, "Found: " + deviceName, Toast.LENGTH_SHORT).show();
                 }
             }
         };
+
+        // ########## ACTION_DISCOVERY_FINISHED ##########
+
         public static BroadcastReceiver BluetoothBroadcastReceiverSearch = new BroadcastReceiver() {
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
@@ -336,6 +378,7 @@ public class Settings extends AppCompatPreferenceActivity {
                 }
             }
         };
+
         public static BroadcastReceiver BluetoothBroadcastReceiverSearchFinished = new BroadcastReceiver() {
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
@@ -346,6 +389,9 @@ public class Settings extends AppCompatPreferenceActivity {
                 }
             }
         };
+
+        // ########## ACTION_SCAN_MODE_CHANGED ##########
+
         /**
          * Broadcast Receiver for changes made to bluetooth states such as:
          * 1) Discoverability mode on/off or expire.
@@ -378,6 +424,9 @@ public class Settings extends AppCompatPreferenceActivity {
                 }
             }
         };
+
+        // ########## ACTION_BOND_STATE_CHANGED ##########
+
         /**
          * Broadcast Receiver that detects bond state changes (Pairing status changes)
          */
@@ -404,29 +453,6 @@ public class Settings extends AppCompatPreferenceActivity {
                 }
             }
         };
-
-        /**
-         * Fixar listan med Bluetoothenheter
-         */
-        private static void enableBluetoothList() {
-            bluetoothList.setEnabled(true);
-            Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
-            if (pairedDevices.size() > 0) {
-                CharSequence[] deviceName = new CharSequence[pairedDevices.size()];
-                CharSequence[] deviceHardwareAddress = new CharSequence[pairedDevices.size()];
-                //UUID deviceUUID;
-                int i = 0;
-                for (BluetoothDevice device : pairedDevices) {
-                    deviceName[i] = device.getName();
-                    deviceHardwareAddress[i] = device.getAddress(); // MAC address
-                    //deviceUUID = device.getUuids()[0].getUuid();
-                    i++;
-                }
-                bluetoothList.setEntries(deviceName);
-                bluetoothList.setEntryValues(deviceHardwareAddress);
-                bluetoothList.setSummary(bluetoothList.getEntry());
-            }
-        }
     } // end of BluetoothSettings
 
     // ########## ########## ########## Wifi ########## ########## ##########
