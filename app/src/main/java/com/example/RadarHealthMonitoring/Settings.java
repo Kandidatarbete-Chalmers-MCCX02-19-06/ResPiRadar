@@ -3,6 +3,10 @@ package com.example.RadarHealthMonitoring;
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.BluetoothLeScanner;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +25,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Settings är en aktivitet som skapar en panel med inställningar. Innehåller genvägar till flera
@@ -150,6 +155,12 @@ public class Settings extends AppCompatPreferenceActivity {
         static SwitchPreference bluetoothSearch;
         static SwitchPreference bluetoothConnect;
         static ConnectThread connectThread;
+        private boolean mScanning;
+        private Handler handler = new Handler();
+        BluetoothLeScanner bluetoothLeScanner;
+        static UUID uuid;
+        static BluetoothDevice activeDevice;
+
 
         // ########## ########## onCreate ########## ##########
 
@@ -159,12 +170,11 @@ public class Settings extends AppCompatPreferenceActivity {
             addPreferencesFromResource(R.xml.pref_bluetooth);
             setHasOptionsMenu(true);
             getActivity().setTitle("Bluetooth Settings");  // ändrar titeln i menyraden
-            //bindPreferenceSummaryToValue(findPreference("bluetooth_list"));
             /* Start Bluetooth */
-            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // Får enhetens egna Bluetooth adapter TODO cleanup?
-            //final BluetoothManager bluetoothManager =
-            //        (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-            //bluetoothAdapter = bluetoothManager.getAdapter();
+            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // Får enhetens egna Bluetooth adapter
+
+            // BLE behövs?
+            bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
 
             bluetoothOn = (SwitchPreference) findPreference("bluetooth_switch");
             bluetoothConnect = (SwitchPreference) findPreference("bluetooth_connect");
@@ -177,7 +187,7 @@ public class Settings extends AppCompatPreferenceActivity {
                 bluetoothConnect.setEnabled(true);
                 bluetoothSearch.setEnabled(true);
                 if (bluetoothAdapter.getBondedDevices().size()>0) {
-                    connectBluetooth();  // TODO Error
+                    connectBluetooth();
                 }
             } else {
                 bluetoothOn.setChecked(false);
@@ -195,7 +205,7 @@ public class Settings extends AppCompatPreferenceActivity {
                     final int index = listPreference.findIndexOfValue(stringValue);
                     listPreference.setSummary(  // ändrar summary till värdet
                             listPreference.getEntries()[index]);
-                    Handler handler = new Handler();
+                    //Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
@@ -223,13 +233,15 @@ public class Settings extends AppCompatPreferenceActivity {
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     //Log.d(Settingsmsg,newValue.toString());
                     if ((boolean)newValue) {
-                        bluetoothAdapter.startDiscovery();
+                        scanLeDevice(true);
+                        //bluetoothAdapter.startDiscovery();
                         Log.d(Settingsmsg,"Enable search");
                     } else {
-                        bluetoothAdapter.cancelDiscovery();
+                        scanLeDevice(false);
+                        //bluetoothAdapter.cancelDiscovery();
                         Log.d(Settingsmsg,"Disable search");
                     }
-                    return false;
+                    return true;
                 }
             });
             // Anslut till enheten Switch Listener
@@ -239,13 +251,21 @@ public class Settings extends AppCompatPreferenceActivity {
                     if ((boolean) newValue) {
                         //BluetoothDevice.createRfcommSocketToServiceRecord();
                         Log.d(Settingsmsg,"run thread");
-                        connectThread.run();
-                        //boolean outcome = connectThread.getDevice().createBond();
-                        //Log.d(Settingsmsg, "Bounding outcome : " + outcome);
+                        //connectThread.run();
+                        if (activeDevice != null) {
+                            connectDevice(activeDevice);// BLE
+                            //BluetoothGatt bluetoothGatt = activeDevice.connectGatt(getActivity().getApplicationContext(), false, gattCallback);
+                            //boolean outcome = connectThread.getDevice().createBond();
+                            //Log.d(Settingsmsg, "Bounding outcome : " + outcome);
+                        } else {
+                            Toast.makeText(getActivity().getApplicationContext(),
+                                    "No device selected", Toast.LENGTH_LONG).show();
+                        }
                     }
                     else {
                         Log.d(Settingsmsg,"cancel Thread");
-                        connectThread.cancel();
+                        //connectThread.cancel();
+                        disconnectGattServer(); // BLE
                     }
                     return false;
                 }
@@ -254,12 +274,64 @@ public class Settings extends AppCompatPreferenceActivity {
 
         // ########## ########## Program ########## ##########
 
+        // BLE
+        public BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
+
+        };
+
+        boolean mConnected = false;
+        BluetoothGatt mGatt;
+
+        private class GattClientCallback extends BluetoothGattCallback {
+            @Override
+            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+                Log.d(Settingsmsg,"onConnectionStateChange newState: " + newState);
+                super.onConnectionStateChange(gatt, status, newState);
+                if (status == BluetoothGatt.GATT_FAILURE) {
+                    Log.d(Settingsmsg,"Connection Gatt failure status " + status);
+                    disconnectGattServer();
+                    return;
+                } else if (status != BluetoothGatt.GATT_SUCCESS) {
+                    Log.d(Settingsmsg,"Connection not GATT sucess status " + status);
+                    disconnectGattServer();
+                    return;
+                }
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    Log.d(Settingsmsg,"Connected to device " + gatt.getDevice().getAddress());
+                    mConnected = true;
+                    gatt.discoverServices();
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    Log.d(Settingsmsg,"Disconnected from device");
+                    disconnectGattServer();
+                }
+            }
+        }
+
+        private void connectDevice(BluetoothDevice device) {
+            GattClientCallback gattClientCallback = new GattClientCallback();
+            mGatt = device.connectGatt(getActivity().getApplicationContext(), false, gattClientCallback);
+        }
+
+        public void disconnectGattServer() {
+            mConnected = false;
+            if (mGatt != null) {
+                mGatt.disconnect();
+                mGatt.close();
+            }
+        }
+
+        // Vanlig Bluetooth
         public static void connectBluetooth() {
             int index = bluetoothList.findIndexOfValue(bluetoothList.getValue());
             Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
-            BluetoothDevice device = (BluetoothDevice)pairedDevices.toArray()[index];
-            connectThread = new ConnectThread(device);
-            Log.d(Settingsmsg,"Connect Device " + device.getName());
+            if (!(index==-1)) {
+                BluetoothDevice device = (BluetoothDevice)pairedDevices.toArray()[index]; //TODO ArrayIndexOutOfBoundsException
+                //connectThread = new ConnectThread(device);
+                Log.d(Settingsmsg,"Connect Device " + device.getName());
+                uuid = device.getUuids()[0].getUuid();
+                activeDevice = device;
+            }
+            Log.d(Settingsmsg,"No device selected");
         }
 
         /**
@@ -276,8 +348,10 @@ public class Settings extends AppCompatPreferenceActivity {
                 if (!bluetoothAdapter.isEnabled()) {
                     bluetoothAdapter.enable(); // Startar Bluetooth
                 } else {
-                    if (connectThread.isRunning()) {
-                        connectThread.cancel();
+                    if (connectThread != null) {
+                        if (connectThread.isRunning()) {
+                            connectThread.cancel();
+                        }
                     }
                     bluetoothAdapter.disable();
                 }
@@ -307,6 +381,51 @@ public class Settings extends AppCompatPreferenceActivity {
                 bluetoothList.setEntryValues(deviceHardwareAddress);
                 bluetoothList.setSummary(bluetoothList.getEntry());
             }
+        }
+
+        /**
+         * Activity for scanning and displaying available BLE devices.
+         */
+        private void scanLeDevice(final boolean enable) {
+            final long SCAN_PERIOD = 10000; // Stops scanning after 10 seconds.
+            if (enable) {
+                bluetoothSearch.setChecked(true);
+                // Stops scanning after a pre-defined scan period.
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        mScanning = false;
+                        bluetoothAdapter.stopLeScan(mLeScanCallback);
+                        //bluetoothLeScanner.stopScan(mLeScanCallback);
+                        bluetoothSearch.setChecked(false);
+                    }
+                }, SCAN_PERIOD);
+
+                mScanning = true;
+                //bluetoothLeScanner.startScan(mLeScanCallback);
+                bluetoothAdapter.startLeScan(mLeScanCallback);
+            } else {
+                mScanning = false;
+                //bluetoothLeScanner.stopScan(mLeScanCallback);
+                bluetoothAdapter.stopLeScan(mLeScanCallback);
+            }
+        }
+
+        // Hör till scanLeDevice
+        private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+            @Override
+            public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+                String deviceName = device.getName();
+                String deviceHardwareAddress = device.getAddress(); // MAC address
+                Log.d(Settingsmsg,"Found: " + deviceName + deviceHardwareAddress);
+                //enableBluetoothList(); TODO fixa så att listan uppdateras
+                Toast.makeText(getActivity().getApplicationContext(), "Found: " + deviceName + " " + deviceHardwareAddress, Toast.LENGTH_SHORT).show();
+            }
+        };
+
+        public static UUID getUUID() {
+            //UUID uuid = device.getUuids()[0].getUuid();
+            return uuid;
         }
 
         // ########## ########## BroadcastReceivers ########## ##########
@@ -360,9 +479,9 @@ public class Settings extends AppCompatPreferenceActivity {
                     BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                     String deviceName = device.getName();
                     String deviceHardwareAddress = device.getAddress(); // MAC address
-                    Log.d(Settingsmsg,deviceName);
+                    //Log.d(Settingsmsg,deviceName);
                     //enableBluetoothList(); TODO fixa så att listan uppdateras
-                    Toast.makeText(context, "Found: " + deviceName, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Found: " + deviceName + " " + deviceHardwareAddress, Toast.LENGTH_SHORT).show();
                 }
             }
         };
@@ -450,6 +569,36 @@ public class Settings extends AppCompatPreferenceActivity {
                     if (mDevice.getBondState() == BluetoothDevice.BOND_NONE) {
                         Log.d(Settingsmsg, "BroadcastReceiver: BOND_NONE.");
                     }
+                }
+            }
+        };
+
+        // Handles various events fired by the Service.
+// ACTION_GATT_CONNECTED: connected to a GATT server.
+// ACTION_GATT_DISCONNECTED: disconnected from a GATT server.
+// ACTION_GATT_SERVICES_DISCOVERED: discovered GATT services.
+// ACTION_DATA_AVAILABLE: received data from the device. This can be a
+// result of read or notification operations.
+        private final BroadcastReceiver gattUpdateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                final String action = intent.getAction();
+                if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
+                    //connected = true;
+                    //updateConnectionState(R.string.connected);
+                    //invalidateOptionsMenu();
+                } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
+                    //connected = false;
+                    //updateConnectionState(R.string.disconnected);
+                    //invalidateOptionsMenu();
+                    //clearUI();
+                } else if (BluetoothLeService.
+                        ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+                    // Show all the supported services and characteristics on the
+                    // user interface.
+                    //displayGattServices(bluetoothLeService.getSupportedGattServices());
+                } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+                    //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
                 }
             }
         };
