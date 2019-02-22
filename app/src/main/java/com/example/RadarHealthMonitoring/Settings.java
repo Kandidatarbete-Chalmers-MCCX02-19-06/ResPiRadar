@@ -411,7 +411,6 @@ public class Settings extends AppCompatPreferenceActivity {
          * Fixar listan med Bluetoothenheter
          */
         private static void enableBluetoothList() {
-            bluetoothList.setEnabled(true);
             Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
             if (pairedDevices.size() > 0) {
                 CharSequence[] deviceName = new CharSequence[pairedDevices.size()];
@@ -427,6 +426,9 @@ public class Settings extends AppCompatPreferenceActivity {
                 bluetoothList.setEntries(deviceName);
                 bluetoothList.setEntryValues(deviceHardwareAddress);
                 bluetoothList.setSummary(bluetoothList.getEntry());
+                bluetoothList.setEnabled(true);
+            } else {
+                bluetoothList.setEnabled(false);
             }
         }
 
