@@ -164,7 +164,7 @@ public class Settings extends AppCompatPreferenceActivity {
 
 
         // Low Energy Bluetooth enable
-        private static boolean ble = false;
+        private static boolean ble = true;
 
         static BluetoothAdapter bluetoothAdapter;
         static SwitchPreference bluetoothOn;
