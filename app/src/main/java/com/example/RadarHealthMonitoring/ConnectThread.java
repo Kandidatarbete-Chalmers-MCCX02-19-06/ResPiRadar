@@ -2,6 +2,7 @@ package com.example.RadarHealthMonitoring;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.os.Handler;
 import android.util.Log;
 
 import java.io.IOException;
@@ -14,6 +15,8 @@ class ConnectThread extends Thread {
     private final BluetoothSocket mmSocket;
     private final BluetoothDevice mmDevice;
     private boolean isRunning;
+    private Handler handler = new Handler();
+    private boolean hasSocket = false;
 
     public ConnectThread(BluetoothDevice device) {
         // Use a temporary object that is later assigned to mmSocket
@@ -32,6 +35,7 @@ class ConnectThread extends Thread {
             Log.d(TAG,"failed device.createRfcommSocketToServiceRecord(deviceUUID)");
         }
         mmSocket = tmp;
+        hasSocket=true;
     }
 
     public void run() {
@@ -52,11 +56,12 @@ class ConnectThread extends Thread {
 
             try {
                 mmSocket.close();
-                Log.d(TAG,"try mmSocket.close();"); // TODO se till att den startar om tråden, annars funkar inte swithen
+                Log.d(TAG,"try mmSocket.close();");
             } catch (IOException closeException) {
                 Log.e(TAG, "Could not close the client socket", closeException);
                 Log.d(TAG,"failed mmSocket.close();");
             }
+            hasSocket=false;
             return;
         }
 
@@ -78,10 +83,15 @@ class ConnectThread extends Thread {
             Log.d(TAG, "Could not close the client socket", e);
             Log.d(TAG,"failed mmSocket.close()");
         }
+        hasSocket=false;
     }
 
     public boolean isRunning() {
         return isRunning;
+    }
+
+    public boolean hasSocket() {
+        return hasSocket;
     }
 
     public BluetoothDevice getDevice() {

@@ -1,5 +1,6 @@
 package com.example.RadarHealthMonitoring;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -11,6 +12,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -40,6 +42,8 @@ public class Settings extends AppCompatPreferenceActivity {
     /* keys för olika värden från inställningarna */
     public static final String key_pref_connection_list = "connection_list";
     public static final String key_pref_usb_port = "usb_port";
+    private static final int REQUEST_FINE_LOCATION = 2;
+    //private static BluetoothAdapter bluetoothAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +66,15 @@ public class Settings extends AppCompatPreferenceActivity {
         registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverScan, BTIntentScanChange);
         IntentFilter BTIntentBondChange = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverBondChange, BTIntentBondChange);
+
+        if (!hasLocationPermissions()) { // ger tillåtelse att scanna med bluetooth
+            requestLocationPermission();
+        }
+
+        // BLE, fungerar inte
+        /*final BluetoothManager bluetoothManager =
+                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        bluetoothAdapter = bluetoothManager.getAdapter();*/
     }
 
     @Override
@@ -149,6 +162,10 @@ public class Settings extends AppCompatPreferenceActivity {
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class BluetoothSettings extends PreferenceFragment {
 
+
+        // Low Energy Bluetooth enable
+        private static boolean ble = false;
+
         static BluetoothAdapter bluetoothAdapter;
         static SwitchPreference bluetoothOn;
         static ListPreference bluetoothList;
@@ -157,7 +174,8 @@ public class Settings extends AppCompatPreferenceActivity {
         static ConnectThread connectThread;
         private boolean mScanning;
         private Handler handler = new Handler();
-        BluetoothLeScanner bluetoothLeScanner;
+
+        BluetoothLeScanner bluetoothLeScanner;  // BLE
         static UUID uuid;
         static BluetoothDevice activeDevice;
 
@@ -174,7 +192,9 @@ public class Settings extends AppCompatPreferenceActivity {
             bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // Får enhetens egna Bluetooth adapter
 
             // BLE behövs?
-            bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
+            if (ble) {
+                bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
+            }
 
             bluetoothOn = (SwitchPreference) findPreference("bluetooth_switch");
             bluetoothConnect = (SwitchPreference) findPreference("bluetooth_connect");
@@ -209,10 +229,12 @@ public class Settings extends AppCompatPreferenceActivity {
                     handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            if (connectThread.isRunning()) {
-                                connectThread.cancel();
-                                Toast.makeText(getActivity().getApplicationContext(),
-                                        "Connection canceled", Toast.LENGTH_LONG).show();
+                            if (!(connectThread == null)) {
+                                if (connectThread.isRunning()) {
+                                    connectThread.cancel();
+                                    Toast.makeText(getActivity().getApplicationContext(),
+                                            "Connection canceled", Toast.LENGTH_LONG).show();
+                                }
                             }
                             connectBluetooth();
                         }
@@ -233,12 +255,18 @@ public class Settings extends AppCompatPreferenceActivity {
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     //Log.d(Settingsmsg,newValue.toString());
                     if ((boolean)newValue) {
-                        scanLeDevice(true);
-                        //bluetoothAdapter.startDiscovery();
+                        if (ble) {
+                            scanLeDevice(true);
+                        } else {
+                            bluetoothAdapter.startDiscovery();
+                        }
                         Log.d(Settingsmsg,"Enable search");
                     } else {
-                        scanLeDevice(false);
-                        //bluetoothAdapter.cancelDiscovery();
+                        if (ble) {
+                            scanLeDevice(false);
+                        } else {
+                            bluetoothAdapter.cancelDiscovery();
+                        }
                         Log.d(Settingsmsg,"Disable search");
                     }
                     return true;
@@ -250,22 +278,39 @@ public class Settings extends AppCompatPreferenceActivity {
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     if ((boolean) newValue) {
                         //BluetoothDevice.createRfcommSocketToServiceRecord();
-                        Log.d(Settingsmsg,"run thread");
-                        //connectThread.run();
                         if (activeDevice != null) {
-                            connectDevice(activeDevice);// BLE
-                            //BluetoothGatt bluetoothGatt = activeDevice.connectGatt(getActivity().getApplicationContext(), false, gattCallback);
-                            //boolean outcome = connectThread.getDevice().createBond();
-                            //Log.d(Settingsmsg, "Bounding outcome : " + outcome);
+                            if (ble) {
+                                handler.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Log.d(Settingsmsg,"Connect Device");
+                                        connectDevice(activeDevice);// BLE
+                                    }
+                                }, 100);
+                                //connectDevice(activeDevice);// BLE
+                                //BluetoothGatt bluetoothGatt = activeDevice.connectGatt(getActivity().getApplicationContext(), false, gattCallback);
+                                //boolean outcome = connectThread.getDevice().createBond();
+                                //Log.d(Settingsmsg, "Bounding outcome : " + outcome);
+                            } else {
+                                Log.d(Settingsmsg,"run thread");
+                                if (!connectThread.hasSocket()) {
+                                    connectBluetooth();
+                                }
+                                connectThread.run();
+                            }
                         } else {
                             Toast.makeText(getActivity().getApplicationContext(),
                                     "No device selected", Toast.LENGTH_LONG).show();
                         }
                     }
                     else {
-                        Log.d(Settingsmsg,"cancel Thread");
-                        //connectThread.cancel();
-                        disconnectGattServer(); // BLE
+                        if (ble) {
+                            Log.d(Settingsmsg,"Disconnect Gatt Server");
+                            disconnectGattServer(); // BLE
+                        } else {
+                            Log.d(Settingsmsg,"cancel Thread");
+                            connectThread.cancel();
+                        }
                     }
                     return false;
                 }
@@ -315,7 +360,7 @@ public class Settings extends AppCompatPreferenceActivity {
         public void disconnectGattServer() {
             mConnected = false;
             if (mGatt != null) {
-                mGatt.disconnect();
+                //mGatt.disconnect(); // redudant
                 mGatt.close();
             }
         }
@@ -325,13 +370,15 @@ public class Settings extends AppCompatPreferenceActivity {
             int index = bluetoothList.findIndexOfValue(bluetoothList.getValue());
             Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
             if (!(index==-1)) {
-                BluetoothDevice device = (BluetoothDevice)pairedDevices.toArray()[index]; //TODO ArrayIndexOutOfBoundsException
-                //connectThread = new ConnectThread(device);
-                Log.d(Settingsmsg,"Connect Device " + device.getName());
+                BluetoothDevice device = (BluetoothDevice)pairedDevices.toArray()[index];
+                if (!ble) {
+                    connectThread = new ConnectThread(device);
+                    Log.d(Settingsmsg, "Create Refcomm Socket: " + device.getName());
+                }
                 uuid = device.getUuids()[0].getUuid();
                 activeDevice = device;
             }
-            Log.d(Settingsmsg,"No device selected");
+            //Log.d(Settingsmsg,"No device selected");
         }
 
         /**
@@ -781,5 +828,14 @@ public class Settings extends AppCompatPreferenceActivity {
                 PreferenceManager
                         .getDefaultSharedPreferences(preference.getContext())
                         .getString(preference.getKey(), ""));
+    }
+
+    private boolean hasLocationPermissions() {
+        return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestLocationPermission() {
+        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
+        //log("Requested user enable Location. Try starting the scan again.");
     }
 } // end of Settings.class
