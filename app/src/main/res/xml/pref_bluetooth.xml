@@ -8,7 +8,9 @@
     <ListPreference
         android:enabled="false"
         android:key="bluetooth_list"
-        android:title="Available Bluetooth devices" />
+        android:title="Available Bluetooth devices"
+        android:entries="@array/pref_bluetooth_list"
+        android:entryValues="@array/pref_bluetooth_list_values" />
     <SwitchPreference
         android:defaultValue="false"
         android:key="search_bluetooth_device"
