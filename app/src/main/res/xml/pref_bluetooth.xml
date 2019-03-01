@@ -17,5 +17,9 @@
         android:defaultValue="false"
         android:key="bluetooth_connect"
         android:title="Connect Bluetooth Device" />
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="bluetooth_read"
+        android:title="Read" />
 
 </PreferenceScreen>

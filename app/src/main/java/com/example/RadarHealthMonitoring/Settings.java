@@ -28,7 +28,9 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.jakewharton.rx.ReplayingShare;
 import com.polidea.rxandroidble2.RxBleClient;
+import com.polidea.rxandroidble2.RxBleConnection;
 import com.polidea.rxandroidble2.RxBleDevice;
 import com.polidea.rxandroidble2.scan.ScanFilter;
 import com.polidea.rxandroidble2.scan.ScanSettings;
@@ -36,8 +38,11 @@ import com.polidea.rxandroidble2.scan.ScanSettings;
 import java.util.Set;
 import java.util.UUID;
 
+import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.PublishSubject;
 
 import static android.bluetooth.BluetoothGatt.GATT_SUCCESS;
 
@@ -56,6 +61,8 @@ public class Settings extends AppCompatPreferenceActivity {
     public static final String key_pref_usb_port = "usb_port";
     private static final int REQUEST_FINE_LOCATION = 2;
     //private static BluetoothAdapter bluetoothAdapter;
+
+    public static UUID characteristicUuid2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +87,8 @@ public class Settings extends AppCompatPreferenceActivity {
         registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverBondChange, BTIntentBondChange);
         IntentFilter BTIntentGattConnection = new IntentFilter(BluetoothLeService.ACTION_GATT_CONNECTED); // används? Ta bort?
         registerReceiver(BluetoothSettings.gattUpdateReceiver, BTIntentBondChange);
+
+        characteristicUuid2 = (UUID) getIntent().getSerializableExtra("extra_uuid");
 
         if (!hasLocationPermissions()) { // ger tillåtelse att scanna med bluetooth
             requestLocationPermission();
@@ -180,18 +189,21 @@ public class Settings extends AppCompatPreferenceActivity {
 
         // Low Energy Bluetooth enable
         private static boolean ble = false;
-        private static boolean RxBle = true;
+        private static boolean RxBle = false;
         private static boolean discoverAll = true;
         private static boolean discoveredRaspberryPi = false;
+        private static boolean infoRxbleOn = false;
+        private static boolean RxBT = true;
 
         static BluetoothAdapter bluetoothAdapter;
         static SwitchPreference bluetoothOn;
         static ListPreference bluetoothList;
         static SwitchPreference bluetoothSearch;
         static SwitchPreference bluetoothConnect;
+        static SwitchPreference bluetoothRead;
         static ConnectThread connectThread;
         private boolean mScanning;
-        private Handler handler = new Handler();
+        private static Handler handler = new Handler();
 
         BluetoothLeScanner bluetoothLeScanner;  // BLE
         static RxBleClient rxBleClient; // RxBle
@@ -208,6 +220,24 @@ public class Settings extends AppCompatPreferenceActivity {
         Disposable flowDisposable;
         Disposable scanSubscription;
         static Disposable disposable;
+        //Disposable nonStaticDisposable;
+        private static Observable<RxBleConnection> connectionObservable;
+        private RxBleDevice bleDevice;
+        private PublishSubject<Boolean> disconnectTriggerSubject = PublishSubject.create();
+        //private static UUID characteristicUuid = UUID.fromString("82ff5000-abc8-40dd-99fe-ba009c4a2acd");
+        //private static UUID characteristicUuid = UUID.fromString("00x2A37-0000-1000-8000-00805F9B34FB");
+        //private static UUID characteristicUuid = UUID.fromString("0x2A37");
+        //private static UUID characteristicUuid;
+        private static UUID HEART_RATE_SERVICE_UUID = convertFromInteger(0x180D);
+        private static UUID HEART_RATE_MEASUREMENT_CHAR_UUID = convertFromInteger(0x2A37);
+        private static UUID HEART_RATE_CONTROL_POINT_CHAR_UUID = convertFromInteger(0x2A39);
+        //private static UUID characteristicUuid = convertFromInteger(0x2A3D);
+        //private static UUID characteristicUuid = new UUID((byte)0x2A37);
+        private static UUID characteristicUuid = HEART_RATE_MEASUREMENT_CHAR_UUID;
+
+        //        .fromString("00x2A37-0000-1000-8000-00805F9B34FB");
+        private static final CompositeDisposable compositeDisposable = new CompositeDisposable();
+        //UUID.fromString("0x2A37"
 
 
 
@@ -224,6 +254,7 @@ public class Settings extends AppCompatPreferenceActivity {
 
             uuidRaspberryPi[0]= UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
 
+
             // BLE
             if (ble) {
                 bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
@@ -236,6 +267,7 @@ public class Settings extends AppCompatPreferenceActivity {
             bluetoothOn = (SwitchPreference) findPreference("bluetooth_switch");
             bluetoothConnect = (SwitchPreference) findPreference("bluetooth_connect");
             bluetoothSearch = (SwitchPreference) findPreference("search_bluetooth_device");
+            bluetoothRead = (SwitchPreference) findPreference("bluetooth_read");
             bluetoothList = (ListPreference) findPreference("bluetooth_list");
             // On create
             if (bluetoothAdapter.isEnabled()) { // kollar om Bluetooth redan är på
@@ -245,7 +277,8 @@ public class Settings extends AppCompatPreferenceActivity {
                 bluetoothConnect.setEnabled(true);
                 bluetoothSearch.setEnabled(true);
                 if (bluetoothAdapter.getBondedDevices().size()>0) {
-                    connectBluetooth();
+                    setActiveDevice();
+                    //connectBluetooth(); // TODO automaitsk anslutning
                 }
             } else {
                 bluetoothOn.setChecked(false);
@@ -253,6 +286,16 @@ public class Settings extends AppCompatPreferenceActivity {
                 bluetoothList.setEnabled(false);
                 bluetoothConnect.setEnabled(false);
                 bluetoothSearch.setEnabled(false);
+            }
+            if (bluetoothConnect.isChecked()) {
+                if (disposable==null) {
+                    bluetoothConnect.setChecked(false);
+                    // disposable = new Disposable(); // TODO gör ej abstrakt, alltså ärv klassen
+                } else if (disposable.isDisposed()) {
+                    bluetoothConnect.setChecked(false);
+                } else {
+                    bluetoothConnect.setChecked(true);
+                }
             }
             // Ändring av enhet i Bluetoothlistan Listener
             bluetoothList.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
@@ -274,7 +317,8 @@ public class Settings extends AppCompatPreferenceActivity {
                                             "Connection canceled", Toast.LENGTH_LONG).show();
                                 }
                             }
-                            connectBluetooth();
+                            setActiveDevice();
+                            //connectBluetooth();
                         }
                     }, 1);
                     return true;
@@ -369,6 +413,9 @@ public class Settings extends AppCompatPreferenceActivity {
                             disconnectGattServer(); // BLE
                         } else if (RxBle) {
                             disposable.dispose();
+                            infoRxbleOn = false;
+                            //bluetoothConnect.setChecked(false);
+                            return true;
                         } else {
                             Log.d(Settingsmsg,"cancel Thread");
                             connectThread.cancel();
@@ -377,9 +424,26 @@ public class Settings extends AppCompatPreferenceActivity {
                     return false;
                 }
             });
+            bluetoothRead.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    if ((boolean) newValue) {
+                        read();
+                        Log.d(Settingsmsg, "Read");
+                    }
+                    return false;
+                }
+            });
         }
 
         // ########## ########## Program ########## ##########
+
+        public static UUID convertFromInteger(int i) {
+            final long MSB = 0x0000000000001000L;
+            final long LSB = 0x800000805f9b34fbL;
+            long value = i & 0xFFFFFFFF;
+            return new UUID(MSB | (value << 32), LSB);
+        }
 
         // RxBle
         private void deviceDiscovery() {
@@ -520,12 +584,20 @@ public class Settings extends AppCompatPreferenceActivity {
         public void disconnectGattServer() {
             mConnected = false;
             if (mGatt != null) {
-                //mGatt.disconnect(); // redudant
+                mGatt.disconnect(); // redudant
                 mGatt.close();
             }
         }
 
         // Vanlig Bluetooth
+        private static void setActiveDevice() {
+            int index = bluetoothList.findIndexOfValue(bluetoothList.getValue());
+            Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+            if (!(index==-1)) {
+                activeDevice = (BluetoothDevice)pairedDevices.toArray()[index];
+            }
+        }
+
         public static void connectBluetooth() { // TODO Välj automatiskt Raspberrypien
             int index = bluetoothList.findIndexOfValue(bluetoothList.getValue());
             Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
@@ -535,22 +607,15 @@ public class Settings extends AppCompatPreferenceActivity {
                     connectThread = new ConnectThread(device);
                     Log.d(Settingsmsg, "Create Refcomm Socket: " + device.getName());
                 } else if (RxBle) {
-                    if (device.getAddress().equals(raspberryPiMAC)) {
+                    //if (device.getAddress().equals(raspberryPiMAC)) {
                         rxDevice = rxBleClient.getBleDevice(raspberryPiMAC);
+                        connectionObservable = prepareConnectionObservable();
+                        if (!infoRxbleOn) {
+                            infoRxble();
+                        }
                         connectRaspberryPi();
-                        // TODO anslut automatiskt
-                        rxDevice.observeConnectionStateChanges().subscribe(
-                                connectionState -> {
-                                    Log.d(Settingsmsg, "observeConnectionStateChanges: " + connectionState); // TODO Undeersök vad som händer här
-                                    //connectionState.equals(GATT_SUCCESS);
-                                    //connectionState.equals(CONNECTED);
-                                    // Process your way.
-                                },
-                                throwable -> {
-                                    // Handle an error here.
-                                }
-                        );
-                    } else {
+                        // TODO anslut automatiskt + ifsats som kollar om man redan är ansluten
+                    /*} else {
                         rxDevice = rxBleClient.getBleDevice(device.getAddress());
                         connectRaspberryPi();
                         rxDevice.observeConnectionStateChanges().subscribe(
@@ -559,17 +624,23 @@ public class Settings extends AppCompatPreferenceActivity {
                                     //connectionState.equals(GATT_SUCCESS);
                                     //connectionState.equals(CONNECTED);
                                     // Process your way.
+                                    switch (connectionState) {
+                                        case CONNECTED:
+                                            bluetoothConnect.setChecked(true);
+                                        case DISCONNECTED:
+                                            bluetoothConnect.setChecked(false);
+                                    }
                                 },
                                 throwable -> {
                                     // Handle an error here.
                                 }
                         );
-                    }
+                    }*/
                 }
                 uuid = device.getUuids()[0].getUuid();
                 //Log.d(Settingsmsg, "UUID: " + uuid);
-                activeDevice = device;
-                bluetoothList.setSummary(activeDevice.getName());
+                //activeDevice = device;
+                //bluetoothList.setSummary(activeDevice.getName()); // TODO
             } else {
                 bluetoothList.setSummary("");
             }
@@ -577,15 +648,135 @@ public class Settings extends AppCompatPreferenceActivity {
         }
 
         private static void connectRaspberryPi() {
-            disposable = rxDevice.establishConnection(false) // <-- autoConnect flag
+            //UUID characteristicUuid = (UUID) getIntent().getSerializableExtra(EXTRA_CHARACTERISTIC_UUID);
+            //UUID characteristicUUID = UUID.fromString("00002a26-0000-1000-8000-00805f9b34fb");
+            byte[] bytesToWrite = HexString.hexToBytes("Test message");
+            if (disposable!=null) {
+                Log.d(Settingsmsg, "is disposed: " + disposable.isDisposed());
+            }
+            Disposable disposableLocal = rxDevice.establishConnection(false) // <-- autoConnect flag
+                    //.flatMapSingle(rxBleConnection -> rxBleConnection.writeCharacteristic(characteristicUUID, bytesToWrite))
                     .subscribe(
                             rxBleConnection -> {
                                 // All GATT operations are done through the rxBleConnection.
+                                io.reactivex.Single <byte[]> value = rxBleConnection.readCharacteristic(characteristicUuid);
+                                Log.d(Settingsmsg, "Read: " + value);
+                                Log.d(Settingsmsg, "Services: " + rxBleConnection.discoverServices());
+                                rxBleConnection.setupNotification(characteristicUuid);
+
+                            },
+                            /*characteristicValue -> {
+                                Log.d(Settingsmsg,characteristicValue.toString());
+                                // Characteristic value confirmed.
+                            },*/
+                            throwable -> {
+                                // Handle an error here.
+                            }
+                    );
+            disposable = disposableLocal;
+            Log.d(Settingsmsg, "is disposed: " + disposable.isDisposed());
+        }
+
+        private static void connectRaspberryPi2() {
+            //characteristicUuid = HEART_RATE_MEASUREMENT_CHAR_UUID;
+            //characteristicUuid = characteristicUuid2; // error, null object
+            Disposable connectionDisposable = connectionObservable
+                    .flatMapSingle(RxBleConnection::discoverServices)
+                    .flatMapSingle(rxBleDeviceServices -> rxBleDeviceServices.getCharacteristic(characteristicUuid))
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            characteristic -> {
+                                updateUI(characteristic);
+                                Log.i(Settingsmsg, "Hey, connection has been established!");
+                            },
+                            BluetoothSettings::onConnectionFailure,
+                            BluetoothSettings::onConnectionFinished
+                    );
+
+            compositeDisposable.add(connectionDisposable);
+        }
+
+        private static Observable<RxBleConnection> prepareConnectionObservable() {
+            return rxDevice
+                    .establishConnection(false)
+                    //.takeUntil(disconnectTriggerSubject)
+                    .compose(ReplayingShare.instance());
+        }
+
+        private static void updateUI(BluetoothGattCharacteristic characteristic) {
+            Log.d(Settingsmsg, characteristic != null ? "disconnect" : "connect");
+            Log.d(Settingsmsg,"BluetoothGattCharacteristic.PROPERTY_WRITE: " + BluetoothGattCharacteristic.PROPERTY_WRITE);
+            Log.d(Settingsmsg,"BluetoothGattCharacteristic.PROPERTY_READ: " + BluetoothGattCharacteristic.PROPERTY_READ);
+            Log.d(Settingsmsg,"BluetoothGattCharacteristic.PROPERTY_NOTIFY: " + BluetoothGattCharacteristic.PROPERTY_NOTIFY);
+            Log.d(Settingsmsg, "characteristic: " + characteristic);
+        }
+
+        private static void onConnectionFailure(Throwable throwable) {
+            //noinspection ConstantConditions
+            //Snackbar.make(getActivity().findViewById(R.id.layoutView), "Connection error: " + throwable, Snackbar.LENGTH_SHORT).show();
+            Log.d(Settingsmsg,"Connection error: " + throwable);
+            updateUI(null);
+        }
+        private static void onConnectionFinished() {
+            Log.d(Settingsmsg, "Connection succeded");
+            updateUI(null);
+        }
+
+        private static void read() {
+            if (isConnected()||true) {
+                Disposable disposable = connectionObservable
+                        .firstOrError()
+                        .flatMap(rxBleConnection -> rxBleConnection.readCharacteristic(characteristicUuid))
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(bytes -> {
+                            Log.d(Settingsmsg,"read: " + bytes.toString() + " + " + HexString.bytesToHex(bytes));
+                        }, BluetoothSettings::onReadFailure);
+
+                compositeDisposable.add(disposable);
+            }
+        }
+
+        private static void read2() {
+            rxDevice.establishConnection(false)
+                    //.flatMap(rxBleConnection -> rxBleConnection.readCharacteristic(characteristicUuid))
+                    .subscribe(characteristicValue -> {
+                        // Read characteristic value.
+                    });
+        }
+
+        private static void onReadFailure(Throwable throwable) {
+            //noinspection ConstantConditions
+            Log.d(Settingsmsg, "Read error: " + throwable);
+        }
+
+        private static boolean isConnected() {
+            return rxDevice.getConnectionState() == RxBleConnection.RxBleConnectionState.CONNECTED;
+        }
+
+        private static void infoRxble() {
+            infoRxbleOn = true;
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    rxDevice.observeConnectionStateChanges().subscribe(
+                            connectionState -> {
+                                Log.d(Settingsmsg, "observeConnectionStateChanges: " + connectionState); // TODO Undeersök vad som händer här
+                                //connectionState.equals(GATT_SUCCESS);
+                                //connectionState.equals(CONNECTED);
+                                // Process your way.
+                                switch (connectionState) {
+                                    case CONNECTED:
+                                        bluetoothConnect.setChecked(true);
+                                    case DISCONNECTED:
+                                        bluetoothConnect.setChecked(false);
+                                }
                             },
                             throwable -> {
                                 // Handle an error here.
                             }
                     );
+                }
+            }, 50);
         }
 
         /**
@@ -722,7 +913,7 @@ public class Settings extends AppCompatPreferenceActivity {
                             bluetoothSearch.setEnabled(true);
                             bluetoothConnect.setEnabled(true);
                             if (bluetoothAdapter.getBondedDevices().size()>0) {
-                                connectBluetooth();
+                                //connectBluetooth(); //TODO automatisk anslutning
                             } else {
                                 bluetoothList.setSummary("No device avalible");
                             }
@@ -753,6 +944,8 @@ public class Settings extends AppCompatPreferenceActivity {
                     if (deviceHardwareAddress.equals(raspberryPiMAC)) {
                         Toast.makeText(context, "Found " + deviceName, Toast.LENGTH_SHORT).show();
                         discoveredRaspberryPi=true;
+                        bluetoothList.setValue(raspberryPiMAC);
+                        bluetoothList.setSummary(bluetoothList.getEntry());
                         //Log.d(Settingsmsg, "Bondstate: " + device.getBondState());
                         if (device.getBondState()!=12) {
                             device.createBond();
