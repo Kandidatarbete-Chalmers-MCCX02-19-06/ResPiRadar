@@ -19,9 +19,10 @@ android {
     productFlavors {
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
     }
+    buildToolsVersion '28.0.3'
 }
 
 dependencies {
@@ -41,10 +42,10 @@ dependencies {
     //implementation "androidx.fragment:fragment:1.1.0-alpha04"
     //implementation 'androidx.preference:preference:1.0.0'
     //implementation 'com.takisoft.fix:preference-v7:25.3.0.0'
+
     implementation 'com.polidea.rxandroidble2:rxandroidble:1.8.1'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.7'
     implementation 'com.jakewharton.rx2:replaying-share:2.1.1'
-    implementation 'com.github.ivbaranov:rxbluetooth2:2.1.0'
-
+    //implementation 'com.github.ivbaranov:rxbluetooth2:2.1.0'
 }

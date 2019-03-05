@@ -1,4 +1,4 @@
-package com.example.RadarHealthMonitoring;
+package com.example.RadarHealthMonitoring.Archive.BLEDSG;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -10,6 +10,8 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
+
+import com.example.RadarHealthMonitoring.Settings;
 
 import java.util.UUID;
 

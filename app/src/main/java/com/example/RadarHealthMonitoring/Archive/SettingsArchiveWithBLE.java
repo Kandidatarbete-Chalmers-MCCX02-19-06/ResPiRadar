@@ -1,41 +1,79 @@
-package com.example.RadarHealthMonitoring;
+package com.example.RadarHealthMonitoring.Archive;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
+import android.os.Message;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
 import android.support.v7.app.ActionBar;
+import android.support.v7.recyclerview.extensions.ListAdapter;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.example.RadarHealthMonitoring.AppCompatPreferenceActivity;
+import com.example.RadarHealthMonitoring.Archive.BLEDSG.BleAdapterService;
+import com.example.RadarHealthMonitoring.Archive.BLEDSG.BleScanner;
 import com.example.RadarHealthMonitoring.Archive.BLEDSG.BluetoothLeService;
+import com.example.RadarHealthMonitoring.Archive.BLEDSG.Constants;
+import com.example.RadarHealthMonitoring.Archive.BLEDSG.ScanReceiver;
+import com.example.RadarHealthMonitoring.Archive.BLEDSG.ScanResultsConsumer;
+import com.example.RadarHealthMonitoring.R;
+import com.polidea.rxandroidble2.RxBleClient;
+import com.polidea.rxandroidble2.RxBleConnection;
+import com.polidea.rxandroidble2.RxBleDevice;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.PublishSubject;
+
+import static android.bluetooth.BluetoothGatt.GATT_SUCCESS;
+
+//import com.example.RadarHealthMonitoring.ConnectThread;
+
+//import com.example.RadarHealthMonitoring.ConnectThread;
 
 /**
  * Settings är en aktivitet som skapar en panel med inställningar. Innehåller genvägar till flera
  * olika paneler med olika kategorier av inställningar. Alla paneler finns under R.xml och
  * dessa styrs av aktiviteten.
  */
-public class Settings extends AppCompatPreferenceActivity {
+public class SettingsArchiveWithBLE extends AppCompatPreferenceActivity {
 
-    static Settings s;
+    static SettingsArchiveWithBLE s;
 
     private static final String Settingsmsg = "Settings";
     //boolean static
@@ -50,7 +88,7 @@ public class Settings extends AppCompatPreferenceActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        s = Settings.this;
+        s = SettingsArchiveWithBLE.this;
 
         super.onCreate(savedInstanceState);
         setupActionBar();
@@ -107,12 +145,12 @@ public class Settings extends AppCompatPreferenceActivity {
      */
     protected boolean isValidFragment(String fragmentName) {
         return PreferenceFragment.class.getName().equals(fragmentName)
-                || Settings.SettingsFragment.class.getName().equals(fragmentName)
-                || Settings.BluetoothFragment.class.getName().equals(fragmentName)
-                || Settings.WifiFragment.class.getName().equals(fragmentName)
-                || Settings.USBFragment.class.getName().equals(fragmentName)
-                || Settings.GeneralFragment.class.getName().equals(fragmentName)
-                || Settings.DeveloperFragment.class.getName().equals(fragmentName);
+                || SettingsArchiveWithBLE.SettingsFragment.class.getName().equals(fragmentName)
+                || SettingsArchiveWithBLE.BluetoothFragment.class.getName().equals(fragmentName)
+                || SettingsArchiveWithBLE.WifiFragment.class.getName().equals(fragmentName)
+                || SettingsArchiveWithBLE.USBFragment.class.getName().equals(fragmentName)
+                || SettingsArchiveWithBLE.GeneralFragment.class.getName().equals(fragmentName)
+                || SettingsArchiveWithBLE.DeveloperFragment.class.getName().equals(fragmentName);
     }
 
     private void setupActionBar() {
@@ -172,14 +210,20 @@ public class Settings extends AppCompatPreferenceActivity {
      *  Inställningar för Bluetooth
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class BluetoothSettings extends PreferenceFragment {
+    public static class BluetoothSettings extends PreferenceFragment implements ScanResultsConsumer {
 
 
         // Low Energy Bluetooth enable
-
+        private static boolean ble = true;
+        private static boolean RxBle = false;
         private static boolean discoverAll = false;
         private static boolean discoveredRaspberryPi = false;
+        private static boolean infoRxbleOn = false;
+        private static boolean RxBT = false;
+        private static boolean BLEDSG = false;
 
+        private static boolean bleScan = true; // mBluetoothAdapter.startLeScan(mLeScanCallback);
+        private static boolean bleScanner = false; // BLEScanner.startScan(mScanCallback);
 
         static BluetoothAdapter bluetoothAdapter;
         static SwitchPreference bluetoothOn;
@@ -187,16 +231,78 @@ public class Settings extends AppCompatPreferenceActivity {
         static SwitchPreference bluetoothSearch;
         static SwitchPreference bluetoothConnect;
         static SwitchPreference bluetoothRead;
-        static ConnectThread connectThread;
+        static ConnectThreadOld connectThread;
         private boolean mScanning;
         private static Handler handler = new Handler();
 
+        BluetoothLeScanner bluetoothLeScanner;  // BLE
+        static RxBleClient rxBleClient; // RxBle
         static UUID uuid;
         static BluetoothDevice activeDevice;
         static UUID[] uuidRaspberryPi = new UUID[1];
+        static RxBleDevice rxDevice;
         private static String raspberryPiMAC = "B8:27:EB:FC:22:65";
 
+        private static final int SCAN_REQUEST_CODE = 42;
+        private PendingIntent callbackIntent;
+        private Disposable scanDisposable;
+        //private ScanResultsAdapter resultsAdapter;
+        Disposable flowDisposable;
+        Disposable scanSubscription;
+        static Disposable disposable;
+        Disposable nonStaticDisposable;
+        private static Observable<RxBleConnection> connectionObservable;
+        private RxBleDevice bleDevice;
+        private PublishSubject<Boolean> disconnectTriggerSubject = PublishSubject.create();
+        //private static UUID characteristicUuid = UUID.fromString("82ff5000-abc8-40dd-99fe-ba009c4a2acd");
+        //private static UUID characteristicUuid = UUID.fromString("00x2A37-0000-1000-8000-00805F9B34FB");
+        //private static UUID characteristicUuid = UUID.fromString("0x2A37");
+        //private static UUID characteristicUuid;
+
+        private static UUID HEART_RATE_SERVICE_UUID = convertFromInteger(0x180D);
+        private static UUID HEART_RATE_MEASUREMENT_CHAR_UUID = convertFromInteger(0x2A37);
+        private static UUID HEART_RATE_CONTROL_POINT_CHAR_UUID = convertFromInteger(0x2A39);
+        private static UUID CLIENT_CHARACTERISTIC_CONFIG_UUID = convertFromInteger(0x2902);
+
+        //private static UUID characteristicUuid = convertFromInteger(0x2A3D);
+        //private static UUID characteristicUuid = new UUID((byte)0x2A37);
+        private static UUID characteristicUuid = HEART_RATE_MEASUREMENT_CHAR_UUID;
+        private static UUID privateUUID = UUID.fromString("00001112-0000-1000-8000-00805f9b34fb");
+
+        //        .fromString("00x2A37-0000-1000-8000-00805F9B34FB");
+        private static final CompositeDisposable compositeDisposable = new CompositeDisposable();
+        //UUID.fromString("0x2A37"
+
+
+        private static BluetoothAdapter.LeScanCallback mLeScanCallback;
+        boolean mConnected = false;
+        BluetoothGatt mGatt;
+        BluetoothGattCallback gattCallback;
+        BluetoothGatt gatt;
+        private ScanCallback mScanCallback;
+        private static Handler bleHandler;
+        private static Handler.Callback loopHandler;
+
+        //private static UUID uuid2 = new UUID(0x1101,0);
+
+        // BLEDSG
+        private boolean ble_scanning = false;
+        //private Handler handler = new Handler(); // already defined
+        private ListAdapter ble_device_list_adapter;
+        private BleScanner ble_scanner;
+        private static final long SCAN_TIMEOUT = 5000;
+        private static final int REQUEST_LOCATION = 0;
+        private static String[] PERMISSIONS_LOCATION = {Manifest.permission.ACCESS_COARSE_LOCATION};
+        private boolean permissions_granted=false;
+        private int device_count=0;
+        private Toast toast;
         private static Handler uiHandler = new Handler(Looper.getMainLooper());
+        public static final String EXTRA_NAME = "name";
+        public static final String EXTRA_ID = "id";
+        private BluetoothGatt bluetooth_gatt;
+
+
+
 
         // ########## ########## onCreate ########## ##########
 
@@ -210,6 +316,89 @@ public class Settings extends AppCompatPreferenceActivity {
             bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // Får enhetens egna Bluetooth adapter
 
             uuidRaspberryPi[0] = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
+
+
+            // BLE
+            if (ble) {
+                bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
+                mScanCallback = new ScanCallback() {
+                    @Override
+                    public void onScanResult(int callbackType, ScanResult result) {
+                        BluetoothDevice device = result.getDevice();
+                        //callback.onDeviceFound(device);
+                        Log.d(Settingsmsg, "Found ble: " + device);
+                    }
+                };
+                gattCallback = new BluetoothGattCallback() { // TODO Check if work?
+                    @Override
+                    public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+                        Log.d(Settingsmsg, "onConnectionStateChange newState: " + newState);
+                        super.onConnectionStateChange(gatt, status, newState);
+                        if (status == BluetoothGatt.GATT_FAILURE) {
+                            Log.d(Settingsmsg, "Connection Gatt failure status " + status);
+                            disconnectGattServer();
+                            return;
+                        } else if (status != GATT_SUCCESS) {
+                            Log.d(Settingsmsg, "Connection not GATT sucess status " + status);
+                            disconnectGattServer();
+                            return;
+                        }
+                        if (newState == BluetoothProfile.STATE_CONNECTED) {
+                            Log.d(Settingsmsg, "Connected to device " + gatt.getDevice().getAddress());
+                            mConnected = true;
+                            gatt.discoverServices();
+                            //gatt.beginReliableWrite();
+                            Log.d(Settingsmsg, "Services: " + gatt.getServices().toString());
+                            BluetoothGattCharacteristic characteristic = new BluetoothGattCharacteristic(uuid, 1, 1);
+                            characteristic.setValue("123");
+                            gatt.writeCharacteristic(characteristic);
+                            gatt.executeReliableWrite();
+                        } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                            Log.d(Settingsmsg, "Disconnected from device");
+                            disconnectGattServer();
+                        }
+                    }
+
+                    @Override
+                    public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+                        BluetoothGattCharacteristic characteristic =
+                                gatt.getService(HEART_RATE_SERVICE_UUID)
+                                        .getCharacteristic(HEART_RATE_MEASUREMENT_CHAR_UUID);
+                        BluetoothGattDescriptor descriptor =
+                                characteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG_UUID);
+
+                        descriptor.setValue(
+                                BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                        gatt.writeDescriptor(descriptor);
+                    }
+
+                    @Override
+                    public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+                        BluetoothGattCharacteristic characteristic =
+                                gatt.getService(HEART_RATE_SERVICE_UUID)
+                                        .getCharacteristic(HEART_RATE_CONTROL_POINT_CHAR_UUID);
+                        characteristic.setValue(new byte[]{1, 1});
+                        gatt.writeCharacteristic(characteristic);
+                    }
+
+                    @Override
+                    public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+
+                        //processData(characteristic.getValue());
+                        Log.d(Settingsmsg, "Got a value: " + characteristic.getValue()); // For loop?
+                    }
+                };
+            } else if (BLEDSG) {
+                ble_scanner = new BleScanner(getActivity().getApplicationContext());
+                // connect to the Bluetooth adapter service
+                Intent gattServiceIntent = new Intent(getActivity().getApplicationContext(), BleAdapterService.class);
+                s.bindService(gattServiceIntent, service_connection, BIND_AUTO_CREATE);
+                showMsg("READY");
+            } else if (RxBle) {
+                rxBleClient = RxBleClient.create(getActivity().getApplicationContext());
+                callbackIntent = PendingIntent.getBroadcast(getActivity().getApplicationContext(), SCAN_REQUEST_CODE,
+                        new Intent(getActivity().getApplicationContext(), ScanReceiver.class), 0);
+            }
 
             bluetoothOn = (SwitchPreference) findPreference("bluetooth_switch");
             bluetoothConnect = (SwitchPreference) findPreference("bluetooth_connect");
@@ -233,6 +422,16 @@ public class Settings extends AppCompatPreferenceActivity {
                 bluetoothList.setEnabled(false);
                 bluetoothConnect.setEnabled(false);
                 bluetoothSearch.setEnabled(false);
+            }
+            if (bluetoothConnect.isChecked()) {
+                if (disposable == null) {
+                    bluetoothConnect.setChecked(false);
+                    // disposable = new Disposable(); // TODO gör ej abstrakt, alltså ärv klassen
+                } else if (disposable.isDisposed()) {
+                    bluetoothConnect.setChecked(false);
+                } else {
+                    bluetoothConnect.setChecked(true);
+                }
             }
             // Ändring av enhet i Bluetoothlistan Listener
             bluetoothList.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
@@ -274,10 +473,40 @@ public class Settings extends AppCompatPreferenceActivity {
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     //Log.d(Settingsmsg,newValue.toString());
                     if ((boolean) newValue) {
-                        bluetoothAdapter.startDiscovery();
+                        if (discoverAll) {
+                            bluetoothAdapter.startDiscovery();
+                        } else {
+                            if (BLEDSG) {
+                                leScanDevice();
+                            } else if (ble) {
+                                scanLeDevice(true);
+                            } else if (RxBle) {
+                                //deviceDiscovery();
+                                discoveredRaspberryPi = false;
+                                //scanBleDeviceInBackground(); // TODO ?
+                                //scanBleDevices();
+                            } else {
+                                bluetoothAdapter.startDiscovery();
+                            }
+                        }
                         Log.d(Settingsmsg, "Enable search");
                     } else {
-                        bluetoothAdapter.cancelDiscovery();
+                        if (discoverAll) {
+                            bluetoothAdapter.cancelDiscovery();
+                        } else {
+                            if (ble) {
+                                scanLeDevice(false);
+                            } else if (RxBle) {
+                                // When done, just dispose.
+                                if (scanSubscription != null) {
+                                    scanSubscription.dispose();
+                                }
+                                //flowDisposable.dispose();
+                                Log.d(Settingsmsg, "flowDisposable.dispose()");
+                            } else {
+                                bluetoothAdapter.cancelDiscovery();
+                            }
+                        }
                         Log.d(Settingsmsg, "Disable search");
                     }
                     return true;
@@ -290,34 +519,84 @@ public class Settings extends AppCompatPreferenceActivity {
                     if ((boolean) newValue) {
                         //BluetoothDevice.createRfcommSocketToServiceRecord();
                         if (activeDevice != null) {
-                            Log.d(Settingsmsg, "run thread");
-                            if (connectThread != null) {
-                                if (!connectThread.hasSocket()) {
+                            if (BLEDSG) {
+                                BleAdapterService.b.connect(activeDevice);
+                            } else if (ble) {
+                                handler.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Log.d(Settingsmsg, "Connect Device");
+                                        gatt = activeDevice.connectGatt(getActivity().getApplicationContext(), true, gattCallback);
+                                        //connectDevice(activeDevice);// BLE
+                                    }
+                                }, 100);
+                                //connectDevice(activeDevice);// BLE
+                                //BluetoothGatt bluetoothGatt = activeDevice.connectGatt(getActivity().getApplicationContext(), false, gattCallback);
+                                //boolean outcome = connectThread.getDevice().createBond();
+                                //Log.d(Settingsmsg, "Bounding outcome : " + outcome);
+                            } else if (RxBle) {
+                                connectBluetooth();
+                            } else {
+                                Log.d(Settingsmsg, "run thread");
+                                if (connectThread != null) {
+                                    if (!connectThread.hasSocket()) {
+                                        connectBluetooth();
+                                    }
+                                } else {
                                     connectBluetooth();
                                 }
-                            } else {
-                                connectBluetooth();
+                                connectThread.run();
                             }
-                            connectThread.run();
                         } else {
                             Toast.makeText(getActivity().getApplicationContext(),
                                     "No device selected", Toast.LENGTH_LONG).show();
                         }
                     } else {
-                        Log.d(Settingsmsg, "cancel Thread");
-                        connectThread.cancel();
+                        if (BLEDSG) {
+                            BleAdapterService.b.disconnect();
+                        } else if (ble) {
+                            Log.d(Settingsmsg, "Disconnect Gatt Server");
+                            disconnectGattServer(); // BLE
+                        } else if (RxBle) {
+                            disposable.dispose();
+                            infoRxbleOn = false;
+                            //bluetoothConnect.setChecked(false);
+                            return true;
+                        } else {
+                            Log.d(Settingsmsg, "cancel Thread");
+                            connectThread.cancel();
+                        }
                     }
                     return false;
                 }
             });
+
+            /*bluetoothRead.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    if ((boolean) newValue) {
+                        read();
+                        Log.d(Settingsmsg, "Read");
+                    }
+                    return false;
+                }
+            });*/
+
+            // Hör till scanLeDevice
+            mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+                @Override
+                public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+                    String deviceName = device.getName();
+                    String deviceHardwareAddress = device.getAddress(); // MAC address
+                    Log.d(Settingsmsg,"Found: " + deviceName + deviceHardwareAddress);
+                    //enableBluetoothList(); TODO fixa så att listan uppdateras
+                    Toast.makeText(getActivity().getApplicationContext(), "Found: " + deviceName + " " + deviceHardwareAddress, Toast.LENGTH_SHORT).show();
+                }
+            };
         }
+
         // ########## ########## Program ########## ##########
 
-        /**
-         * Converts a 16 bit UUID to 128 bit
-         * @param i
-         * @return
-         */
         public static UUID convertFromInteger(int i) {
             final long MSB = 0x0000000000001000L;
             final long LSB = 0x800000805f9b34fbL;
@@ -325,12 +604,235 @@ public class Settings extends AppCompatPreferenceActivity {
             return new UUID(MSB | (value << 32), LSB);
         }
 
-        /**
-         * Method to run a thread in a static context. Can also be done with useing s.runOnUiThread
-         * @param runnable
-         */
         public static void runOnUI(Runnable runnable) {
             uiHandler.post(runnable);
+        }
+
+        // BLEDSG
+        void leScanDevice() {
+            if (!ble_scanner.isScanning()) {
+                startScanning();
+            } else {
+                ble_scanner.stopScanning();
+            }
+        }
+
+        private void startScanning() {
+            if (permissions_granted) {
+                s.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //ble_device_list_adapter.clear();
+                        ble_device_list_adapter.notifyDataSetChanged();
+                    }
+                });
+                //simpleToast(Constants.SCANNING, 2000);
+                ble_scanner.startScanning(this, SCAN_TIMEOUT);
+            } else {
+                Log.i(Constants.TAG, "Permission to perform Bluetooth scanning was not yet granted");
+            }
+        }
+
+        @Override
+        public void candidateBleDevice(final BluetoothDevice device, byte[] scan_record, int rssi) {
+            s.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    //ble_device_list_adapter.addDevice(device);
+                    ble_device_list_adapter.notifyDataSetChanged();
+                    device_count++;
+                    Log.d(Settingsmsg,"Found device: " + device);
+                }
+            });
+        }
+
+        @Override
+        public void scanningStarted() {
+            setScanState(true);
+        }
+
+        @Override
+        public void scanningStopped() {
+            if (toast != null) {
+                toast.cancel();
+            }
+            setScanState(false);
+        }
+
+        private void setScanState(boolean value) {
+            ble_scanning = value;
+            //((Button) this.findViewById(R.id.scanButton)).setText(value ? Constants.STOP_SCANNING : Constants.FIND);
+        }
+
+        private BleAdapterService bluetooth_le_adapter;
+        private final ServiceConnection service_connection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName componentName, IBinder service) {
+                bluetooth_le_adapter = ((BleAdapterService.LocalBinder) service).getService();
+                bluetooth_le_adapter.setActivityHandler(message_handler);
+            }
+            @Override
+            public void onServiceDisconnected(ComponentName componentName) {
+                bluetooth_le_adapter = null;
+            }
+        };
+
+        @SuppressLint("HandlerLeak")
+        private Handler message_handler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                Bundle bundle;
+                String service_uuid = "";
+                String characteristic_uuid = "";
+                byte[] b = null;
+                // message handling logic
+                switch (msg.what) {
+                    case BleAdapterService.MESSAGE:
+                        bundle = msg.getData();
+                        String text = bundle.getString(BleAdapterService.PARCEL_TEXT);
+                        showMsg(text);
+                        break;
+                    case BleAdapterService.GATT_CONNECTED:
+                        //((Button) PeripheralControlActivity.this
+                        //        .findViewById(R.id.connectButton)).setEnabled(false);
+                        // we're connected
+                        showMsg("CONNECTED");
+                        bluetooth_le_adapter.discoverServices();
+                        // TODO enable swichpreference
+                        break;
+                    case BleAdapterService.GATT_DISCONNECT:
+                        //((Button) PeripheralControlActivity.this
+                        //        .findViewById(R.id.connectButton)).setEnabled(true);
+                        // we're disconnected
+                        showMsg("DISCONNECTED");
+                        // TODO disable swichpreference
+                        //if (back_requested) {
+                        //    PeripheralControlActivity.this.finish();
+                        //}
+                        break;
+                    case BleAdapterService.GATT_SERVICES_DISCOVERED:
+                        // validate services and if ok....
+                        List<BluetoothGattService> slist = bluetooth_le_adapter.getSupportedGattServices();
+                        boolean heart_rate_present = false;
+                        boolean link_loss_present=false;
+                        boolean immediate_alert_present=false;
+                        boolean tx_power_present=false;
+                        boolean proximity_monitoring_present=false;
+                        boolean health_thermometer_present = false;
+                        for (BluetoothGattService svc : slist) {
+                            Log.d(Constants.TAG, "UUID=" + svc.getUuid().toString().toUpperCase() + " INSTANCE=" + svc.getInstanceId());
+                            if (svc.getUuid().equals(HEART_RATE_SERVICE_UUID)) {
+                                heart_rate_present = true;
+                                continue;
+                            } // + if ()
+                        }
+                        if (heart_rate_present) {
+                            showMsg("Device has expected services");
+                            // show the rssi distance colored rectangle
+                            bluetooth_le_adapter.readCharacteristic(
+                                    HEART_RATE_SERVICE_UUID.toString(), HEART_RATE_MEASUREMENT_CHAR_UUID.toString());
+                        } else {
+                            showMsg("Device does not have expected GATT services");
+                        }
+                        break;
+                    /*case BleAdapterService.GATT_CHARACTERISTIC_READ:
+                        bundle = msg.getData();
+                        Log.d(Constants.TAG, "Service=" + bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString().toUpperCase() + " Characteristic=" + bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID).toString().toUpperCase());
+                        if (bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID).toString()
+                                .toUpperCase().equals(BleAdapterService.ALERT_LEVEL_CHARACTERISTIC)
+                                && bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString()
+                                .toUpperCase().equals(BleAdapterService.LINK_LOSS_SERVICE_UUID)) {
+                            b = bundle.getByteArray(BleAdapterService.PARCEL_VALUE);
+                            if (b.length > 0) {
+                                PeripheralControlActivity.this.setAlertLevel((int) b[0]);
+                            }
+                        }
+                        break;
+                    case BleAdapterService.GATT_CHARACTERISTIC_WRITTEN:
+                        bundle = msg.getData();
+                        if (bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID).toString()
+                                .toUpperCase().equals(BleAdapterService.ALERT_LEVEL_CHARACTERISTIC)
+                                && bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString()
+                                .toUpperCase().equals(BleAdapterService.LINK_LOSS_SERVICE_UUID)) {
+                            b = bundle.getByteArray(BleAdapterService.PARCEL_VALUE);
+                        }
+                        break;*/
+                }
+            }
+        };
+
+        private void showMsg(final String msg) {
+            Log.d(Constants.TAG, msg);
+            s.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    //((TextView) s.findViewById(R.id.msgTextView)).setText(msg);
+                    Log.d(Settingsmsg,msg);
+                }
+            });
+        }
+
+        public void onBackPressed() {
+            Log.d(Constants.TAG, "onBackPressed");
+            //back_requested = true;
+            if (bluetooth_le_adapter.isConnected()) {
+                try {
+                    bluetooth_le_adapter.disconnect();
+                } catch (Exception e) {
+                }
+            } else {
+                s.finish();
+            }
+        }
+
+        // BLE
+
+        private class GattClientCallback extends BluetoothGattCallback {
+            @Override
+            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+                Log.d(Settingsmsg,"onConnectionStateChange newState: " + newState);
+                super.onConnectionStateChange(gatt, status, newState);
+                if (status == BluetoothGatt.GATT_FAILURE) {
+                    Log.d(Settingsmsg,"Connection Gatt failure status " + status);
+                    disconnectGattServer();
+                    return;
+                } else if (status != GATT_SUCCESS) {
+                    Log.d(Settingsmsg,"Connection not GATT sucess status " + status);
+                    disconnectGattServer();
+                    return;
+                }
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    Log.d(Settingsmsg,"Connected to device " + gatt.getDevice().getAddress());
+                    mConnected = true;
+                    gatt.discoverServices();
+                    gatt.beginReliableWrite();
+                    Log.d(Settingsmsg,"Services: " + gatt.getServices().toString());
+                    BluetoothGattCharacteristic characteristic = new BluetoothGattCharacteristic(uuid,1,1);
+                    characteristic.setValue("123");
+                    gatt.writeCharacteristic(characteristic);
+                    gatt.executeReliableWrite();
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    Log.d(Settingsmsg,"Disconnected from device");
+                    disconnectGattServer();
+                }
+            }
+        }
+
+        private void connectDevice(BluetoothDevice device) {
+            GattClientCallback gattClientCallback = new GattClientCallback();
+            mGatt = device.connectGatt(getActivity().getApplicationContext(), false, gattClientCallback);
+        }
+
+        public void disconnectGattServer() {
+            mConnected = false;
+            if (mGatt != null) {
+                mGatt.disconnect(); // redudant
+                mGatt.close();
+            }
+            if (gatt != null) {
+                gatt.disconnect();
+                gatt.close();
+            }
         }
 
         // Vanlig Bluetooth
@@ -347,8 +849,16 @@ public class Settings extends AppCompatPreferenceActivity {
             Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
             if (!(index==-1)) {
                 BluetoothDevice device = (BluetoothDevice)pairedDevices.toArray()[index];
-                    connectThread = new ConnectThread(device);
+                if (!ble&&!RxBle) {
+                    connectThread = new ConnectThreadOld(device);
                     Log.d(Settingsmsg, "Create Refcomm Socket: " + device.getName());
+                } else if (RxBle) {
+                    //if (device.getAddress().equals(raspberryPiMAC)) {
+                        //rxDevice = rxBleClient.getBleDevice(raspberryPiMAC);
+                        //connectionObservable = prepareConnectionObservable();
+                        //connectRaspberryPi();
+                        // TODO anslut automatiskt + ifsats som kollar om man redan är ansluten
+                }
                 uuid = device.getUuids()[0].getUuid();
                 //Log.d(Settingsmsg, "UUID: " + uuid);
                 //activeDevice = device;
@@ -409,6 +919,79 @@ public class Settings extends AppCompatPreferenceActivity {
                 bluetoothList.setEnabled(false);
             }
         }
+
+        /**
+         * Activity for scanning and displaying available BLE devices.
+         */
+
+        private void scanLeDevice(final boolean enable) {
+            final long SCAN_PERIOD = 10000; // Stops scanning after 10 seconds.
+            if (enable) {
+                bluetoothSearch.setChecked(true);
+                // Stops scanning after a pre-defined scan period.
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        mScanning = false;
+                        //HandlerThread handlerThread = new HandlerThread("BLE-Worker");
+                        //handlerThread.start();
+                        //bleHandler = new Handler(handlerThread.getLooper(), loopHandler); // oklart om det funkar
+                        if (bleScan) {
+                            bluetoothAdapter.stopLeScan(mLeScanCallback);
+                        } else if (bleScanner) {
+                            bluetoothLeScanner.startScan(mScanCallback);
+                        }
+                        //bluetoothLeScanner.stopScan(mLeScanCallback);
+                        bluetoothSearch.setChecked(false);
+                    }
+                }, SCAN_PERIOD);
+
+                mScanning = true;
+                //bluetoothLeScanner.startScan(mLeScanCallback);
+                //bluetoothAdapter.startLeScan(uuidRaspberryPi, mLeScanCallback);
+                if (bleScan) {
+                    bluetoothAdapter.startLeScan(mLeScanCallback);
+                } else if (bleScanner) {
+                    bluetoothLeScanner.stopScan(mScanCallback);
+                }
+                //bleHandler.removeCallbacksAndMessages(null);
+                //bleHandler.getLooper().quit();
+
+            } else {
+                mScanning = false;
+                //bluetoothLeScanner.stopScan(mLeScanCallback);
+                if (bleScan) {
+                    bluetoothAdapter.stopLeScan(mLeScanCallback);
+                } else if (bleScanner) {
+                    bluetoothLeScanner.stopScan(mScanCallback);
+                }
+                //bleHandler.removeCallbacksAndMessages(null);
+                //bleHandler.getLooper().quit();
+            }
+        }
+
+        /*// Hör till scanLeDevice
+        private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+            @Override
+            public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+                String deviceName = device.getName();
+                String deviceHardwareAddress = device.getAddress(); // MAC address
+                Log.d(Settingsmsg,"Found: " + deviceName + deviceHardwareAddress);
+                //enableBluetoothList(); TODO fixa så att listan uppdateras
+                Toast.makeText(getActivity().getApplicationContext(), "Found: " + deviceName + " " + deviceHardwareAddress, Toast.LENGTH_SHORT).show();
+            }
+        };*/
+
+
+
+        /*val leDeviceListAdapter: LeDeviceListAdapter = ...
+
+        private val leScanCallback = BluetoothAdapter.LeScanCallback { device, rssi, scanRecord ->
+                runOnUiThread {
+            leDeviceListAdapter.addDevice(device)
+            leDeviceListAdapter.notifyDataSetChanged()
+        }
+        }*/
 
         public static UUID getUUID() {
             //UUID uuid = device.getUuids()[0].getUuid();

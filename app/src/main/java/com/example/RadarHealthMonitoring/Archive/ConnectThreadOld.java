@@ -1,16 +1,18 @@
-package com.example.RadarHealthMonitoring;
+package com.example.RadarHealthMonitoring.Archive;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.os.Handler;
 import android.util.Log;
 
+import com.example.RadarHealthMonitoring.Settings;
+
 import java.io.IOException;
 import java.util.UUID;
 
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAdapter;
+import static com.example.RadarHealthMonitoring.Archive.SettingsArchiveWithBLE.BluetoothSettings.bluetoothAdapter;
 
-class ConnectThread extends Thread {
+class ConnectThreadOld extends Thread {
     private static final String TAG = "ConnectThread";
     private final BluetoothSocket mmSocket;
     private final BluetoothDevice mmDevice;
@@ -18,7 +20,7 @@ class ConnectThread extends Thread {
     private Handler handler = new Handler();
     private boolean hasSocket = false;
 
-    public ConnectThread(BluetoothDevice device) {
+    public ConnectThreadOld(BluetoothDevice device) {
         // Use a temporary object that is later assigned to mmSocket
         // because mmSocket is final.
         BluetoothSocket tmp = null;
@@ -70,7 +72,7 @@ class ConnectThread extends Thread {
         // The connection attempt succeeded. Perform work associated with
         // the connection in a separate thread.
         //manageMyConnectedSocket(mmSocket);
-        Settings.BluetoothSettings.bluetoothConnect.setChecked(true);
+        SettingsArchiveWithBLE.BluetoothSettings.bluetoothConnect.setChecked(true);
         Log.d(TAG,"The connection attempt succeeded.");
     }
 
@@ -80,7 +82,7 @@ class ConnectThread extends Thread {
             Log.d(TAG,"try mmSocket.close()");
             mmSocket.close();
             isRunning = false;
-            Settings.BluetoothSettings.bluetoothConnect.setChecked(false);
+            SettingsArchiveWithBLE.BluetoothSettings.bluetoothConnect.setChecked(false);
         } catch (IOException e) {
             Log.d(TAG, "Could not close the client socket", e);
             Log.d(TAG,"failed mmSocket.close()");
