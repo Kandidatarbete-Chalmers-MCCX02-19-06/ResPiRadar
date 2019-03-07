@@ -18,12 +18,18 @@ class ConnectThread extends Thread {
     private Handler handler = new Handler();
     private boolean hasSocket = false;
 
-    public ConnectThread(BluetoothDevice device) {
+    ConnectThread(BluetoothDevice device) {
         // Use a temporary object that is later assigned to mmSocket
         // because mmSocket is final.
         BluetoothSocket tmp = null;
         mmDevice = device;
-        UUID deviceUUID = device.getUuids()[0].getUuid();
+        UUID deviceUUID;
+        if (!(device.getUuids() == null)) {
+            deviceUUID = device.getUuids()[0].getUuid();
+        } else {
+            deviceUUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
+        }
+
         //UUID deviceUUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
         Log.d("ConnectionThread", "UUID: " + deviceUUID);
 
@@ -37,7 +43,7 @@ class ConnectThread extends Thread {
             Log.d(TAG,"failed device.createRfcommSocketToServiceRecord(deviceUUID)");
         }
         mmSocket = tmp;
-        hasSocket=true;
+        hasSocket = true;
     }
 
     public void run() {
@@ -71,6 +77,7 @@ class ConnectThread extends Thread {
         // the connection in a separate thread.
         //manageMyConnectedSocket(mmSocket);
         Settings.BluetoothSettings.bluetoothConnect.setChecked(true);
+        Settings.BluetoothSettings.bluetoothSearch.setEnabled(false);
         Log.d(TAG,"The connection attempt succeeded.");
     }
 
@@ -81,6 +88,8 @@ class ConnectThread extends Thread {
             mmSocket.close();
             isRunning = false;
             Settings.BluetoothSettings.bluetoothConnect.setChecked(false);
+            Settings.BluetoothSettings.bluetoothAutoConnect.setChecked(false);
+            Settings.BluetoothSettings.bluetoothSearch.setEnabled(true);
         } catch (IOException e) {
             Log.d(TAG, "Could not close the client socket", e);
             Log.d(TAG,"failed mmSocket.close()");

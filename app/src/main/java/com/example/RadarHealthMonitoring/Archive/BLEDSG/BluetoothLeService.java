@@ -11,7 +11,7 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.example.RadarHealthMonitoring.Settings;
+import com.example.RadarHealthMonitoring.Archive.SettingsArchiveWithBLE;
 
 import java.util.UUID;
 
@@ -40,7 +40,7 @@ public class BluetoothLeService extends Service {
     public final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
 
-    public final static UUID UUID_HEART_RATE_MEASUREMENT = Settings.BluetoothSettings.getUUID();
+    public final static UUID UUID_HEART_RATE_MEASUREMENT = SettingsArchiveWithBLE.BluetoothSettings.getUUID();
         //UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
 
     //device.getUuids()[0].getUuid();
