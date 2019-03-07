@@ -307,8 +307,12 @@ public class Settings extends AppCompatPreferenceActivity {
                                     "No device selected", Toast.LENGTH_LONG).show();
                         }
                     } else {
-                        Log.d(Settingsmsg, "cancel Thread");
-                        connectThread.cancel();
+                        if (connectThread != null) {
+                            Log.d(Settingsmsg, "cancel Thread");
+                            connectThread.cancel();
+                        } else {
+                            return true;
+                        }
                     }
                     return false;
                 }
@@ -326,8 +330,16 @@ public class Settings extends AppCompatPreferenceActivity {
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     if ((boolean) newValue) {
                         autoConnect();
+                        return true;
+                    } else {
+                        if (connectThread != null) {
+                            Log.d(Settingsmsg, "cancel Thread");
+                            connectThread.cancel();
+                        } else {
+                            return true;
+                        }
                     }
-                    return true;
+                    return false;
                 }
             });
         }
@@ -344,7 +356,7 @@ public class Settings extends AppCompatPreferenceActivity {
             }
         }
 
-        private static void autoConnect() { // Todo if bonded
+        private static void autoConnect() {
             autoConnect = true;
             Log.d(Settingsmsg, "activeDevice" + activeDevice);
             boolean isRaspberryPi = isRaspberryPi(activeDevice);
@@ -361,7 +373,7 @@ public class Settings extends AppCompatPreferenceActivity {
                     }
                 }
                 Log.d(Settingsmsg, "update device isRaspberryPi: " + isRaspberryPi);
-                if (!isRaspberryPi) {
+                if (!isRaspberryPi || (activeDevice.getBondState() != 12)) {
                     startDiscovery();
                 } else {
                     connectBluetooth(true);
@@ -397,7 +409,7 @@ public class Settings extends AppCompatPreferenceActivity {
             }
         }
 
-        public static void connectBluetooth(boolean connect) {
+        public static void connectBluetooth(boolean connect) { // TODO Callback Manager
             if (connect) {
                 if (!(activeDevice == null)) {
                     if (connectThread != null) {
@@ -466,8 +478,8 @@ public class Settings extends AppCompatPreferenceActivity {
 
         /**
          * Converts a 16 bit UUID to 128 bit
-         * @param i
-         * @return
+         * @param i 16 bit UUID integer
+         * @return UUID
          */
         public static UUID convertFromInteger(int i) {
             final long MSB = 0x0000000000001000L;
@@ -478,7 +490,7 @@ public class Settings extends AppCompatPreferenceActivity {
 
         /**
          * Method to run a thread in a static context. Can also be done with useing s.runOnUiThread
-         * @param runnable
+         * @param runnable Runnable
          */
         public static void runOnUI(Runnable runnable) {
             uiHandler.post(runnable);
@@ -531,7 +543,7 @@ public class Settings extends AppCompatPreferenceActivity {
                     Log.d(Settingsmsg, "Found: " + device.getName() + " " + device.getAddress());
                     if (isRaspberryPi(device)) { // Raspberry Pi detected
                         Toast.makeText(context, "Found " + device.getName(), Toast.LENGTH_SHORT).show();
-                        if (device.getBondState()!=12) { // Not bonded: 10, Bonding: 11, Bonded: 12
+                        if (device.getBondState()!= 12) { // Not bonded: 10, Bonding: 11, Bonded: 12
                             device.createBond();
                         } else {
                             Log.d(Settingsmsg, "search finnished, foudn RPI, bonded, autoconnect: " + autoConnect);
@@ -821,7 +833,7 @@ public class Settings extends AppCompatPreferenceActivity {
         return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
-    private void requestLocationPermission() {
+    private void requestLocationPermission() { // TODO Se till att vid automatisk anlutning loopa så den ansluts
         requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
         //log("Requested user enable Location. Try starting the scan again.");
     }
