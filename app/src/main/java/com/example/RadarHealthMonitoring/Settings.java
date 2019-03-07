@@ -7,7 +7,6 @@ import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -56,7 +55,7 @@ public class Settings extends AppCompatPreferenceActivity {
                 .replace(android.R.id.content, new SettingsFragment())
                 .commit();  // Skapar ett nytt fragment i en ny panel
 
-        IntentFilter BTIntentChange = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        /*IntentFilter BTIntentChange = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverState, BTIntentChange);
         IntentFilter BTIntentFound = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverAction, BTIntentFound);
@@ -67,7 +66,7 @@ public class Settings extends AppCompatPreferenceActivity {
         IntentFilter BTIntentScanChange = new IntentFilter(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
         registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverScan, BTIntentScanChange);
         IntentFilter BTIntentBondChange = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverBondChange, BTIntentBondChange);
+        registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverBondChange, BTIntentBondChange);*/
 
         /*IntentFilter BTIntentChange = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(BluetoothSettings.BluetoothBroadcastReciver, BTIntentChange);
@@ -95,12 +94,12 @@ public class Settings extends AppCompatPreferenceActivity {
         public void onDestroy() {
             Log.d(Settingsmsg, "onDestroy: called for Settings.");
             super.onDestroy();
-            unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverState); // viktigt att stänga av
+            /*unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverState); // viktigt att stänga av
             unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverAction);
             unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverSearch);
             unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverSearchFinished);
             unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverScan);
-            unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverBondChange);
+            unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverBondChange);*/
 
             //unregisterReceiver(BluetoothSettings.BluetoothBroadcastReciver);
         }
@@ -373,14 +372,19 @@ public class Settings extends AppCompatPreferenceActivity {
                     }
                 }
                 Log.d(Settingsmsg, "update device isRaspberryPi: " + isRaspberryPi);
-                if (!isRaspberryPi || (activeDevice.getBondState() != 12)) {
+                if (!isRaspberryPi) {
                     startDiscovery();
                 } else {
+                    Log.d(Settingsmsg, "bonded: " + activeDevice.getBondState());
                     connectBluetooth(true);
                 }
                 Log.d(Settingsmsg, "start discovery isRaspberryPi: " + isRaspberryPi);
             } else {
-                connectBluetooth(true);
+                if (activeDevice.getBondState() != 12) {
+                    startDiscovery();
+                } else {
+                    connectBluetooth(true);
+                }
             }
         }
 
@@ -540,7 +544,7 @@ public class Settings extends AppCompatPreferenceActivity {
                     // Discovery has found a device. Get the BluetoothDevice
                     // object and its info from the Intent.
                     BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                    Log.d(Settingsmsg, "Found: " + device.getName() + " " + device.getAddress());
+                    Log.d(Settingsmsg, "Found: " + device.getName() + " " + device.getAddress() + " " + device.getBondState());
                     if (isRaspberryPi(device)) { // Raspberry Pi detected
                         Toast.makeText(context, "Found " + device.getName(), Toast.LENGTH_SHORT).show();
                         if (device.getBondState()!= 12) { // Not bonded: 10, Bonding: 11, Bonded: 12
@@ -587,7 +591,7 @@ public class Settings extends AppCompatPreferenceActivity {
          * Broadcast Receiver for changes made to bluetooth states such as:
          * 1) Discoverability mode on/off or expire.
          */
-        private static BroadcastReceiver BluetoothBroadcastReceiverScan = new BroadcastReceiver() {
+        public static BroadcastReceiver BluetoothBroadcastReceiverScan = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 final String action = intent.getAction();
@@ -620,27 +624,28 @@ public class Settings extends AppCompatPreferenceActivity {
         /**
          * Broadcast Receiver that detects bond state changes (Pairing status changes)
          */
-        private static BroadcastReceiver BluetoothBroadcastReceiverBondChange = new BroadcastReceiver() {
+        public static BroadcastReceiver BluetoothBroadcastReceiverBondChange = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 final String action = intent.getAction();
                 if(action.equals(BluetoothDevice.ACTION_BOND_STATE_CHANGED)){
                     BluetoothDevice mDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                    //3 cases:
-                    //case1: bonded already
                     if (mDevice.getBondState() == BluetoothDevice.BOND_BONDED){
                         Log.d(Settingsmsg, "BroadcastReceiver: BOND_BONDED.");
                         updateBluetoothList();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                Log.d(Settingsmsg, "search finnished, foudn RPI, bonded, autoconnect: " + autoConnect);
+                                connectBluetooth(autoConnect);
+                            }
+                        }, 1); // delay needed
                         if (isRaspberryPi(activeDevice)) {
-                            Log.d(Settingsmsg, "search finnished, foudn RPI, bonded, autoconnect: " + autoConnect);
-                            connectBluetooth(autoConnect);
                         }
                     }
-                    //case2: creating a bone
                     if (mDevice.getBondState() == BluetoothDevice.BOND_BONDING) {
                         Log.d(Settingsmsg, "BroadcastReceiver: BOND_BONDING.");
                     }
-                    //case3: breaking a bond
                     if (mDevice.getBondState() == BluetoothDevice.BOND_NONE) {
                         Log.d(Settingsmsg, "BroadcastReceiver: BOND_NONE.");
                         updateBluetoothList();

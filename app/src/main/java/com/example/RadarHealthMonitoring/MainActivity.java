@@ -24,6 +24,8 @@ public class MainActivity extends AppCompatActivity {
     private Graph graphBreathe;
     private static final String msg = "MyActivity";
 
+    Intent intentBluetooth;
+
     /**
      * Skapar huvudfönstret
      */
@@ -36,6 +38,9 @@ public class MainActivity extends AppCompatActivity {
         graphPulse = new Graph(findViewById(R.id.graphPulse),getApplicationContext());
         graphBreathe = new Graph(findViewById(R.id.graphBreathe),getApplicationContext());
         /* Bluetooth */
+        intentBluetooth = new Intent(this, Bluetooth.class);
+        startService(intentBluetooth);
+        //Bluetooth Bluetooth = new Bluetooth();
 
         //Toast.makeText(this, "Connecting...", Toast.LENGTH_SHORT).show();
 
@@ -60,6 +65,12 @@ public class MainActivity extends AppCompatActivity {
             Log.d(msg, "got to WANTED");
         }
     };*/
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopService(intentBluetooth);
+    }
 
     /**
      * Skapar menyn i huvudfönstret

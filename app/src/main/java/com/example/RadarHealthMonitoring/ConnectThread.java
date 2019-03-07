@@ -50,35 +50,41 @@ class ConnectThread extends Thread {
         // Cancel discovery because it otherwise slows down the connection.
         bluetoothAdapter.cancelDiscovery();
 
-        try {
-            // Connect to the remote device through the socket. This call blocks
-            // until it succeeds or throws an exception.
-            mmSocket.connect();
-            //mmDevice.createBond();
-            isRunning = true;
-            Log.d(TAG,"try mmSocket.connect()");
-        } catch (IOException connectException) {
-            // Unable to connect; close the socket and return.
-            isRunning = false;
-            Log.d(TAG,"failed mmSocket.connect()" + connectException + " Is connected: ");
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // Connect to the remote device through the socket. This call blocks
+                    // until it succeeds or throws an exception.
+                    mmSocket.connect();
+                    //mmDevice.createBond();
+                    isRunning = true;
+                    Log.d(TAG,"try mmSocket.connect()");
+                } catch (IOException connectException) {
+                    // Unable to connect; close the socket and return.
+                    isRunning = false;
+                    Log.d(TAG,"failed mmSocket.connect()" + connectException + " Is connected: ");
 
-            try {
-                mmSocket.close();
-                Log.d(TAG,"try mmSocket.close();");
-            } catch (IOException closeException) {
-                Log.e(TAG, "Could not close the client socket", closeException);
-                Log.d(TAG,"failed mmSocket.close();");
+                    try {
+                        mmSocket.close();
+                        Log.d(TAG,"try mmSocket.close();");
+                    } catch (IOException closeException) {
+                        Log.e(TAG, "Could not close the client socket", closeException);
+                        Log.d(TAG,"failed mmSocket.close();");
+                    }
+                    hasSocket=false;
+                    return;
+                }
+
+                // The connection attempt succeeded. Perform work associated with
+                // the connection in a separate thread.
+                //manageMyConnectedSocket(mmSocket);
+                Settings.BluetoothSettings.bluetoothConnect.setChecked(true);
+                Settings.BluetoothSettings.bluetoothAutoConnect.setChecked(true);
+                Settings.BluetoothSettings.bluetoothSearch.setEnabled(false);
+                Log.d(TAG,"The connection attempt succeeded.");
             }
-            hasSocket=false;
-            return;
-        }
-
-        // The connection attempt succeeded. Perform work associated with
-        // the connection in a separate thread.
-        //manageMyConnectedSocket(mmSocket);
-        Settings.BluetoothSettings.bluetoothConnect.setChecked(true);
-        Settings.BluetoothSettings.bluetoothSearch.setEnabled(false);
-        Log.d(TAG,"The connection attempt succeeded.");
+        }, 1); // delay maybe needed
     }
 
     // Closes the client socket and causes the thread to finish.
