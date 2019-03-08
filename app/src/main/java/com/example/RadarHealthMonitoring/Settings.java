@@ -1,13 +1,7 @@
 package com.example.RadarHealthMonitoring;
 
-import android.Manifest;
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,8 +17,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import java.util.Set;
-import java.util.UUID;
+import static com.example.RadarHealthMonitoring.Bluetooth.b;
 
 /**
  * Settings är en aktivitet som skapar en panel med inställningar. Innehåller genvägar till flera
@@ -41,67 +34,24 @@ public class Settings extends AppCompatPreferenceActivity {
     public static final String key_pref_connection_list = "connection_list";
     public static final String key_pref_usb_port = "usb_port";
 
-    private static final int REQUEST_FINE_LOCATION = 2;
+    //private static final int REQUEST_FINE_LOCATION = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        s = Settings.this;
-
         super.onCreate(savedInstanceState);
         Log.d(Settingsmsg, "onCreate for Settings");
+        s = Settings.this;
         setupActionBar();
         getFragmentManager()
                 .beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
                 .commit();  // Skapar ett nytt fragment i en ny panel
-
-        /*IntentFilter BTIntentChange = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverState, BTIntentChange);
-        IntentFilter BTIntentFound = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverAction, BTIntentFound);
-        IntentFilter BTIntentSearch = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-        registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverSearch, BTIntentSearch);
-        IntentFilter BTIntentSearchFinished = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-        registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverSearchFinished, BTIntentSearchFinished);
-        IntentFilter BTIntentScanChange = new IntentFilter(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
-        registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverScan, BTIntentScanChange);
-        IntentFilter BTIntentBondChange = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        registerReceiver(BluetoothSettings.BluetoothBroadcastReceiverBondChange, BTIntentBondChange);*/
-
-        /*IntentFilter BTIntentChange = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        registerReceiver(BluetoothSettings.BluetoothBroadcastReciver, BTIntentChange);
-        IntentFilter BTIntentFound = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(BluetoothSettings.BluetoothBroadcastReciver, BTIntentFound);
-        IntentFilter BTIntentSearch = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-        registerReceiver(BluetoothSettings.BluetoothBroadcastReciver, BTIntentSearch);
-        IntentFilter BTIntentSearchFinished = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-        registerReceiver(BluetoothSettings.BluetoothBroadcastReciver, BTIntentSearchFinished);
-        IntentFilter BTIntentScanChange = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-        registerReceiver(BluetoothSettings.BluetoothBroadcastReciver, BTIntentScanChange);
-        IntentFilter BTIntentBondChange = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        registerReceiver(BluetoothSettings.BluetoothBroadcastReciver, BTIntentBondChange);*/
-
-        //IntentFilter BluetoothIntent = new IntentFilter();
-        //registerReceiver(BluetoothSettings.BluetoothBroadcastReciver,BluetoothIntent);
-
-        // BLE, fungerar inte
-        /*final BluetoothManager bluetoothManager =
-                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        bluetoothAdapter = bluetoothManager.getAdapter();*/
     }
 
     @Override
         public void onDestroy() {
             Log.d(Settingsmsg, "onDestroy: called for Settings.");
             super.onDestroy();
-            /*unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverState); // viktigt att stänga av
-            unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverAction);
-            unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverSearch);
-            unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverSearchFinished);
-            unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverScan);
-            unregisterReceiver(BluetoothSettings.BluetoothBroadcastReceiverBondChange);*/
-
-            //unregisterReceiver(BluetoothSettings.BluetoothBroadcastReciver);
         }
 
     /**
@@ -177,8 +127,6 @@ public class Settings extends AppCompatPreferenceActivity {
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class BluetoothSettings extends PreferenceFragment {
 
-        private static boolean autoConnect = false;
-
         static BluetoothAdapter bluetoothAdapter;
         static SwitchPreference bluetoothOn;
         static SwitchPreference bluetoothAutoConnect;
@@ -187,14 +135,16 @@ public class Settings extends AppCompatPreferenceActivity {
         static SwitchPreference bluetoothConnect;
         static SwitchPreference bluetoothRead;
         static EditTextPreference bluetoothRaspberryPiName;
-        static ConnectThread connectThread;
-        private static Handler handler = new Handler();
 
-        private static BluetoothDevice activeDevice;
-        private static Set<BluetoothDevice> pairedDevices;
-        private static int chosenDeviceIndex;
-        private static String raspberryPiName = "raspberrypi";
-        private static final String raspberryPiMAC = "B8:27:EB:FC:22:65";
+        /*static ConnectThread connectThread;
+        static Handler handler = new Handler();
+
+        static BluetoothDevice activeDevice;
+        static Set<BluetoothDevice> pairedDevices;
+        static int chosenDeviceIndex;
+        static String raspberryPiName = "raspberrypi";
+        static final String raspberryPiMAC = "B8:27:EB:FC:22:65";
+        static boolean autoConnect = false;*/
 
         private static final String key_pref_bluetooth_switch = "bluetooth_switch";
         private static final String key_pref_bluetooth_auto_connect = "bluetooth_auto_connect";
@@ -205,6 +155,8 @@ public class Settings extends AppCompatPreferenceActivity {
         private static final String key_pref_raspberry_pi_name = "bluetooth_raspberrypi_name";
 
         private static Handler uiHandler = new Handler(Looper.getMainLooper());
+
+        static BluetoothSettings bs; // for static service
 
         @Override
         public void onDestroy() {
@@ -218,6 +170,7 @@ public class Settings extends AppCompatPreferenceActivity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             Log.d(Settingsmsg, "BluetoothSettings onCreate");
+            bs = BluetoothSettings.this;
             addPreferencesFromResource(R.xml.pref_bluetooth);
             setHasOptionsMenu(true);
             getActivity().setTitle("Bluetooth Settings");  // Change title
@@ -230,15 +183,15 @@ public class Settings extends AppCompatPreferenceActivity {
             bluetoothRead = (SwitchPreference) findPreference(key_pref_bluetooth_read);
             bluetoothList = (ListPreference) findPreference(key_pref_bluetooth_list);
             bluetoothRaspberryPiName = (EditTextPreference) findPreference(key_pref_raspberry_pi_name);
-            // On create
+            // On return to bluetooth settings
             if (bluetoothAdapter.isEnabled()) { // Check if Bluetooth already is on
                 bluetoothOn.setChecked(true);
                 bluetoothOn.setTitle("Bluetooth On");
-                updateBluetoothList();
+                b.updateBluetoothList();
                 bluetoothConnect.setEnabled(true);
                 bluetoothSearch.setEnabled(true);
                 if (bluetoothAdapter.getBondedDevices().size() > 0) {
-                    setActiveDevice();
+                    b.setActiveDevice();
                 }
             } else {
                 bluetoothOn.setChecked(false);
@@ -247,45 +200,48 @@ public class Settings extends AppCompatPreferenceActivity {
                 bluetoothConnect.setEnabled(false);
                 bluetoothSearch.setEnabled(false);
             }
+
+            // ########## Preference Listeners ##########
             // Ändring av enhet i Bluetoothlistan Listener
             bluetoothList.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     String stringValue = newValue.toString();
                     final ListPreference listPreference = (ListPreference) preference;
-                    chosenDeviceIndex = listPreference.findIndexOfValue(stringValue);
-                    listPreference.setSummary(listPreference.getEntries()[chosenDeviceIndex]); // ändrar summary till värdet
-                    handler.postDelayed(new Runnable() {
+                    b.chosenDeviceIndex = listPreference.findIndexOfValue(stringValue);
+                    listPreference.setSummary(listPreference.getEntries()[b.chosenDeviceIndex]); // ändrar summary till värdet
+                    b.handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            if (!(connectThread == null)) {
-                                if (connectThread.isRunning()) {
-                                    connectThread.cancel();
+                            if (!(b.connectThread == null)) {
+                                if (b.connectThread.isRunning()) {
+                                    b.connectThread.cancel();
                                     Toast.makeText(getActivity().getApplicationContext(),
                                             "Connection canceled", Toast.LENGTH_LONG).show();
                                 }
                             }
-                            setActiveDevice();
-                            //connectBluetooth();
+                            b.setActiveDevice();
                         }
                     }, 1); // delay needed, otherwise it won't change
                     return true;
                 }
             });
+
             // Starta Bluetooth Swithc Listener
             bluetoothOn.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    return startBluetooth();
+                    return b.startBluetooth();
                 }
             });
+
             // Leta efter bluetoothenheter Switch Listener
             bluetoothSearch.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     if ((boolean) newValue) {
-                        autoConnect = false;
-                        startDiscovery();
+                        b.autoConnect = false;
+                        b.startDiscovery();
                     } else {
                         bluetoothAdapter.cancelDiscovery();
                         Log.d(Settingsmsg, "Disable search");
@@ -294,21 +250,22 @@ public class Settings extends AppCompatPreferenceActivity {
                     return false;
                 }
             });
+
             // Anslut till enheten Switch Listener
             bluetoothConnect.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     if ((boolean) newValue) {
-                        if (activeDevice != null) {
-                            connectBluetooth(true);
+                        if (b.activeDevice != null) {
+                            b.connectBluetooth(true);
                         } else {
                             Toast.makeText(getActivity().getApplicationContext(),
                                     "No device selected", Toast.LENGTH_LONG).show();
                         }
                     } else {
-                        if (connectThread != null) {
+                        if (b.connectThread != null) {
                             Log.d(Settingsmsg, "cancel Thread");
-                            connectThread.cancel();
+                            b.connectThread.cancel();
                         } else {
                             return true;
                         }
@@ -316,24 +273,28 @@ public class Settings extends AppCompatPreferenceActivity {
                     return false;
                 }
             });
+
+            // Change Raspberry Pi bluetooth name or MAC address text preference
             bluetoothRaspberryPiName.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    raspberryPiName = (String) newValue;
+                    b.raspberryPiName = (String) newValue;
                     preference.setSummary((String)newValue);
                     return true;
                 }
             });
+
+            // Auto connect switch listener
             bluetoothAutoConnect.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     if ((boolean) newValue) {
-                        autoConnect();
+                        b.autoConnect();
                         return true;
                     } else {
-                        if (connectThread != null) {
+                        if (b.connectThread != null) {
                             Log.d(Settingsmsg, "cancel Thread");
-                            connectThread.cancel();
+                            b.connectThread.cancel();
                         } else {
                             return true;
                         }
@@ -342,317 +303,6 @@ public class Settings extends AppCompatPreferenceActivity {
                 }
             });
         }
-
-
-        // ########## ########## Program ########## ##########
-
-        private static void startDiscovery() {
-            if (s.hasLocationPermissions()) {
-                bluetoothAdapter.startDiscovery();
-                Log.d(Settingsmsg, "Enable search");
-            } else {
-                s.requestLocationPermission();
-            }
-        }
-
-        private static void autoConnect() {
-            autoConnect = true;
-            Log.d(Settingsmsg, "activeDevice" + activeDevice);
-            boolean isRaspberryPi = isRaspberryPi(activeDevice);
-            Log.d(Settingsmsg, "start isRaspberryPi: " + isRaspberryPi);
-            if (!isRaspberryPi) {
-                updatePairedDevices();
-                for (BluetoothDevice device : pairedDevices) {
-                    if (isRaspberryPi(device)) {
-                        activeDevice = device;
-                        isRaspberryPi = true;
-                        bluetoothList.setValue(raspberryPiMAC);
-                        bluetoothList.setSummary(bluetoothList.getEntry());
-                        break;
-                    }
-                }
-                Log.d(Settingsmsg, "update device isRaspberryPi: " + isRaspberryPi);
-                if (!isRaspberryPi) {
-                    startDiscovery();
-                } else {
-                    Log.d(Settingsmsg, "bonded: " + activeDevice.getBondState());
-                    connectBluetooth(true);
-                }
-                Log.d(Settingsmsg, "start discovery isRaspberryPi: " + isRaspberryPi);
-            } else {
-                if (activeDevice.getBondState() != 12) {
-                    startDiscovery();
-                } else {
-                    connectBluetooth(true);
-                }
-            }
-        }
-
-        private static void updatePairedDevices() {
-            pairedDevices = bluetoothAdapter.getBondedDevices();
-        }
-
-        private static void setActiveDevice() {
-            if (!(chosenDeviceIndex==-1)) {
-                activeDevice = (BluetoothDevice)pairedDevices.toArray()[chosenDeviceIndex];
-                bluetoothList.setValue(raspberryPiMAC);
-                bluetoothList.setSummary(bluetoothList.getEntry());
-            }
-        }
-
-        private static boolean isRaspberryPi(BluetoothDevice device) {
-            if (device != null) {
-                if (device.getName() == null) {
-                    return device.getAddress().equals(raspberryPiMAC);
-                } else {
-                    return (device.getName().equals(raspberryPiName) ||
-                            device.getAddress().equals(raspberryPiName) || device.getAddress().equals(raspberryPiMAC));
-                }
-            } else {
-                return false;
-            }
-        }
-
-        public static void connectBluetooth(boolean connect) { // TODO Callback Manager
-            if (connect) {
-                if (!(activeDevice == null)) {
-                    if (connectThread != null) {
-                        if (!connectThread.hasSocket()) { // do nothing if already has socket
-                            connectThread = new ConnectThread(activeDevice);
-                            Log.d(Settingsmsg, "Create Refcomm Socket: " + activeDevice.getName());
-                        }
-                    } else {
-                        connectThread = new ConnectThread(activeDevice);
-                        Log.d(Settingsmsg, "Create Refcomm Socket: " + activeDevice.getName());
-                    }
-                    connectThread.run();
-                    Log.d(Settingsmsg, "Run thread");
-                }
-            }
-        }
-
-        /**
-         * Starts or disables Bluetooth
-         */
-        public boolean startBluetooth() {
-            if (bluetoothAdapter == null) { // Device doesn't support Bluetooth
-                Toast.makeText(getActivity().getApplicationContext(),
-                        "Bluetooth Not Supported", Toast.LENGTH_LONG).show();
-                return false;
-            } else {
-                if (!bluetoothAdapter.isEnabled()) { // Enable Bluetooth
-                    bluetoothAdapter.enable();
-                } else { // Disable Bluetooth
-                    if (connectThread != null) {
-                        if (connectThread.isRunning()) {
-                            connectThread.cancel();
-                        }
-                    }
-                    bluetoothAdapter.disable();
-                }
-                return false;
-            }
-        }
-
-        /**
-         * Fixar listan med Bluetoothenheter
-         */
-        private static void updateBluetoothList() {
-            updatePairedDevices();
-            if (pairedDevices.size() > 0) {
-                CharSequence[] deviceName = new CharSequence[pairedDevices.size()];
-                CharSequence[] deviceHardwareAddress = new CharSequence[pairedDevices.size()];
-                int i = 0;
-                for (BluetoothDevice device : pairedDevices) {
-                    deviceName[i] = device.getName();
-                    deviceHardwareAddress[i] = device.getAddress(); // MAC address
-                    i++;
-                }
-                bluetoothList.setEntries(deviceName);
-                bluetoothList.setEntryValues(deviceHardwareAddress);
-                bluetoothList.setSummary(bluetoothList.getEntry());
-                if (!bluetoothList.isEnabled()) {
-                    bluetoothList.setEnabled(true);
-                }
-            } else {
-                bluetoothList.setSummary("No device avalible");
-                bluetoothList.setEnabled(false);
-            }
-        }
-
-        /**
-         * Converts a 16 bit UUID to 128 bit
-         * @param i 16 bit UUID integer
-         * @return UUID
-         */
-        public static UUID convertFromInteger(int i) {
-            final long MSB = 0x0000000000001000L;
-            final long LSB = 0x800000805f9b34fbL;
-            long value = i & 0xFFFFFFFF;
-            return new UUID(MSB | (value << 32), LSB);
-        }
-
-        /**
-         * Method to run a thread in a static context. Can also be done with useing s.runOnUiThread
-         * @param runnable Runnable
-         */
-        public static void runOnUI(Runnable runnable) {
-            uiHandler.post(runnable);
-        }
-
-        // ########## ########## BroadcastReceivers ########## ##########
-
-        // ########## ACTION_STATE_CHANGED ##########
-        /**
-         * Create a BroadcastReceiver for ACTION_STATE_CHANGED.
-         */
-        public static BroadcastReceiver BluetoothBroadcastReceiverState = new BroadcastReceiver() {
-            public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
-                if (action.equals(bluetoothAdapter.ACTION_STATE_CHANGED)) {
-                    final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, bluetoothAdapter.ERROR);
-                    switch(state){
-                        case BluetoothAdapter.STATE_OFF:
-                            break;
-                        case BluetoothAdapter.STATE_TURNING_OFF:
-                            bluetoothOn.setChecked(false);
-                            bluetoothOn.setTitle("Bluetooth Off");
-                            bluetoothList.setEnabled(false);
-                            bluetoothSearch.setEnabled(false);
-                            bluetoothConnect.setEnabled(false);
-                            break;
-                        case BluetoothAdapter.STATE_ON:
-                            updateBluetoothList();
-                            bluetoothSearch.setEnabled(true);
-                            bluetoothConnect.setEnabled(true);
-                            autoConnect();
-                            break;
-                        case BluetoothAdapter.STATE_TURNING_ON:
-                            bluetoothOn.setChecked(true);
-                            bluetoothOn.setTitle("Bluetooth On");
-                            break;
-                    }
-                }
-            }
-        };
-
-        // ########## ACTION_FOUND ##########
-        public static BroadcastReceiver BluetoothBroadcastReceiverAction = new BroadcastReceiver() {
-            public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
-                if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                    // Discovery has found a device. Get the BluetoothDevice
-                    // object and its info from the Intent.
-                    BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                    Log.d(Settingsmsg, "Found: " + device.getName() + " " + device.getAddress() + " " + device.getBondState());
-                    if (isRaspberryPi(device)) { // Raspberry Pi detected
-                        Toast.makeText(context, "Found " + device.getName(), Toast.LENGTH_SHORT).show();
-                        if (device.getBondState()!= 12) { // Not bonded: 10, Bonding: 11, Bonded: 12
-                            device.createBond();
-                        } else {
-                            Log.d(Settingsmsg, "search finnished, foudn RPI, bonded, autoconnect: " + autoConnect);
-                            connectBluetooth(autoConnect);
-                        }
-                        activeDevice = device;
-                        bluetoothList.setValue(raspberryPiMAC);
-                        bluetoothList.setSummary(bluetoothList.getEntry());
-                        bluetoothAdapter.cancelDiscovery();
-                    }
-                }
-            }
-        };
-
-        // ########## ACTION_DISCOVERY ##########
-        public static BroadcastReceiver BluetoothBroadcastReceiverSearch = new BroadcastReceiver() {
-            public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
-                if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
-                    Log.d(Settingsmsg, "Search Started");
-                    bluetoothSearch.setChecked(true);
-                }
-            }
-        };
-
-        public static BroadcastReceiver BluetoothBroadcastReceiverSearchFinished = new BroadcastReceiver() {
-            public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
-                if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                    Log.d(Settingsmsg,"Finished");
-                    bluetoothSearch.setChecked(false);
-                    if (!isRaspberryPi(activeDevice)) {
-                        Toast.makeText(context, "Did not find Raspberry Pi", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-        };
-
-        // ########## ACTION_SCAN_MODE_CHANGED ##########
-        /**
-         * Broadcast Receiver for changes made to bluetooth states such as:
-         * 1) Discoverability mode on/off or expire.
-         */
-        public static BroadcastReceiver BluetoothBroadcastReceiverScan = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                final String action = intent.getAction();
-                if (action.equals(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED)) {
-                    int mode = intent.getIntExtra(BluetoothAdapter.EXTRA_SCAN_MODE, BluetoothAdapter.ERROR);
-                    switch (mode) {
-                        //Device is in Discoverable Mode
-                        case BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE:
-                            Log.d(Settingsmsg, "mBroadcastReceiver2: Discoverability Enabled.");
-                            break;
-                        //Device not in discoverable mode
-                        case BluetoothAdapter.SCAN_MODE_CONNECTABLE:
-                            Log.d(Settingsmsg, "mBroadcastReceiver2: Discoverability Disabled. Able to receive connections.");
-                            break;
-                        case BluetoothAdapter.SCAN_MODE_NONE:
-                            Log.d(Settingsmsg, "mBroadcastReceiver2: Discoverability Disabled. Not able to receive connections.");
-                            break;
-                        case BluetoothAdapter.STATE_CONNECTING:
-                            Log.d(Settingsmsg, "mBroadcastReceiver2: Connecting....");
-                            break;
-                        case BluetoothAdapter.STATE_CONNECTED:
-                            Log.d(Settingsmsg, "mBroadcastReceiver2: Connected.");
-                            break;
-                    }
-                }
-            }
-        };
-
-        // ########## ACTION_BOND_STATE_CHANGED ##########
-        /**
-         * Broadcast Receiver that detects bond state changes (Pairing status changes)
-         */
-        public static BroadcastReceiver BluetoothBroadcastReceiverBondChange = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                final String action = intent.getAction();
-                if(action.equals(BluetoothDevice.ACTION_BOND_STATE_CHANGED)){
-                    BluetoothDevice mDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                    if (mDevice.getBondState() == BluetoothDevice.BOND_BONDED){
-                        Log.d(Settingsmsg, "BroadcastReceiver: BOND_BONDED.");
-                        updateBluetoothList();
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                Log.d(Settingsmsg, "search finnished, foudn RPI, bonded, autoconnect: " + autoConnect);
-                                connectBluetooth(autoConnect);
-                            }
-                        }, 1); // delay needed
-                        if (isRaspberryPi(activeDevice)) {
-                        }
-                    }
-                    if (mDevice.getBondState() == BluetoothDevice.BOND_BONDING) {
-                        Log.d(Settingsmsg, "BroadcastReceiver: BOND_BONDING.");
-                    }
-                    if (mDevice.getBondState() == BluetoothDevice.BOND_NONE) {
-                        Log.d(Settingsmsg, "BroadcastReceiver: BOND_NONE.");
-                        updateBluetoothList();
-                    }
-                }
-            }
-        };
     } // end of BluetoothSettings
 
     // ########## ########## ########## Wifi ########## ########## ##########
@@ -834,12 +484,12 @@ public class Settings extends AppCompatPreferenceActivity {
                         .getString(preference.getKey(), ""));
     }
 
-    private boolean hasLocationPermissions() {
+    /*boolean hasLocationPermissions() {
         return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
-    private void requestLocationPermission() { // TODO Se till att vid automatisk anlutning loopa så den ansluts
+    void requestLocationPermission() { // TODO Se till att vid automatisk anlutning loopa så den ansluts
         requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
         //log("Requested user enable Location. Try starting the scan again.");
-    }
+    }*/
 } // end of Settings.class

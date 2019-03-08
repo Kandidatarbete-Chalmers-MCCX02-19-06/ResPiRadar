@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.util.UUID;
 
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAdapter;
+import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAutoConnect;
+import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothConnect;
+import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothSearch;
 
 class ConnectThread extends Thread {
     private static final String TAG = "ConnectThread";
@@ -79,9 +82,9 @@ class ConnectThread extends Thread {
                 // The connection attempt succeeded. Perform work associated with
                 // the connection in a separate thread.
                 //manageMyConnectedSocket(mmSocket);
-                Settings.BluetoothSettings.bluetoothConnect.setChecked(true);
-                Settings.BluetoothSettings.bluetoothAutoConnect.setChecked(true);
-                Settings.BluetoothSettings.bluetoothSearch.setEnabled(false);
+                bluetoothConnect.setChecked(true);
+                bluetoothAutoConnect.setChecked(true);
+                bluetoothSearch.setEnabled(false);
                 Log.d(TAG,"The connection attempt succeeded.");
             }
         }, 1); // delay maybe needed
@@ -93,9 +96,9 @@ class ConnectThread extends Thread {
             Log.d(TAG,"try mmSocket.close()");
             mmSocket.close();
             isRunning = false;
-            Settings.BluetoothSettings.bluetoothConnect.setChecked(false);
-            Settings.BluetoothSettings.bluetoothAutoConnect.setChecked(false);
-            Settings.BluetoothSettings.bluetoothSearch.setEnabled(true);
+            bluetoothConnect.setChecked(false);
+            bluetoothAutoConnect.setChecked(false);
+            bluetoothSearch.setEnabled(true);
         } catch (IOException e) {
             Log.d(TAG, "Could not close the client socket", e);
             Log.d(TAG,"failed mmSocket.close()");
