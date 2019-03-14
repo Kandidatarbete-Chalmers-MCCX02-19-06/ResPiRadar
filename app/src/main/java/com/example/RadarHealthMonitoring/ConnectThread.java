@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -21,6 +22,7 @@ class ConnectThread extends Thread {
     private boolean isRunning;
     private Handler handler = new Handler();
     private boolean hasSocket = false;
+    private int delayTime;
 
     //BluetoothCommunicationService commService;
     //ConnectedThread connectedThread;
@@ -57,6 +59,12 @@ class ConnectThread extends Thread {
         // Cancel discovery because it otherwise slows down the connection.
         b.bluetoothAdapter.cancelDiscovery();
 
+        if (b.autoConnect) {
+            delayTime = 100;
+        } else {
+            delayTime = 1;
+        }
+        //for (int i = 1; i<3;i++) {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -101,6 +109,7 @@ class ConnectThread extends Thread {
                 b.connectedThread = new ConnectedThread(mmSocket);
                 b.connectedThread.start();
                 Log.d(TAG,"The connection attempt succeeded.");
+                Toast.makeText(b.getApplicationContext(), "Connected to Raspberry Pi", Toast.LENGTH_LONG).show();
             }
         }, 1); // delay maybe needed
     }

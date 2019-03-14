@@ -11,10 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import static com.example.RadarHealthMonitoring.Bluetooth.b;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAutoConnect;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothConnect;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothSearch;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothWrite;
+import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bs;
 
 
 public class ConnectedThread extends Thread {
@@ -76,10 +73,7 @@ public class ConnectedThread extends Thread {
                 b.bluetoothSearchEnable = true;
                 b.bluetoothWriteEnable = false;
                 if (b.bluetoothSettingsActive) {
-                    bluetoothConnect.setChecked(false);
-                    bluetoothAutoConnect.setChecked(false);
-                    bluetoothSearch.setEnabled(true);
-                    bluetoothWrite.setEnabled(false);
+                    bs.connectedThreadDisconnect();
                 }
                 break;
             }

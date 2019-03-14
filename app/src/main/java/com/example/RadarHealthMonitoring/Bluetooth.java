@@ -32,7 +32,7 @@ public class Bluetooth extends Service {
     private final String TAG = "Bluetooth";
     private final int REQUEST_FINE_LOCATION = 2;
 
-    boolean alwaysBind = true;
+    boolean alwaysBind = false;
 
     ConnectThread connectThread;
     Handler handler = new Handler();
@@ -46,6 +46,8 @@ public class Bluetooth extends Service {
     boolean autoConnect = false;
     boolean connected = false; // TODO
     int connectAttempt = 1;
+    int searchAttempts = 1;
+    int delay;
 
     // Boolean indicators for BluetoothSettings
     boolean bluetoothSettingsActive = false;
@@ -184,11 +186,26 @@ public class Bluetooth extends Service {
                         Log.d(TAG, "Create Refcomm Socket: " + activeDevice.getName());
                     }
                 } else {
-                    connectThread = new ConnectThread(activeDevice);
-                    Log.d(TAG, "Create Refcomm Socket: " + activeDevice.getName());
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (!connected) {
+                                connectThread = new ConnectThread(activeDevice);
+                                Log.d(TAG, "Create Refcomm Socket: " + activeDevice.getName());
+                            }
+                        }
+                    }, 1);
+
                 }
-                connectThread.start();
-                Log.d(TAG, "Run thread");
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!connected) {
+                            connectThread.start();
+                            Log.d(TAG, "Run thread");
+                        }
+                    }
+                }, 1);
             }
         }
     }
@@ -196,6 +213,7 @@ public class Bluetooth extends Service {
     void autoConnect() {
         autoConnect = true; // eventually remove
         connectAttempt = 1;
+        searchAttempts = 1;
         Log.d(TAG, "activeDevice" + activeDevice);
         boolean isRaspberryPi = isRaspberryPi(activeDevice);
         Log.d(TAG, "start isRaspberryPi: " + isRaspberryPi);
@@ -219,7 +237,6 @@ public class Bluetooth extends Service {
             } else {
                 Log.d(TAG, "bonded: " + activeDevice.getBondState());
                 connectBluetooth(true);
-                autoConnectThread();
             }
             Log.d(TAG, "start discovery isRaspberryPi: " + isRaspberryPi);
         } else {
@@ -227,7 +244,6 @@ public class Bluetooth extends Service {
                 startDiscovery();
             } else {
                 connectBluetooth(true);
-                autoConnectThread();
             }
         }
     }
@@ -245,28 +261,57 @@ public class Bluetooth extends Service {
 
     void connectManager() { // If device did not connect
         if (autoConnect) {
-            if (connectAttempt == 1) {
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!connected) {
-                            connectAttempt ++;
-                            startDiscovery();
+            Log.d(TAG, "connectManager: " + connectAttempt);
+            switch (connectAttempt) {
+                case 1:
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (!connected) {
+                                connectAttempt ++;
+                                connectBluetooth(true);
+                            }
                         }
-                    }
-                }, 200);
-            } else if (connectAttempt < 3) {
-                connectAttempt++;
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!connected) {
-                            connectBluetooth(true);
+                    }, 200);
+                    break;
+                case 2:
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (!connected) {
+                                connectAttempt ++;
+                                startDiscovery();
+                            }
                         }
+                    }, 200);
+                    break;
+                case 3:
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (!connected) {
+                                connectAttempt ++;
+                                connectBluetooth(true);
+                            }
+                        }
+                    }, 200);
+                    break;
+                default :
+                    Toast.makeText(getApplicationContext(), "Error: Couldn't connect to Raspberry Pi", Toast.LENGTH_LONG).show();
+                    bluetoothAutoConnectChecked = false;
+                    if (bluetoothSettingsActive) {
+                        bluetoothAutoConnect.setChecked(false);
                     }
-                }, 200);
-            } else {
-                Toast.makeText(getApplicationContext(), "Error: Couldn't connect to Raspberry Pi", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    void searchManager() {
+        if (autoConnect) {
+            Log.d(TAG, "SearchManager: " + searchAttempts);
+            if (searchAttempts < 3) {
+                searchAttempts++;
+                startDiscovery();
             }
         }
     }
@@ -404,7 +449,7 @@ public class Bluetooth extends Service {
                         bluetoothList.setSummary(bluetoothList.getEntry());
                     }
                     bluetoothAdapter.cancelDiscovery();
-                    if (activeDevice.getBondState()!= 12 || alwaysBind) { // Not bonded: 10, Bonding: 11, Bonded: 12
+                    if (activeDevice.getBondState()!= 12) { // Not bonded: 10, Bonding: 11, Bonded: 12
                         handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
@@ -445,7 +490,10 @@ public class Bluetooth extends Service {
                     bluetoothSearch.setChecked(false);
                 }
                 if (!isRaspberryPi(activeDevice)) {
-                    Toast.makeText(context, "Did not find Raspberry Pi", Toast.LENGTH_LONG).show();
+                    searchManager();
+                    if (!autoConnect) {
+                        Toast.makeText(context, "Did not find Raspberry Pi", Toast.LENGTH_LONG).show();
+                    }
                 }
             }
         }
@@ -502,7 +550,9 @@ public class Bluetooth extends Service {
                         @Override
                         public void run() {
                             Log.d(TAG, "search finnished, foudn RPI, bonded, autoconnect: " + autoConnect);
-                            connectBluetooth(autoConnect);
+                            if (!connected) {
+                                connectBluetooth(autoConnect);
+                            }
                         }
                     }, 1); // delay needed
                     if (isRaspberryPi(activeDevice)) {

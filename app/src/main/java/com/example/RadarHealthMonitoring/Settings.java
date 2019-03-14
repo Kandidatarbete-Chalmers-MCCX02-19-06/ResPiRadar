@@ -240,6 +240,7 @@ public class Settings extends AppCompatPreferenceActivity {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     if ((boolean) newValue) {
+                        b.searchAttempts = 1;
                         b.autoConnect = false;
                         b.startDiscovery();
                     } else {
@@ -258,7 +259,7 @@ public class Settings extends AppCompatPreferenceActivity {
                     if ((boolean) newValue) {
                         if (b.activeDevice != null) {
                             b.autoConnect = false;
-                            b.connectAttempt = 1;
+                            b.connectAttempt = 4;
                             b.connectBluetooth(true);
                         } else {
                             Toast.makeText(getActivity().getApplicationContext(),
@@ -291,6 +292,7 @@ public class Settings extends AppCompatPreferenceActivity {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     if ((boolean) newValue) {
+                        b.autoConnect = true;
                         b.autoConnect();
                         return true;
                     } else {
@@ -319,6 +321,20 @@ public class Settings extends AppCompatPreferenceActivity {
             });
 
         }
+
+        // ########## ########## Methods ########## ##########
+        void connectedThreadDisconnect() {
+            s.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    bluetoothConnect.setChecked(false);
+                    bluetoothAutoConnect.setChecked(false);
+                    bluetoothSearch.setEnabled(true);
+                    bluetoothWrite.setEnabled(false);
+                }
+            });
+        }
+
     } // end of BluetoothSettings
 
     // ########## ########## ########## Wifi ########## ########## ##########
