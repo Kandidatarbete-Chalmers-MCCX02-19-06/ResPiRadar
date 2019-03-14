@@ -8,10 +8,11 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.UUID;
 
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAdapter;
+import static com.example.RadarHealthMonitoring.Bluetooth.b;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAutoConnect;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothConnect;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothSearch;
+import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothWrite;
 
 class ConnectThread extends Thread {
     private static final String TAG = "ConnectThread";
@@ -20,6 +21,9 @@ class ConnectThread extends Thread {
     private boolean isRunning;
     private Handler handler = new Handler();
     private boolean hasSocket = false;
+
+    //BluetoothCommunicationService commService;
+    //ConnectedThread connectedThread;
 
     ConnectThread(BluetoothDevice device) {
         // Use a temporary object that is later assigned to mmSocket
@@ -51,7 +55,7 @@ class ConnectThread extends Thread {
 
     public void run() {
         // Cancel discovery because it otherwise slows down the connection.
-        bluetoothAdapter.cancelDiscovery();
+        b.bluetoothAdapter.cancelDiscovery();
 
         handler.postDelayed(new Runnable() {
             @Override
@@ -66,7 +70,7 @@ class ConnectThread extends Thread {
                 } catch (IOException connectException) {
                     // Unable to connect; close the socket and return.
                     isRunning = false;
-                    Log.d(TAG,"failed mmSocket.connect()" + connectException + " Is connected: ");
+                    Log.d(TAG,"failed mmSocket.connect()" + connectException);
 
                     try {
                         mmSocket.close();
@@ -75,16 +79,27 @@ class ConnectThread extends Thread {
                         Log.e(TAG, "Could not close the client socket", closeException);
                         Log.d(TAG,"failed mmSocket.close();");
                     }
-                    hasSocket=false;
+                    hasSocket = false;
+                    b.connectManager();
                     return;
                 }
 
                 // The connection attempt succeeded. Perform work associated with
                 // the connection in a separate thread.
                 //manageMyConnectedSocket(mmSocket);
-                bluetoothConnect.setChecked(true);
-                bluetoothAutoConnect.setChecked(true);
-                bluetoothSearch.setEnabled(false);
+                b.bluetoothConnectChecked = true;
+                b.bluetoothAutoConnectChecked = true;
+                b.bluetoothWriteEnable = true;
+                b.connected = true;
+                if (b.bluetoothSettingsActive) {
+                    bluetoothConnect.setChecked(true);
+                    bluetoothAutoConnect.setChecked(true);
+                    bluetoothSearch.setEnabled(false);
+                    bluetoothWrite.setEnabled(true);
+                }
+                //b.connectedThread = new BluetoothCommunicationService.ConnectedThread(mmSocket);
+                b.connectedThread = new ConnectedThread(mmSocket);
+                b.connectedThread.start();
                 Log.d(TAG,"The connection attempt succeeded.");
             }
         }, 1); // delay maybe needed
@@ -94,11 +109,20 @@ class ConnectThread extends Thread {
     public void cancel() {
         try {
             Log.d(TAG,"try mmSocket.close()");
+            //b.connectedThread.cancel();
             mmSocket.close();
             isRunning = false;
-            bluetoothConnect.setChecked(false);
-            bluetoothAutoConnect.setChecked(false);
-            bluetoothSearch.setEnabled(true);
+            b.bluetoothConnectChecked = false;
+            b.bluetoothAutoConnectChecked = false;
+            b.bluetoothSearchEnable = true;
+            b.bluetoothWriteEnable = false;
+            b.connected = false;
+            if (b.bluetoothSettingsActive) {
+                bluetoothConnect.setChecked(false);
+                bluetoothAutoConnect.setChecked(false);
+                bluetoothSearch.setEnabled(true);
+                bluetoothWrite.setEnabled(false);
+            }
         } catch (IOException e) {
             Log.d(TAG, "Could not close the client socket", e);
             Log.d(TAG,"failed mmSocket.close()");
@@ -116,5 +140,9 @@ class ConnectThread extends Thread {
 
     public BluetoothDevice getDevice() {
         return mmDevice;
+    }
+
+    public BluetoothSocket getSocket() {
+        return mmSocket;
     }
 }

@@ -5,6 +5,16 @@
         android:key="bluetooth_switch"
         android:title="Bluetooth Off"
         android:summary="Switch Bluetooth on or off" />
+    <EditTextPreference
+        android:capitalize="words"
+        android:defaultValue="raspberrypi"
+        android:inputType="textCapWords"
+        android:key="bluetooth_raspberrypi_name"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="Name or MAC adress for Raspberry Pi"
+        android:summary="raspberrypi" />
     <SwitchPreference
         android:defaultValue="false"
         android:key="bluetooth_auto_connect"
@@ -21,19 +31,14 @@
         android:defaultValue="false"
         android:key="bluetooth_connect"
         android:title="Connect Bluetooth Device" />
-    <SwitchPreference
-        android:defaultValue="false"
-        android:key="bluetooth_read"
-        android:title="Read" />
     <EditTextPreference
         android:capitalize="words"
-        android:defaultValue="raspberrypi"
         android:inputType="textCapWords"
-        android:key="bluetooth_raspberrypi_name"
+        android:key="bluetooth_write"
         android:maxLines="1"
         android:selectAllOnFocus="true"
         android:singleLine="true"
-        android:title="Name or MAC adress for Raspberry Pi"
-        android:summary="raspberrypi" />
+        android:title="Write to Raspberry Pi"
+        android:summary="" />
 
 </PreferenceScreen>

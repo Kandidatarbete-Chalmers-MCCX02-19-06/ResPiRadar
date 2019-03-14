@@ -1,7 +1,6 @@
 package com.example.RadarHealthMonitoring;
 
 import android.annotation.TargetApi;
-import android.bluetooth.BluetoothAdapter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -127,14 +126,13 @@ public class Settings extends AppCompatPreferenceActivity {
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class BluetoothSettings extends PreferenceFragment {
 
-        static BluetoothAdapter bluetoothAdapter;
         static SwitchPreference bluetoothOn;
         static SwitchPreference bluetoothAutoConnect;
         static ListPreference bluetoothList;
         static SwitchPreference bluetoothSearch;
         static SwitchPreference bluetoothConnect;
-        static SwitchPreference bluetoothRead;
         static EditTextPreference bluetoothRaspberryPiName;
+        static EditTextPreference bluetoothWrite;
 
         /*static ConnectThread connectThread;
         static Handler handler = new Handler();
@@ -150,9 +148,9 @@ public class Settings extends AppCompatPreferenceActivity {
         private static final String key_pref_bluetooth_auto_connect = "bluetooth_auto_connect";
         private static final String key_pref_bluetooth_connect = "bluetooth_connect";
         private static final String key_pref_bluetooth_search = "search_bluetooth_device";
-        private static final String key_pref_bluetooth_read = "bluetooth_read";
         private static final String key_pref_bluetooth_list = "bluetooth_list";
         private static final String key_pref_raspberry_pi_name = "bluetooth_raspberrypi_name";
+        private static final String key_pref_bluetooth_write = "bluetooth_write";
 
         private static Handler uiHandler = new Handler(Looper.getMainLooper());
 
@@ -162,6 +160,7 @@ public class Settings extends AppCompatPreferenceActivity {
         public void onDestroy() {
             super.onDestroy();
             Log.d(Settingsmsg, "BluetoothSettings onDestroy");
+            b.bluetoothSettingsActive = false;
         }
 
         // ########## ########## onCreate ########## ##########
@@ -171,35 +170,36 @@ public class Settings extends AppCompatPreferenceActivity {
             super.onCreate(savedInstanceState);
             Log.d(Settingsmsg, "BluetoothSettings onCreate");
             bs = BluetoothSettings.this;
+            b.bluetoothSettingsActive = true;
             addPreferencesFromResource(R.xml.pref_bluetooth);
             setHasOptionsMenu(true);
             getActivity().setTitle("Bluetooth Settings");  // Change title
             // Start Bluetooth
-            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // Gets the device's Bluetooth adapter
             bluetoothOn = (SwitchPreference) findPreference(key_pref_bluetooth_switch);
             bluetoothAutoConnect = (SwitchPreference) findPreference(key_pref_bluetooth_auto_connect);
             bluetoothConnect = (SwitchPreference) findPreference(key_pref_bluetooth_connect);
             bluetoothSearch = (SwitchPreference) findPreference(key_pref_bluetooth_search);
-            bluetoothRead = (SwitchPreference) findPreference(key_pref_bluetooth_read);
             bluetoothList = (ListPreference) findPreference(key_pref_bluetooth_list);
             bluetoothRaspberryPiName = (EditTextPreference) findPreference(key_pref_raspberry_pi_name);
-            // On return to bluetooth settings
-            if (bluetoothAdapter.isEnabled()) { // Check if Bluetooth already is on
+            bluetoothWrite = (EditTextPreference) findPreference(key_pref_bluetooth_write);
+            // On return to bluetooth settings, manually update everything
+            if (b.bluetoothOnChecked) {
                 bluetoothOn.setChecked(true);
                 bluetoothOn.setTitle("Bluetooth On");
                 b.updateBluetoothList();
-                bluetoothConnect.setEnabled(true);
-                bluetoothSearch.setEnabled(true);
-                if (bluetoothAdapter.getBondedDevices().size() > 0) {
-                    b.setActiveDevice();
-                }
             } else {
                 bluetoothOn.setChecked(false);
                 bluetoothOn.setTitle("Bluetooth Off");
-                bluetoothList.setEnabled(false);
-                bluetoothConnect.setEnabled(false);
-                bluetoothSearch.setEnabled(false);
             }
+            bluetoothConnect.setEnabled(b.bluetoothConnectEnable);
+            bluetoothConnect.setChecked(b.bluetoothConnectChecked);
+            bluetoothAutoConnect.setEnabled(b.bluetoothConnectEnable);
+            bluetoothAutoConnect.setChecked(b.bluetoothAutoConnectChecked);
+            bluetoothSearch.setEnabled(b.bluetoothSearchEnable);
+            bluetoothSearch.setChecked(b.bluetoothSearchChecked);
+            bluetoothList.setEnabled(b.bluetoothListEnable);
+            bluetoothWrite.setEnabled(b.bluetoothWriteEnable);
+            bluetoothList.setEnabled(b.bluetoothListEnable);
 
             // ########## Preference Listeners ##########
             // Ändring av enhet i Bluetoothlistan Listener
@@ -231,7 +231,7 @@ public class Settings extends AppCompatPreferenceActivity {
             bluetoothOn.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    return b.startBluetooth();
+                    return b.startBluetooth((boolean)newValue);
                 }
             });
 
@@ -243,7 +243,7 @@ public class Settings extends AppCompatPreferenceActivity {
                         b.autoConnect = false;
                         b.startDiscovery();
                     } else {
-                        bluetoothAdapter.cancelDiscovery();
+                        b.bluetoothAdapter.cancelDiscovery();
                         Log.d(Settingsmsg, "Disable search");
                         return true;
                     }
@@ -257,6 +257,8 @@ public class Settings extends AppCompatPreferenceActivity {
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     if ((boolean) newValue) {
                         if (b.activeDevice != null) {
+                            b.autoConnect = false;
+                            b.connectAttempt = 1;
                             b.connectBluetooth(true);
                         } else {
                             Toast.makeText(getActivity().getApplicationContext(),
@@ -302,6 +304,20 @@ public class Settings extends AppCompatPreferenceActivity {
                     return false;
                 }
             });
+
+            // Write to  Raspberry Pi text preference
+            bluetoothWrite.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    byte[] write = ((String)newValue).getBytes();
+                    Log.d(Settingsmsg, "Message: " + newValue + write);
+                    b.connectedThread.write(write);
+                    //b.raspberryPiName = (String) newValue;
+                    preference.setSummary((String)newValue);
+                    return true;
+                }
+            });
+
         }
     } // end of BluetoothSettings
 
