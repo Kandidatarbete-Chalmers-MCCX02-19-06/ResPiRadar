@@ -246,6 +246,7 @@ public class Settings extends AppCompatPreferenceActivity {
                     } else {
                         b.bluetoothAdapter.cancelDiscovery();
                         Log.d(Settingsmsg, "Disable search");
+                        b.autoConnect = false;
                         return true;
                     }
                     return false;
@@ -294,11 +295,13 @@ public class Settings extends AppCompatPreferenceActivity {
                     if ((boolean) newValue) {
                         b.autoConnect = true;
                         b.autoConnect();
-                        return true;
+                        return false;
                     } else {
                         if (b.connectThread != null) {
                             Log.d(Settingsmsg, "cancel Thread");
                             b.connectThread.cancel();
+                            b.autoConnect = false;
+                            b.bluetoothAdapter.cancelDiscovery();
                         } else {
                             return true;
                         }

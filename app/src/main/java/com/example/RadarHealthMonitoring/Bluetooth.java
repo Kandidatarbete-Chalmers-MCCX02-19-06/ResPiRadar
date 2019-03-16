@@ -45,6 +45,7 @@ public class Bluetooth extends Service {
     final String raspberryPiMAC = "B8:27:EB:FC:22:65";
     boolean autoConnect = false;
     boolean connected = false; // TODO
+    boolean foundRaspberryPi = false;
     int connectAttempt = 1;
     int searchAttempts = 1;
     int delay;
@@ -201,11 +202,15 @@ public class Bluetooth extends Service {
                     @Override
                     public void run() {
                         if (!connected) {
-                            connectThread.start();
-                            Log.d(TAG, "Run thread");
+                            try {
+                                connectThread.start();
+                                Log.d(TAG, "Run thread");
+                            } catch (IllegalThreadStateException e) {
+                                Log.e(TAG, "Thread already started",e);
+                            }
                         }
                     }
-                }, 1);
+                }, 2);
             }
         }
     }
@@ -214,6 +219,10 @@ public class Bluetooth extends Service {
         autoConnect = true; // eventually remove
         connectAttempt = 1;
         searchAttempts = 1;
+        bluetoothAutoConnectChecked = true;
+        if (bluetoothSettingsActive) {
+            bluetoothAutoConnect.setChecked(true);
+        }
         Log.d(TAG, "activeDevice" + activeDevice);
         boolean isRaspberryPi = isRaspberryPi(activeDevice);
         Log.d(TAG, "start isRaspberryPi: " + isRaspberryPi);
@@ -248,17 +257,6 @@ public class Bluetooth extends Service {
         }
     }
 
-    void autoConnectThread() { // If device bonded on the phone but not on the RPI
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (!connected) {
-                    startDiscovery();
-                }
-            }
-        }, 3000);
-    }
-
     void connectManager() { // If device did not connect
         if (autoConnect) {
             Log.d(TAG, "connectManager: " + connectAttempt);
@@ -272,7 +270,7 @@ public class Bluetooth extends Service {
                                 connectBluetooth(true);
                             }
                         }
-                    }, 200);
+                    }, 100);
                     break;
                 case 2:
                     handler.postDelayed(new Runnable() {
@@ -283,7 +281,7 @@ public class Bluetooth extends Service {
                                 startDiscovery();
                             }
                         }
-                    }, 200);
+                    }, 100);
                     break;
                 case 3:
                     handler.postDelayed(new Runnable() {
@@ -294,7 +292,7 @@ public class Bluetooth extends Service {
                                 connectBluetooth(true);
                             }
                         }
-                    }, 200);
+                    }, 100);
                     break;
                 default :
                     Toast.makeText(getApplicationContext(), "Error: Couldn't connect to Raspberry Pi", Toast.LENGTH_LONG).show();
@@ -309,14 +307,21 @@ public class Bluetooth extends Service {
     void searchManager() {
         if (autoConnect) {
             Log.d(TAG, "SearchManager: " + searchAttempts);
-            if (searchAttempts < 3) {
+            if (searchAttempts < 3) { // will search max 3 times if RPI not found
                 searchAttempts++;
                 startDiscovery();
+            } else {
+                bluetoothAutoConnectChecked = false;
+                if (bluetoothSettingsActive) {
+                    bluetoothAutoConnect.setChecked(false);
+                }
+                Toast.makeText(getApplicationContext(), "Did not find Raspberry Pi", Toast.LENGTH_LONG).show();
             }
         }
     }
 
     void startDiscovery() {
+        foundRaspberryPi = false;
         if (hasLocationPermissions()) {
             bluetoothAdapter.startDiscovery();
             Log.d(TAG, "Enable search");
@@ -408,6 +413,8 @@ public class Bluetooth extends Service {
                         bluetoothSearchEnable = false;
                         bluetoothConnectEnable = false;
                         bluetoothListEnable = false;
+                        bluetoothConnectChecked = false;
+                        bluetoothAutoConnectChecked = false;
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(false);
                             bluetoothOn.setTitle("Bluetooth Off");
@@ -415,6 +422,8 @@ public class Bluetooth extends Service {
                             bluetoothSearch.setEnabled(false);
                             bluetoothConnect.setEnabled(false);
                             bluetoothAutoConnect.setEnabled(false);
+                            bluetoothConnect.setChecked(false);
+                            bluetoothAutoConnect.setChecked(false);
                         }
                         break;
                     case BluetoothAdapter.STATE_ON:
@@ -444,6 +453,7 @@ public class Bluetooth extends Service {
                 if (isRaspberryPi(device)) { // Raspberry Pi detected
                     Toast.makeText(context, "Found " + device.getName(), Toast.LENGTH_SHORT).show();
                     activeDevice = device;
+                    foundRaspberryPi = true;
                     if (bluetoothSettingsActive) {
                         bluetoothList.setValue(raspberryPiMAC);
                         bluetoothList.setSummary(bluetoothList.getEntry());
@@ -489,7 +499,7 @@ public class Bluetooth extends Service {
                 if (bluetoothSettingsActive) {
                     bluetoothSearch.setChecked(false);
                 }
-                if (!isRaspberryPi(activeDevice)) {
+                if (!foundRaspberryPi) {
                     searchManager();
                     if (!autoConnect) {
                         Toast.makeText(context, "Did not find Raspberry Pi", Toast.LENGTH_LONG).show();

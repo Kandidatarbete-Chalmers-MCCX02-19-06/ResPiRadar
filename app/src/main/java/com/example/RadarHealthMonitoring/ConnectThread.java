@@ -65,9 +65,9 @@ class ConnectThread extends Thread {
             delayTime = 1;
         }
         //for (int i = 1; i<3;i++) {
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
+//        handler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
                 try {
                     // Connect to the remote device through the socket. This call blocks
                     // until it succeeds or throws an exception.
@@ -110,8 +110,8 @@ class ConnectThread extends Thread {
                 b.connectedThread.start();
                 Log.d(TAG,"The connection attempt succeeded.");
                 Toast.makeText(b.getApplicationContext(), "Connected to Raspberry Pi", Toast.LENGTH_LONG).show();
-            }
-        }, 1); // delay maybe needed
+            //}
+        //}, 1); // delay maybe needed
     }
 
     // Closes the client socket and causes the thread to finish.
