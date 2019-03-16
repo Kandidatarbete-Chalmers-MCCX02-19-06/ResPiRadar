@@ -19,11 +19,14 @@ import java.util.Set;
 
 import androidx.annotation.Nullable;
 
+import static com.example.RadarHealthMonitoring.MainActivity.m;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAutoConnect;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothConnect;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothList;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothOn;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothSearch;
+import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothWrite;
+import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bs;
 import static com.example.RadarHealthMonitoring.Settings.s;
 
 public class Bluetooth extends Service {
@@ -90,11 +93,7 @@ public class Bluetooth extends Service {
         registerReceiver(BluetoothBroadcastReceiverScan, BTIntentScanChange);
         IntentFilter BTIntentBondChange = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         registerReceiver(BluetoothBroadcastReceiverBondChange, BTIntentBondChange);
-        //comService = new BluetoothCommunicationService();
-        //connectedThread = new ConnectedThread();
-
         startBluetooth(true);
-
     } // end off onCreate
 
     @Override
@@ -357,6 +356,38 @@ public class Bluetooth extends Service {
         }
     }
 
+    void bluetoothDisconnected(boolean newThread) {
+        b.connected = false;
+        b.bluetoothConnectChecked = false;
+        b.bluetoothAutoConnectChecked = false;
+        b.bluetoothSearchEnable = true;
+        b.bluetoothWriteEnable = false;
+        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
+        if (b.bluetoothSettingsActive && !newThread) {
+            bluetoothConnect.setChecked(false);
+            bluetoothAutoConnect.setChecked(false);
+            bluetoothSearch.setEnabled(true);
+            bluetoothWrite.setEnabled(false);
+        } else if (b.bluetoothSettingsActive && newThread) {
+            bs.connectedThreadDisconnect();
+        }
+    }
+
+    void bluetoothConnected() {
+        b.bluetoothConnectChecked = true;
+        b.bluetoothAutoConnectChecked = true;
+        b.bluetoothWriteEnable = true;
+        b.connected = true;
+        b.bluetoothSearchEnable = false;
+        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_connected_white_24dp);
+        if (b.bluetoothSettingsActive) {
+            bluetoothConnect.setChecked(true);
+            bluetoothAutoConnect.setChecked(true);
+            bluetoothSearch.setEnabled(false);
+            bluetoothWrite.setEnabled(true);
+        }
+    }
+
     /**
      * Fixar listan med Bluetoothenheter
      */
@@ -415,6 +446,7 @@ public class Bluetooth extends Service {
                         bluetoothListEnable = false;
                         bluetoothConnectChecked = false;
                         bluetoothAutoConnectChecked = false;
+                        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_disabled_white_24dp);
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(false);
                             bluetoothOn.setTitle("Bluetooth Off");
@@ -431,6 +463,7 @@ public class Bluetooth extends Service {
                         break;
                     case BluetoothAdapter.STATE_TURNING_ON:
                         bluetoothOnChecked = true;
+                        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(true);
                             bluetoothOn.setTitle("Bluetooth On");
@@ -483,6 +516,7 @@ public class Bluetooth extends Service {
             if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
                 Log.d(TAG, "Search Started");
                 bluetoothSearchChecked = true;
+                m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_searching_white_24dp);
                 if (bluetoothSettingsActive) {
                     bluetoothSearch.setChecked(true);
                 }
@@ -496,6 +530,7 @@ public class Bluetooth extends Service {
             if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
                 Log.d(TAG,"Finished");
                 bluetoothSearchChecked = false;
+                m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
                 if (bluetoothSettingsActive) {
                     bluetoothSearch.setChecked(false);
                 }

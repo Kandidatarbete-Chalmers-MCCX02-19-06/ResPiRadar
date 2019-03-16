@@ -1,47 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Lista med val av anslutning -->
-    <ListPreference
-        android:key="connection_list"
-        android:title="Connection"
-        android:defaultValue="1"
-        android:icon="@drawable/ic_bluetooth_black_24dp"
-        android:entries="@array/pref_connection_list"
-        android:entryValues="@array/pref_connection_list_values" />
-
-    <!-- Inställningar för olika anslutningar -->
+    <!-- Settings -->
     <PreferenceCategory
-        android:title="Connection Settings">
+        android:title="Settings">
+        <Preference
+            android:key="information"
+            android:title="Information"
+            android:icon="@drawable/ic_info_black_24dp"/>
+
         <Preference
             android:key="bluetoothSettings"
             android:title="Bluetooth Settings"
             android:icon="@drawable/ic_bluetooth_black_24dp"
             android:fragment="com.example.RadarHealthMonitoring.Settings$BluetoothFragment"/>
-        <Preference
-            android:key="wifiSettings"
-            android:title="Wifi Settings"
-            android:icon="@drawable/ic_wifi_black_24dp"
-            android:fragment="com.example.RadarHealthMonitoring.Settings$WifiFragment"/>
-        <Preference
-            android:key="usbSettings"
-            android:title="USB Settings"
-            android:icon="@drawable/ic_usb_black_24dp"
-            android:fragment="com.example.RadarHealthMonitoring.Settings$USBFragment"/>
     </PreferenceCategory>
 
-    <!-- övriga inställningar -->
-    <PreferenceCategory
-        android:title="Other Settings">
-        <Preference
-            android:key="generalSettings"
-            android:title="General Settings"
-            android:icon="@drawable/ic_settings_black_24dp"
-            android:fragment="com.example.RadarHealthMonitoring.Settings$GeneralFragment"/>
-        <Preference
-            android:key="developerSettings"
-            android:title="Developer Settings"
-            android:icon="@drawable/ic_developer_24dp"
-            android:fragment="com.example.RadarHealthMonitoring.Settings$DeveloperFragment"/>
-    </PreferenceCategory>
 </PreferenceScreen>

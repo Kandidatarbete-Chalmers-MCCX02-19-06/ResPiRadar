@@ -5,19 +5,25 @@
     <!-- Skapar menyraden i main-aktiviteten -->
     <item
         android:id="@+id/menu_red"
-        android:orderInCategory="2"
+        android:orderInCategory="3"
         app:showAsAction="never"
         android:title="Meny 1"/>
     <item
         android:id="@+id/menu_green"
-        android:orderInCategory="3"
+        android:orderInCategory="4"
         app:showAsAction="never"
         android:title="Meny 2"/>
     <item
         android:id="@+id/settings"
         android:title="@string/menu_settings"
-        android:orderInCategory="1"
+        android:orderInCategory="2"
         android:icon="@drawable/ic_settings"
+        app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/bluetooth"
+        android:title="Bluetooth"
+        android:orderInCategory="1"
+        android:icon="@drawable/ic_bluetooth_disabled_white_24dp"
         app:showAsAction="ifRoom"/>
 
 </menu>

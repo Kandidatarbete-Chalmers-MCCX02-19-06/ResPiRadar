@@ -11,7 +11,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import static com.example.RadarHealthMonitoring.Bluetooth.b;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bs;
 
 
 public class ConnectedThread extends Thread {
@@ -67,14 +66,7 @@ public class ConnectedThread extends Thread {
                 Log.d(TAG, "Message recieved: " + readBuf);
             } catch (IOException e) {
                 Log.e(TAG, "Input stream was disconnected", e);
-                b.connected = false;
-                b.bluetoothConnectChecked = false;
-                b.bluetoothAutoConnectChecked = false;
-                b.bluetoothSearchEnable = true;
-                b.bluetoothWriteEnable = false;
-                if (b.bluetoothSettingsActive) {
-                    bs.connectedThreadDisconnect();
-                }
+                b.bluetoothDisconnected(true);
                 break;
             }
         }

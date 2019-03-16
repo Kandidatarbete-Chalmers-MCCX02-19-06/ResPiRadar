@@ -26,14 +26,7 @@ import static com.example.RadarHealthMonitoring.Bluetooth.b;
 public class Settings extends AppCompatPreferenceActivity {
 
     static Settings s; // for static activity
-
     private static final String Settingsmsg = "Settings";
-
-    // keys för olika värden från inställningarna
-    public static final String key_pref_connection_list = "connection_list";
-    public static final String key_pref_usb_port = "usb_port";
-
-    //private static final int REQUEST_FINE_LOCATION = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,11 +53,7 @@ public class Settings extends AppCompatPreferenceActivity {
     protected boolean isValidFragment(String fragmentName) {
         return PreferenceFragment.class.getName().equals(fragmentName)
                 || Settings.SettingsFragment.class.getName().equals(fragmentName)
-                || Settings.BluetoothFragment.class.getName().equals(fragmentName)
-                || Settings.WifiFragment.class.getName().equals(fragmentName)
-                || Settings.USBFragment.class.getName().equals(fragmentName)
-                || Settings.GeneralFragment.class.getName().equals(fragmentName)
-                || Settings.DeveloperFragment.class.getName().equals(fragmentName);
+                || Settings.BluetoothFragment.class.getName().equals(fragmentName);
     }
 
     private void setupActionBar() {
@@ -92,13 +81,11 @@ public class Settings extends AppCompatPreferenceActivity {
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class SettingsFragment extends PreferenceFragment {
-        ListPreference connectionList;
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.settings);  // hämtar preferenserna
             setHasOptionsMenu(true);  // ger menyraden
-            bindPreferenceSummaryToValue(findPreference(key_pref_connection_list));  // delar värdet
         }
     }
 
@@ -134,16 +121,6 @@ public class Settings extends AppCompatPreferenceActivity {
         static EditTextPreference bluetoothRaspberryPiName;
         static EditTextPreference bluetoothWrite;
 
-        /*static ConnectThread connectThread;
-        static Handler handler = new Handler();
-
-        static BluetoothDevice activeDevice;
-        static Set<BluetoothDevice> pairedDevices;
-        static int chosenDeviceIndex;
-        static String raspberryPiName = "raspberrypi";
-        static final String raspberryPiMAC = "B8:27:EB:FC:22:65";
-        static boolean autoConnect = false;*/
-
         private static final String key_pref_bluetooth_switch = "bluetooth_switch";
         private static final String key_pref_bluetooth_auto_connect = "bluetooth_auto_connect";
         private static final String key_pref_bluetooth_connect = "bluetooth_connect";
@@ -152,9 +129,8 @@ public class Settings extends AppCompatPreferenceActivity {
         private static final String key_pref_raspberry_pi_name = "bluetooth_raspberrypi_name";
         private static final String key_pref_bluetooth_write = "bluetooth_write";
 
-        private static Handler uiHandler = new Handler(Looper.getMainLooper());
-
         static BluetoothSettings bs; // for static service
+        private static Handler uiHandler = new Handler(Looper.getMainLooper()); // static handler
 
         @Override
         public void onDestroy() {
@@ -174,7 +150,7 @@ public class Settings extends AppCompatPreferenceActivity {
             addPreferencesFromResource(R.xml.pref_bluetooth);
             setHasOptionsMenu(true);
             getActivity().setTitle("Bluetooth Settings");  // Change title
-            // Start Bluetooth
+            // Bluetooth preferences
             bluetoothOn = (SwitchPreference) findPreference(key_pref_bluetooth_switch);
             bluetoothAutoConnect = (SwitchPreference) findPreference(key_pref_bluetooth_auto_connect);
             bluetoothConnect = (SwitchPreference) findPreference(key_pref_bluetooth_connect);
@@ -340,134 +316,6 @@ public class Settings extends AppCompatPreferenceActivity {
 
     } // end of BluetoothSettings
 
-    // ########## ########## ########## Wifi ########## ########## ##########
-
-    /**
-     * Wififragment
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class WifiFragment extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            getFragmentManager()
-                    .beginTransaction()
-                    .replace(android.R.id.content, new WifiSettings())
-                    .commit();
-            setHasOptionsMenu(true);
-        }
-    }
-
-    /**
-     * Wifiinställningar
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class WifiSettings extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.pref_wifi);
-            setHasOptionsMenu(true);
-            getActivity().setTitle("Wifi Settings");
-        }
-    }
-
-    // ########## ########## ########## USB ########## ########## ##########
-
-    /**
-     * USBfragment
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class USBFragment extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            getFragmentManager()
-                    .beginTransaction()
-                    .replace(android.R.id.content, new USBSettings())
-                    .commit();
-            setHasOptionsMenu(true);
-        }
-    }
-
-    /**
-     * USB-inställningar
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class USBSettings extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.pref_usb);
-            setHasOptionsMenu(true);
-            getActivity().setTitle("USB Settings");
-            bindPreferenceSummaryToValue(findPreference(key_pref_usb_port));
-        }
-    }
-
-    // ########## ########## ########## General ########## ########## ##########
-
-    /**
-     * Fragment till Generella inställningar
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class GeneralFragment extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            getFragmentManager()
-                    .beginTransaction()
-                    .replace(android.R.id.content, new GeneralSettings())
-                    .commit();
-            setHasOptionsMenu(true);
-        }
-    }
-
-    /**
-     * Generella instälningar
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class GeneralSettings extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.pref_general);
-            setHasOptionsMenu(true);
-            getActivity().setTitle("General Settings");
-        }
-    }
-
-    // ########## ########## ########## Developer ########## ########## ##########
-
-    /**
-     * Developerfragment
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class DeveloperFragment extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            getFragmentManager()
-                    .beginTransaction()
-                    .replace(android.R.id.content, new DeveloperSettings())
-                    .commit();
-            setHasOptionsMenu(true);
-        }
-    }
-
-    /**
-     * Inställningar för utvecklare och debug
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class DeveloperSettings extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.pref_developer);
-            setHasOptionsMenu(true);
-            getActivity().setTitle("Developer Settings");
-        }
-    }
 
     // ########## ########## ########## ########## ########## ########## ##########
     // End of Settings Fragments. Start of shared preferences and listeners
@@ -485,19 +333,6 @@ public class Settings extends AppCompatPreferenceActivity {
             if (preference instanceof ListPreference) {
                 ListPreference listPreference = (ListPreference) preference;
                 int index = listPreference.findIndexOfValue(stringValue);
-                if (listPreference.getKey().equals(key_pref_connection_list)) {  // ändrar ikonen
-                    switch (stringValue) {
-                        case "1":
-                            listPreference.setIcon(R.drawable.ic_bluetooth_black_24dp);
-                            break;
-                        case "0":
-                            listPreference.setIcon(R.drawable.ic_wifi_black_24dp);
-                            break;
-                        case "-1":
-                            listPreference.setIcon(R.drawable.ic_usb_black_24dp);
-                            break;
-                    }
-                }
                 preference.setSummary(  // ändrar summary till värdet
                         index >= 0
                                 ? listPreference.getEntries()[index]

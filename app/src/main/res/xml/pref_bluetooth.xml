@@ -18,7 +18,7 @@
     <SwitchPreference
         android:defaultValue="false"
         android:key="bluetooth_auto_connect"
-        android:title="Auto Connect Raspberry Pi" />
+        android:title="Automated Connection" />
     <ListPreference
         android:enabled="false"
         android:key="bluetooth_list"
@@ -26,11 +26,11 @@
     <SwitchPreference
         android:defaultValue="false"
         android:key="search_bluetooth_device"
-        android:title="Search Bluetooth Device" />
+        android:title="Search after Raspberry Pi" />
     <SwitchPreference
         android:defaultValue="false"
         android:key="bluetooth_connect"
-        android:title="Connect Bluetooth Device" />
+        android:title="Connect to Raspberry Pi" />
     <EditTextPreference
         android:capitalize="words"
         android:inputType="textCapWords"

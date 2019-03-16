@@ -10,10 +10,6 @@ import java.io.IOException;
 import java.util.UUID;
 
 import static com.example.RadarHealthMonitoring.Bluetooth.b;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAutoConnect;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothConnect;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothSearch;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothWrite;
 
 class ConnectThread extends Thread {
     private static final String TAG = "ConnectThread";
@@ -95,16 +91,7 @@ class ConnectThread extends Thread {
                 // The connection attempt succeeded. Perform work associated with
                 // the connection in a separate thread.
                 //manageMyConnectedSocket(mmSocket);
-                b.bluetoothConnectChecked = true;
-                b.bluetoothAutoConnectChecked = true;
-                b.bluetoothWriteEnable = true;
-                b.connected = true;
-                if (b.bluetoothSettingsActive) {
-                    bluetoothConnect.setChecked(true);
-                    bluetoothAutoConnect.setChecked(true);
-                    bluetoothSearch.setEnabled(false);
-                    bluetoothWrite.setEnabled(true);
-                }
+                b.bluetoothConnected();
                 //b.connectedThread = new BluetoothCommunicationService.ConnectedThread(mmSocket);
                 b.connectedThread = new ConnectedThread(mmSocket);
                 b.connectedThread.start();
@@ -121,17 +108,7 @@ class ConnectThread extends Thread {
             //b.connectedThread.cancel();
             mmSocket.close();
             isRunning = false;
-            b.bluetoothConnectChecked = false;
-            b.bluetoothAutoConnectChecked = false;
-            b.bluetoothSearchEnable = true;
-            b.bluetoothWriteEnable = false;
-            b.connected = false;
-            if (b.bluetoothSettingsActive) {
-                bluetoothConnect.setChecked(false);
-                bluetoothAutoConnect.setChecked(false);
-                bluetoothSearch.setEnabled(true);
-                bluetoothWrite.setEnabled(false);
-            }
+            b.bluetoothDisconnected(false);
         } catch (IOException e) {
             Log.d(TAG, "Could not close the client socket", e);
             Log.d(TAG,"failed mmSocket.close()");
