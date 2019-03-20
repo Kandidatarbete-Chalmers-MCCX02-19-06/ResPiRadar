@@ -3,6 +3,7 @@ package com.example.RadarHealthMonitoring;
 import android.content.Context;
 import android.view.View;
 import android.widget.Toast;
+
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.DataPointInterface;
@@ -10,40 +11,45 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 import com.jjoe64.graphview.series.OnDataPointTapListener;
 import com.jjoe64.graphview.series.Series;
 
+import static com.example.RadarHealthMonitoring.MainActivity.m;
+
 /**
  * Skapar graferna
  */
 class Graph {
 
-    private double dataNumber = 0;
     private LineGraphSeries<DataPoint> series;
     private Context context;
+    private GraphView graph;
+    private int color;
 
     /**
      * Konstruktor
      * @param view
      * @param context
      */
-    Graph(View view, final Context context) {
+    Graph(View view, final Context context, int color) {
+        this.context = context;
+        this.color = color;
         //GraphView graph = (GraphView) findViewById(R.id.graphPulse);
-        GraphView graph = (GraphView) view;
-        series = new LineGraphSeries<>(new DataPoint[]{      //skapar en första mätserie
-                new DataPoint(0, 0)
-        });
-        series.setOnDataPointTapListener(new OnDataPointTapListener() {
-            @Override
-            public void onTap(Series series, DataPointInterface dataPoint) {
-                //Context context = getApplicationContext();
-                Toast.makeText(context, "Value "+dataPoint, Toast.LENGTH_SHORT).show();
-            }
-        });
-        graph.addSeries(series);        //lägger till serien med mätvärden till grafen.
+        graph = (GraphView) view;
+        //graph.setBackgroundColor(m.getResources().getColor(R.color.colorGraphBackground));
+        graph.getGridLabelRenderer().setGridColor(m.getResources().getColor(R.color.colorGraphGrid));
+        graph.getGridLabelRenderer().setHorizontalLabelsColor(m.getResources().getColor(R.color.colorGraphGrid));
+        graph.getGridLabelRenderer().setVerticalLabelsColor(m.getResources().getColor(R.color.colorGraphGrid));
+        graph.getViewport().setBackgroundColor(m.getResources().getColor(R.color.colorGraphBackground));
+        graph.getGridLabelRenderer().setTextSize(25);
+        graph.getGridLabelRenderer().setPadding(35);
+
+        graph.addSeries(newSeries());        //lägger till serien med mätvärden till grafen.
         graph.getViewport().setScrollable(true);        //scrollable in horizontal (x-axis)
         //graph.getViewport().setScrollableY(true);
         graph.getViewport().setScalable(true);      //för zoomning
         //graph.getViewport().setScalableY(true);
         graph.getViewport().setXAxisBoundsManual(true);     //set Viewport window size
-        graph.getViewport().setYAxisBoundsManual(true);
+        //graph.getViewport().setYAxisBoundsManual(true);
+        graph.getViewport().setMinX(-60);
+        graph.getViewport().setMaxX(0);
         //graph.getViewport().setMaxXAxisSize(1);
         //graph.getViewport().setMinY(-1.5);      //begränsar y-axeln med värden
         //graph.getViewport().setMaxY(1.5);
@@ -57,6 +63,25 @@ class Graph {
      * @return series
      */
     LineGraphSeries<DataPoint> getSeries() {
+        return series;
+    }
+
+    void resetSeries() {
+        graph.removeAllSeries();
+        graph.addSeries(newSeries());
+    }
+
+    private LineGraphSeries<DataPoint> newSeries() {
+        series = new LineGraphSeries<>();  //skapar en första mätserie
+        series.setThickness(13);
+        series.setColor(color);
+        series.setOnDataPointTapListener(new OnDataPointTapListener() {
+            @Override
+            public void onTap(Series series, DataPointInterface dataPoint) {
+                //Context context = getApplicationContext();
+                Toast.makeText(context, "" + String.format("%.1f",dataPoint.getY()) + " bpm at time " + String.format("%.1f",dataPoint.getX()) + " s", Toast.LENGTH_SHORT).show();
+            }
+        });
         return series;
     }
 }

@@ -20,9 +20,6 @@ class ConnectThread extends Thread {
     private boolean hasSocket = false;
     private int delayTime;
 
-    //BluetoothCommunicationService commService;
-    //ConnectedThread connectedThread;
-
     ConnectThread(BluetoothDevice device) {
         // Use a temporary object that is later assigned to mmSocket
         // because mmSocket is final.
@@ -34,10 +31,7 @@ class ConnectThread extends Thread {
         } else {
             deviceUUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
         }
-
-        //UUID deviceUUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
         Log.d("ConnectionThread", "UUID: " + deviceUUID);
-
         try {
             // Get a BluetoothSocket to connect with the given BluetoothDevice.
             // MY_UUID is the app's UUID string, also used in the server code.
@@ -53,61 +47,47 @@ class ConnectThread extends Thread {
 
     public void run() {
         // Cancel discovery because it otherwise slows down the connection.
+        b.uiBluetoothConnecting(); // TODO undersök om start funkar, annars run istället för start
         b.bluetoothAdapter.cancelDiscovery();
 
-        if (b.autoConnect) {
-            delayTime = 100;
-        } else {
-            delayTime = 1;
+        try {
+            // Connect to the remote device through the socket. This call blocks
+            // until it succeeds or throws an exception.
+            isRunning = true;
+            mmSocket.connect();
+            Log.d(TAG,"try mmSocket.connect()");
+        } catch (IOException connectException) {
+            // Unable to connect; close the socket and return.
+            isRunning = false;
+            Log.d(TAG,"failed mmSocket.connect()" + connectException);
+
+            try {
+                mmSocket.close();
+                Log.d(TAG,"try mmSocket.close();");
+            } catch (IOException closeException) {
+                Log.e(TAG, "Could not close the client socket", closeException);
+                Log.d(TAG,"failed mmSocket.close();");
+            }
+            hasSocket = false;
+            b.connectManager();
+            return;
         }
-        //for (int i = 1; i<3;i++) {
-//        handler.postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-                try {
-                    // Connect to the remote device through the socket. This call blocks
-                    // until it succeeds or throws an exception.
-                    mmSocket.connect();
-                    //mmDevice.createBond();
-                    isRunning = true;
-                    Log.d(TAG,"try mmSocket.connect()");
-                } catch (IOException connectException) {
-                    // Unable to connect; close the socket and return.
-                    isRunning = false;
-                    Log.d(TAG,"failed mmSocket.connect()" + connectException);
 
-                    try {
-                        mmSocket.close();
-                        Log.d(TAG,"try mmSocket.close();");
-                    } catch (IOException closeException) {
-                        Log.e(TAG, "Could not close the client socket", closeException);
-                        Log.d(TAG,"failed mmSocket.close();");
-                    }
-                    hasSocket = false;
-                    b.connectManager();
-                    return;
-                }
-
-                // The connection attempt succeeded. Perform work associated with
-                // the connection in a separate thread.
-                //manageMyConnectedSocket(mmSocket);
-                b.bluetoothConnected();
-                //b.connectedThread = new BluetoothCommunicationService.ConnectedThread(mmSocket);
-                b.connectedThread = new ConnectedThread(mmSocket);
-                b.connectedThread.start();
-                Log.d(TAG,"The connection attempt succeeded.");
-                Toast.makeText(b.getApplicationContext(), "Connected to Raspberry Pi", Toast.LENGTH_LONG).show();
-            //}
-        //}, 1); // delay maybe needed
+        // The connection attempt succeeded. Perform work associated with the connection in a separate thread.
+        isRunning = false;
+        b.bluetoothConnected();
+        b.connectedThread = new ConnectedThread(mmSocket);
+        b.connectedThread.start();
+        Log.d(TAG,"The connection attempt succeeded.");
+        Toast.makeText(b.getApplicationContext(), "Connected to Raspberry Pi", Toast.LENGTH_LONG).show();
     }
 
     // Closes the client socket and causes the thread to finish.
-    public void cancel() {
+    void cancel() {
         try {
             Log.d(TAG,"try mmSocket.close()");
-            //b.connectedThread.cancel();
+            //b.connectedThread.cancel(); // TODO undersök om behövs?
             mmSocket.close();
-            isRunning = false;
             b.bluetoothDisconnected(false);
         } catch (IOException e) {
             Log.d(TAG, "Could not close the client socket", e);
@@ -116,11 +96,11 @@ class ConnectThread extends Thread {
         hasSocket=false;
     }
 
-    public boolean isRunning() {
+    boolean isRunning() {
         return isRunning;
     }
 
-    public boolean hasSocket() {
+    boolean hasSocket() {
         return hasSocket;
     }
 

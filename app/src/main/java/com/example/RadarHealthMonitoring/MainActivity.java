@@ -2,35 +2,65 @@ package com.example.RadarHealthMonitoring;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.jjoe64.graphview.series.DataPoint;
 
+import java.util.List;
+
+import pub.devrel.easypermissions.EasyPermissions;
+
 import static com.example.RadarHealthMonitoring.Bluetooth.b;
+import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAutoConnect;
 
 
 /**
  * Huvudaktiviteten för appen
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
+
+    static MainActivity m; // for static activity
+    private static final String msg = "MainActivity";
+    boolean measurementRunning = false;
+    MenuItem bluetoothMenuItem;
+    Button startStoppMeasureButton;
+    TextView pulseValueView;
+    TextView breathValueView;
+    Intent intentBluetooth;
 
     private double dataNumber = 0;
     private Graph graphPulse;
     private Graph graphBreathe;
-    private static final String msg = "MyActivity";
-    boolean bluetoothConnectFromMenu = false;
-    MenuItem bluetoothMenuItem;
-    static MainActivity m; // for static activity
+    double yPulse;
+    double yBreathe;
+    DataPoint dataPulse;
+    DataPoint dataBreathe;
 
-    Intent intentBluetooth;
+    HandlerThread handlerThread;
+    Looper looper;
+    Handler handler;
+
+    HandlerThread handlerThreadGraph;
+    Looper looperGraph;
+    Handler handlerGraph;
 
     /**
-     * Skapar huvudfönstret
+     * On start up: creates the graphs and starts the Bluetooth service that auto connects to
+     * a Raspberry Pi with bluetooth
+     * The MainActivity hosts the graphs, a button to start measuring pulse and breath rate,
+     * an options menu with settings, a reset button and a button/indicator that shows the connection state
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,23 +68,37 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         m = MainActivity.this;
         PreferenceManager.setDefaultValues(this, R.xml.settings, false); // så systemet inte sätter default
+        startStoppMeasureButton = findViewById(R.id.startStoppMeasureButton); // Start button
+        pulseValueView = findViewById(R.id.pulseValueView);
+        breathValueView = findViewById(R.id.breathValueView);
+
         /* Graphs */
-        graphPulse = new Graph(findViewById(R.id.graphPulse),getApplicationContext());
-        graphBreathe = new Graph(findViewById(R.id.graphBreathe),getApplicationContext());
+        graphPulse = new Graph(findViewById(R.id.graphPulse),getApplicationContext(),getResources().getColor(R.color.colorGraphPulse));
+        graphBreathe = new Graph(findViewById(R.id.graphBreathe),getApplicationContext(),getResources().getColor(R.color.colorGraphBreath));
         /* Bluetooth */
         intentBluetooth = new Intent(this, Bluetooth.class);
         startService(intentBluetooth);
 
+        /*handlerThread = new HandlerThread("HandlerThread");
+        handlerThread.start();
+        looper = handlerThread.getLooper();
+        handler = new Handler(looper);*/
+
+        /*handlerThreadGraph = new HandlerThread("HandlerThreadGraph");
+        handlerThreadGraph.start();
+        looperGraph = handlerThreadGraph.getLooper();
+        handlerGraph = new Handler(looperGraph);*/
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         stopService(intentBluetooth);
+        measurementRunning = false;
     }
 
     /**
-     * Skapar menyn i huvudfönstret
+     * Creates a options menu with settings, a reset button and a button/indicator that shows the connection state
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -68,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Om knapparna i menyraden aktiveras
+     * When a menu item is selected
      */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -78,39 +122,117 @@ public class MainActivity extends AppCompatActivity {
                 this.startActivity(intentSettings);
                 return true;
             case R.id.bluetooth:
-                // TODO if BT off
                 if (!b.bluetoothOnChecked) {
                     b.startBluetooth(true);
                 } else {
                     if (!b.bluetoothAutoConnectChecked) {
                         b.autoConnect = true;
                         b.autoConnect();
-                        //return false;
                     } else {
+                        b.autoConnect = false;
+                        b.bluetoothAdapter.cancelDiscovery();
                         if (b.connectThread != null) {
                             b.connectThread.cancel();
-                            b.autoConnect = false;
-                            b.bluetoothAdapter.cancelDiscovery();
                         } else {
-                            //return true;
+                            //b.bluetoothDisconnected(false); // TODO undersök
+                            b.bluetoothAutoConnectChecked = false;
+                            if (b.bluetoothSettingsActive) {
+                                bluetoothAutoConnect.setChecked(false);
+                            }
                         }
                     }
                 }
-                //return false;
-                //return false;
-                //bluetoothConnectFromMenu = !bluetoothConnectFromMenu;
                 return true;
+            case R.id.reset_graphs:
+                graphPulse.resetSeries();
+                graphBreathe.resetSeries();
+                dataNumber = 0;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
-    public void addData(View view) {        //knapp för att lägga till ett värde till serien
-        double yPulse = Math.sin(dataNumber*2)/2+0.5;
-        double yBreathe = Math.sin(dataNumber)/2+0.5;
-        DataPoint dataPulse = new DataPoint(dataNumber,yPulse);
-        DataPoint dataBreathe = new DataPoint(dataNumber,yBreathe);
-        graphPulse.getSeries().appendData(dataPulse, true,100); // seriesPulse
-        graphBreathe.getSeries().appendData(dataBreathe, true,100); // seriesBreathe
+
+    // ########## ########## Methods ########## ##########
+
+    /**
+     * Start/stop the measurement
+     * Activates from the startStoppMeasureButton
+     * @param view from the button
+     */
+    public void measureOnClick(View view) {
+        if (!measurementRunning) {
+            startStoppMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonOff));
+            startStoppMeasureButton.setText("Stop Measure");
+            loopAddData();
+        } else {
+            startStoppMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonOn));
+            startStoppMeasureButton.setText("Start Measure");
+        }
+        measurementRunning = !measurementRunning;
+    }
+
+    /**
+     * Creates a new thread to create simulated data to the graphs every 500 ms
+     */
+    void loopAddData() {
+        Thread loopAddDataThread = new Thread() {
+            @Override
+            public void run() {
+                do {
+                    addData();
+                    try {
+                        sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } while (measurementRunning);
+                Log.d("main", "Loop Finished");
+            }
+        };
+        loopAddDataThread.start();
+    }
+
+    /**
+     * Add simulated data to the graps
+     */
+    public void addData() {        //knapp för att lägga till ett värde till serien
+        yPulse = Math.sin(dataNumber*3/30)/2+70+Math.random()/2;
+        yBreathe = Math.sin(dataNumber/20)/2+22+Math.random()/3;
+        dataPulse = new DataPoint(dataNumber,yPulse);
+        dataBreathe = new DataPoint(dataNumber,yBreathe);
         dataNumber += 0.5;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                graphPulse.getSeries().appendData(dataPulse, true,1000); // seriesPulse
+                pulseValueView.setText("Pulse: " + String.format("%.1f",yPulse));
+                graphBreathe.getSeries().appendData(dataBreathe, true,1000); // seriesBreathe
+                breathValueView.setText("Breath rate: " + String.format("%.1f",yBreathe));
+            }
+        });
+    }
+
+    // ########## ########## Request Permission ########## ##########
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+    }
+
+    @Override
+    public void onPermissionsGranted(int requestCode, List<String> list) {
+        // Some permissions have been granted
+        if (requestCode == 2) {
+            b.startDiscovery();
+        }
+    }
+
+    @Override
+    public void onPermissionsDenied(int requestCode, List<String> list) {
+        // Some permissions have been denied
+        if (requestCode == 2) {
+            b.bluetoothAutoConnectChecked = false;
+            Toast.makeText(getApplicationContext(), "Location Permissions denied", Toast.LENGTH_LONG).show();
+        }
     }
 }

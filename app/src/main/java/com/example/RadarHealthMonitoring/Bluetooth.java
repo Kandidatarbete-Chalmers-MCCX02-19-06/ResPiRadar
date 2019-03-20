@@ -34,12 +34,9 @@ public class Bluetooth extends Service {
     static Bluetooth b; // for static service
     private final String TAG = "Bluetooth";
     private final int REQUEST_FINE_LOCATION = 2;
-
-    boolean alwaysBind = false;
-
     ConnectThread connectThread;
+    ConnectedThread connectedThread;
     Handler handler = new Handler();
-
     BluetoothAdapter bluetoothAdapter;
     BluetoothDevice activeDevice;
     Set<BluetoothDevice> pairedDevices;
@@ -64,9 +61,6 @@ public class Bluetooth extends Service {
     boolean bluetoothConnectChecked = false;
     boolean bluetoothAutoConnectChecked = false;
 
-    //BluetoothCommunicationService comService;
-    ConnectedThread connectedThread;
-
     // Constants that indicate the current connection state
     public static final int STATE_NONE = 0;       // we're doing nothing
     public static final int STATE_LISTEN = 1;     // now listening for incoming connections
@@ -89,11 +83,9 @@ public class Bluetooth extends Service {
         registerReceiver(BluetoothBroadcastReceiverSearch, BTIntentSearch);
         IntentFilter BTIntentSearchFinished = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         registerReceiver(BluetoothBroadcastReceiverSearchFinished, BTIntentSearchFinished);
-        IntentFilter BTIntentScanChange = new IntentFilter(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
-        registerReceiver(BluetoothBroadcastReceiverScan, BTIntentScanChange);
         IntentFilter BTIntentBondChange = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         registerReceiver(BluetoothBroadcastReceiverBondChange, BTIntentBondChange);
-        startBluetooth(true);
+        startBluetooth(true); // Autostart bluetoth on start up
     } // end off onCreate
 
     @Override
@@ -109,7 +101,6 @@ public class Bluetooth extends Service {
         unregisterReceiver(BluetoothBroadcastReceiverAction);
         unregisterReceiver(BluetoothBroadcastReceiverSearch);
         unregisterReceiver(BluetoothBroadcastReceiverSearchFinished);
-        unregisterReceiver(BluetoothBroadcastReceiverScan);
         unregisterReceiver(BluetoothBroadcastReceiverBondChange);
         startBluetooth(false);
 
@@ -122,10 +113,11 @@ public class Bluetooth extends Service {
         return null;
     }
 
-    // ########## ########## Program ########## ##########
+    // ########## ########## Methods ########## ##########
 
     /**
      * Starts or disables Bluetooth
+     * Starts at app start up
      */
     boolean startBluetooth(boolean start) {
         if (start) {
@@ -140,7 +132,7 @@ public class Bluetooth extends Service {
                     bluetoothOn();
                     if (connectThread != null) {
                         if (connectThread.isRunning()) {
-                            // connectedThread.cancel(); // redudant
+                            // connectedThread.cancel(); // redudant?
                             connectThread.cancel();
                         }
                     }
@@ -150,7 +142,7 @@ public class Bluetooth extends Service {
             if (bluetoothAdapter != null) {
                 if (connectThread != null) {
                     if (connectThread.isRunning()) {
-                        // connectedThread.cancel(); // redudant
+                        // connectedThread.cancel(); // redudant?
                         connectThread.cancel();
                     }
                 }
@@ -163,6 +155,10 @@ public class Bluetooth extends Service {
         return false;
     }
 
+    /**
+     * Method to be called when bluetooth is on
+     * Auto connects to Raspberry Pi
+     */
     void bluetoothOn() { // When bluetooth is turned on, or already on at start
         updateBluetoothList();
         bluetoothSearchEnable = true;
@@ -177,6 +173,57 @@ public class Bluetooth extends Service {
         autoConnect();
     }
 
+    /**
+     * Auto connects to Raspberry Pi
+     * Search and bonds to Raspberry Pi if needed
+     * Attempts to search and connect two times
+     */
+    void autoConnect() {
+        autoConnect = true; // eventually remove
+        connectAttempt = 1;
+        searchAttempts = 1;
+        bluetoothAutoConnectChecked = true;
+        if (bluetoothSettingsActive) {
+            bluetoothAutoConnect.setChecked(true);
+        }
+        Log.d(TAG, "activeDevice" + activeDevice);
+        boolean isRaspberryPi = isRaspberryPi(activeDevice);
+        Log.d(TAG, "start isRaspberryPi: " + isRaspberryPi);
+        if (!isRaspberryPi) {
+            updatePairedDevices();
+            for (BluetoothDevice device : pairedDevices) {
+                if (isRaspberryPi(device)) {
+                    activeDevice = device;
+                    isRaspberryPi = true;
+                    //bluetoothListIndicator
+                    if (bluetoothSettingsActive) {
+                        bluetoothList.setValue(raspberryPiMAC);
+                        bluetoothList.setSummary(bluetoothList.getEntry());
+                    }
+                    break;
+                }
+            }
+            Log.d(TAG, "update device isRaspberryPi: " + isRaspberryPi);
+            if (!isRaspberryPi) {
+                startDiscovery();
+            } else {
+                Log.d(TAG, "bonded: " + activeDevice.getBondState());
+                connectBluetooth(true);
+            }
+            Log.d(TAG, "start discovery isRaspberryPi: " + isRaspberryPi);
+        } else {
+            if (activeDevice.getBondState() != 12) {
+                startDiscovery(); // TODO try when stop auto connect
+            } else {
+                connectBluetooth(true);
+            }
+        }
+    }
+
+    /**
+     * Connects to Raspberry Pi with bluetooth rfcomm serial communication
+     * @param connect used to differ auto connect to regular connect with boolean autoConnect
+     */
     void connectBluetooth(boolean connect) { // TODO Callback Manager
         if (connect) {
             if (!(activeDevice == null)) {
@@ -214,48 +261,12 @@ public class Bluetooth extends Service {
         }
     }
 
-    void autoConnect() {
-        autoConnect = true; // eventually remove
-        connectAttempt = 1;
-        searchAttempts = 1;
-        bluetoothAutoConnectChecked = true;
-        if (bluetoothSettingsActive) {
-            bluetoothAutoConnect.setChecked(true);
-        }
-        Log.d(TAG, "activeDevice" + activeDevice);
-        boolean isRaspberryPi = isRaspberryPi(activeDevice);
-        Log.d(TAG, "start isRaspberryPi: " + isRaspberryPi);
-        if (!isRaspberryPi) {
-            updatePairedDevices();
-            for (BluetoothDevice device : pairedDevices) {
-                if (isRaspberryPi(device)) {
-                    activeDevice = device;
-                    isRaspberryPi = true;
-                    //bluetoothListIndicator
-                    if (bluetoothSettingsActive) {
-                        bluetoothList.setValue(raspberryPiMAC);
-                        bluetoothList.setSummary(bluetoothList.getEntry());
-                    }
-                    break;
-                }
-            }
-            Log.d(TAG, "update device isRaspberryPi: " + isRaspberryPi);
-            if (!isRaspberryPi) {
-                startDiscovery();
-            } else {
-                Log.d(TAG, "bonded: " + activeDevice.getBondState());
-                connectBluetooth(true);
-            }
-            Log.d(TAG, "start discovery isRaspberryPi: " + isRaspberryPi);
-        } else {
-            if (activeDevice.getBondState() != 12) {
-                startDiscovery();
-            } else {
-                connectBluetooth(true);
-            }
-        }
-    }
-
+    /**
+     * Method for handle not succeeded connections at connectThread
+     * Only used with auto connect
+     * Tries to connect a second time, then it searches up to two times for Raspberry Pi
+     * If Raspberry Pi found, it bonds and connects with two attempts
+     */
     void connectManager() { // If device did not connect
         if (autoConnect) {
             Log.d(TAG, "connectManager: " + connectAttempt);
@@ -303,10 +314,78 @@ public class Bluetooth extends Service {
         }
     }
 
+    /**
+     * Method to be called when connected
+     */
+    synchronized void bluetoothConnected() {
+        b.bluetoothConnectChecked = true;
+        b.bluetoothAutoConnectChecked = true;
+        b.bluetoothWriteEnable = true;
+        b.connected = true;
+        b.bluetoothSearchEnable = false;
+        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_connected_white_24dp);
+        if (b.bluetoothSettingsActive) {
+            bluetoothConnect.setChecked(true);
+            bluetoothAutoConnect.setChecked(true);
+            bluetoothSearch.setEnabled(false);
+            bluetoothWrite.setEnabled(true);
+        }
+    }
+
+    /**
+     * Method to be called when disconnected
+     * @param uiThread Runs on the uiThread i true, needed for update ui components from another thread
+     */
+    synchronized void bluetoothDisconnected(boolean uiThread) {
+        b.connected = false;
+        b.bluetoothConnectChecked = false;
+        b.bluetoothAutoConnectChecked = false;
+        b.bluetoothSearchEnable = true;
+        b.bluetoothWriteEnable = false;
+        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
+        if (b.bluetoothSettingsActive && !uiThread) {
+            bluetoothConnect.setChecked(false);
+            bluetoothAutoConnect.setChecked(false);
+            bluetoothSearch.setEnabled(true);
+            bluetoothWrite.setEnabled(false);
+        } else if (b.bluetoothSettingsActive && uiThread) { // TODO Undersök
+            //bs.connectedThreadDisconnect();
+            s.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    bluetoothConnect.setChecked(false);
+                    bluetoothAutoConnect.setChecked(false);
+                    bluetoothSearch.setEnabled(true);
+                    bluetoothWrite.setEnabled(false);
+                }
+            });
+        }
+    }
+
+    /**
+     * Start searching for Raspberry Pi with bluetooth
+     * Needs Fine Location, will requests it if needed
+     * When auto connect, has two attempts to search with searchManager
+     * Bonds when found and connects if autoConnect
+     */
+    void startDiscovery() {
+        foundRaspberryPi = false;
+        if (hasLocationPermissions()) {
+            bluetoothAdapter.startDiscovery();
+            Log.d(TAG, "Enable search");
+        } else {
+            requestLocationPermission();
+        }
+    }
+
+    /**
+     * Method for handle not succeeded discoveries/searches
+     * Tries to search after Raspberry Pi another time of autoConnect
+     */
     void searchManager() {
         if (autoConnect) {
             Log.d(TAG, "SearchManager: " + searchAttempts);
-            if (searchAttempts < 3) { // will search max 3 times if RPI not found
+            if (searchAttempts < 2) { // will search max 2 times if RPI not found
                 searchAttempts++;
                 startDiscovery();
             } else {
@@ -319,20 +398,36 @@ public class Bluetooth extends Service {
         }
     }
 
-    void startDiscovery() {
-        foundRaspberryPi = false;
-        if (hasLocationPermissions()) {
-            bluetoothAdapter.startDiscovery();
-            Log.d(TAG, "Enable search");
+    /**
+     * Checks the location permissions
+     * @return true if already has permission
+     */
+    boolean hasLocationPermissions() {
+        return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    /**
+     * Requests for Fine Location permission
+     * The results are handled either at MainActivity if active or BluetoothSettings if active
+     */
+    void requestLocationPermission() {
+        if (bluetoothSettingsActive) {
+            bs.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
         } else {
-            requestLocationPermission();
+            m.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
         }
     }
 
+    /**
+     * Updates the paired devices the system already has
+     */
     void updatePairedDevices() {
         pairedDevices = bluetoothAdapter.getBondedDevices();
     }
 
+    /**
+     * To set the activeDevice (the device to be connected to) when changed at the bluetoothList
+     */
     void setActiveDevice() {
         if (!(chosenDeviceIndex==-1)) {
             activeDevice = (BluetoothDevice)pairedDevices.toArray()[chosenDeviceIndex];
@@ -343,6 +438,11 @@ public class Bluetooth extends Service {
         }
     }
 
+    /**
+     * Checks if the device is Raspberry Pi
+     * @param device the device to compare with
+     * @return true if the devices name or hard ware address equals the Raspberry Pi's
+     */
     boolean isRaspberryPi(BluetoothDevice device) {
         if (device != null) {
             if (device.getName() == null) {
@@ -353,38 +453,6 @@ public class Bluetooth extends Service {
             }
         } else {
             return false;
-        }
-    }
-
-    void bluetoothDisconnected(boolean newThread) {
-        b.connected = false;
-        b.bluetoothConnectChecked = false;
-        b.bluetoothAutoConnectChecked = false;
-        b.bluetoothSearchEnable = true;
-        b.bluetoothWriteEnable = false;
-        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
-        if (b.bluetoothSettingsActive && !newThread) {
-            bluetoothConnect.setChecked(false);
-            bluetoothAutoConnect.setChecked(false);
-            bluetoothSearch.setEnabled(true);
-            bluetoothWrite.setEnabled(false);
-        } else if (b.bluetoothSettingsActive && newThread) {
-            bs.connectedThreadDisconnect();
-        }
-    }
-
-    void bluetoothConnected() {
-        b.bluetoothConnectChecked = true;
-        b.bluetoothAutoConnectChecked = true;
-        b.bluetoothWriteEnable = true;
-        b.connected = true;
-        b.bluetoothSearchEnable = false;
-        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_connected_white_24dp);
-        if (b.bluetoothSettingsActive) {
-            bluetoothConnect.setChecked(true);
-            bluetoothAutoConnect.setChecked(true);
-            bluetoothSearch.setEnabled(false);
-            bluetoothWrite.setEnabled(true);
         }
     }
 
@@ -416,13 +484,45 @@ public class Bluetooth extends Service {
         }
     }
 
-    boolean hasLocationPermissions() {
-        return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    void requestLocationPermission() { // TODO Se till att vid automatisk anlutning loopa så den ansluts
-        s.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
-        //log("Requested user enable Location. Try starting the scan again.");
+    /**
+     * Starts a new thread to get a flashing bluetooth symbol at the options menu when connecting
+     * Updates the symbol every 500 ms
+     */
+    synchronized void uiBluetoothConnecting() {
+        Thread uiBluetoothConnectingThread = new Thread() { // TODO check if working, if it stops at onDestroy
+            @Override
+            public void run() {
+                boolean blueIC = false;
+                while (connectThread.isRunning()) {
+                    Log.d(TAG, "connectThread is alive");
+                    final boolean finalBlueIC = blueIC;
+                    m.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (finalBlueIC)
+                                m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
+                            else
+                                m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_blue_24dp);
+                        }
+                    });
+                    blueIC = !blueIC;
+                    try {
+                        sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (!connected && blueIC) {
+                    m.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
+                        }
+                    });
+                }
+            }
+        };
+        uiBluetoothConnectingThread.start();
     }
 
     // ########## ########## BroadcastReceivers ########## ##########
@@ -446,7 +546,7 @@ public class Bluetooth extends Service {
                         bluetoothListEnable = false;
                         bluetoothConnectChecked = false;
                         bluetoothAutoConnectChecked = false;
-                        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_disabled_white_24dp);
+                        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_disabled_gray_24dp);
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(false);
                             bluetoothOn.setTitle("Bluetooth Off");
@@ -539,40 +639,6 @@ public class Bluetooth extends Service {
                     if (!autoConnect) {
                         Toast.makeText(context, "Did not find Raspberry Pi", Toast.LENGTH_LONG).show();
                     }
-                }
-            }
-        }
-    };
-
-    // ########## ACTION_SCAN_MODE_CHANGED ##########
-    /**
-     * Broadcast Receiver for changes made to bluetooth states such as:
-     * 1) Discoverability mode on/off or expire.
-     */
-    public BroadcastReceiver BluetoothBroadcastReceiverScan = new BroadcastReceiver() { // TODO Ta bort
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (action.equals(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED)) {
-                int mode = intent.getIntExtra(BluetoothAdapter.EXTRA_SCAN_MODE, BluetoothAdapter.ERROR);
-                switch (mode) {
-                    //Device is in Discoverable Mode
-                    case BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE:
-                        Log.d(TAG, "mBroadcastReceiver2: Discoverability Enabled.");
-                        break;
-                    //Device not in discoverable mode
-                    case BluetoothAdapter.SCAN_MODE_CONNECTABLE:
-                        Log.d(TAG, "mBroadcastReceiver2: Discoverability Disabled. Able to receive connections.");
-                        break;
-                    case BluetoothAdapter.SCAN_MODE_NONE:
-                        Log.d(TAG, "mBroadcastReceiver2: Discoverability Disabled. Not able to receive connections.");
-                        break;
-                    case BluetoothAdapter.STATE_CONNECTING:
-                        Log.d(TAG, "mBroadcastReceiver2: Connecting....");
-                        break;
-                    case BluetoothAdapter.STATE_CONNECTED:
-                        Log.d(TAG, "mBroadcastReceiver2: Connected.");
-                        break;
                 }
             }
         }

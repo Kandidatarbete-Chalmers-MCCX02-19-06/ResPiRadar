@@ -16,6 +16,10 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import java.util.List;
+
+import pub.devrel.easypermissions.EasyPermissions;
+
 import static com.example.RadarHealthMonitoring.Bluetooth.b;
 
 /**
@@ -111,7 +115,7 @@ public class Settings extends AppCompatPreferenceActivity {
      *  Inställningar för Bluetooth
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class BluetoothSettings extends PreferenceFragment {
+    public static class BluetoothSettings extends PreferenceFragment implements EasyPermissions.PermissionCallbacks {
 
         static SwitchPreference bluetoothOn;
         static SwitchPreference bluetoothAutoConnect;
@@ -131,13 +135,6 @@ public class Settings extends AppCompatPreferenceActivity {
 
         static BluetoothSettings bs; // for static service
         private static Handler uiHandler = new Handler(Looper.getMainLooper()); // static handler
-
-        @Override
-        public void onDestroy() {
-            super.onDestroy();
-            Log.d(Settingsmsg, "BluetoothSettings onDestroy");
-            b.bluetoothSettingsActive = false;
-        }
 
         // ########## ########## onCreate ########## ##########
 
@@ -178,6 +175,48 @@ public class Settings extends AppCompatPreferenceActivity {
             bluetoothList.setEnabled(b.bluetoothListEnable);
 
             // ########## Preference Listeners ##########
+
+            // Starta Bluetooth Swithc Listener
+            bluetoothOn.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    return b.startBluetooth((boolean)newValue);
+                }
+            });
+
+            // Auto connect switch listener
+            bluetoothAutoConnect.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    if ((boolean) newValue) {
+                        b.autoConnect = true;
+                        b.autoConnect();
+                        return false;
+                    } else {
+                        b.autoConnect = false;
+                        b.bluetoothAdapter.cancelDiscovery();
+                        if (b.connectThread != null) {
+                            Log.d(Settingsmsg, "cancel Thread");
+                            b.connectThread.cancel();
+                        } else {
+                            b.bluetoothAutoConnectChecked = false;
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            });
+
+            // Change Raspberry Pi bluetooth name or MAC address text preference
+            bluetoothRaspberryPiName.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    b.raspberryPiName = (String) newValue;
+                    preference.setSummary((String)newValue);
+                    return true;
+                }
+            });
+
             // Ändring av enhet i Bluetoothlistan Listener
             bluetoothList.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
@@ -203,14 +242,6 @@ public class Settings extends AppCompatPreferenceActivity {
                 }
             });
 
-            // Starta Bluetooth Swithc Listener
-            bluetoothOn.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    return b.startBluetooth((boolean)newValue);
-                }
-            });
-
             // Leta efter bluetoothenheter Switch Listener
             bluetoothSearch.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
@@ -223,6 +254,10 @@ public class Settings extends AppCompatPreferenceActivity {
                         b.bluetoothAdapter.cancelDiscovery();
                         Log.d(Settingsmsg, "Disable search");
                         b.autoConnect = false;
+                        if (!b.connected) {
+                            b.bluetoothAutoConnectChecked = false;
+                            bluetoothAutoConnect.setChecked(false);
+                        }
                         return true;
                     }
                     return false;
@@ -254,38 +289,6 @@ public class Settings extends AppCompatPreferenceActivity {
                 }
             });
 
-            // Change Raspberry Pi bluetooth name or MAC address text preference
-            bluetoothRaspberryPiName.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    b.raspberryPiName = (String) newValue;
-                    preference.setSummary((String)newValue);
-                    return true;
-                }
-            });
-
-            // Auto connect switch listener
-            bluetoothAutoConnect.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    if ((boolean) newValue) {
-                        b.autoConnect = true;
-                        b.autoConnect();
-                        return false;
-                    } else {
-                        if (b.connectThread != null) {
-                            Log.d(Settingsmsg, "cancel Thread");
-                            b.connectThread.cancel();
-                            b.autoConnect = false;
-                            b.bluetoothAdapter.cancelDiscovery();
-                        } else {
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-            });
-
             // Write to  Raspberry Pi text preference
             bluetoothWrite.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
@@ -298,11 +301,17 @@ public class Settings extends AppCompatPreferenceActivity {
                     return true;
                 }
             });
+        } // end of onCreate
 
+        @Override
+        public void onDestroy() {
+            super.onDestroy();
+            Log.d(Settingsmsg, "BluetoothSettings onDestroy");
+            b.bluetoothSettingsActive = false;
         }
 
         // ########## ########## Methods ########## ##########
-        void connectedThreadDisconnect() {
+        void connectedThreadDisconnect() { // TODO ta bort
             s.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -312,6 +321,31 @@ public class Settings extends AppCompatPreferenceActivity {
                     bluetoothWrite.setEnabled(false);
                 }
             });
+        }
+
+        // ########## ########## Request Permission ########## ##########
+        @Override
+        public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+            EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+        }
+
+        @Override
+        public void onPermissionsGranted(int requestCode, List<String> list) {
+            // Some permissions have been granted
+            if (requestCode == 2) {
+                b.startDiscovery();
+            }
+        }
+
+        @Override
+        public void onPermissionsDenied(int requestCode, List<String> list) {
+            // Some permissions have been denied
+            if (requestCode == 2) {
+                b.bluetoothAutoConnectChecked = false;
+                Settings.BluetoothSettings.bluetoothAutoConnect.setChecked(false);
+                Toast.makeText(getActivity().getApplicationContext(), "Location Permissions denied", Toast.LENGTH_LONG).show();
+            }
         }
 
     } // end of BluetoothSettings
@@ -344,7 +378,7 @@ public class Settings extends AppCompatPreferenceActivity {
         }
     };
 
-    private static void bindPreferenceSummaryToValue(Preference preference) {
+    private static void bindPreferenceSummaryToValue(Preference preference) { // TODO undersök om behövs
         // Set the listener to watch for value changes.
         preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
         // Trigger the listener immediately with the preference's current value.
@@ -353,13 +387,4 @@ public class Settings extends AppCompatPreferenceActivity {
                         .getDefaultSharedPreferences(preference.getContext())
                         .getString(preference.getKey(), ""));
     }
-
-    /*boolean hasLocationPermissions() {
-        return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    void requestLocationPermission() { // TODO Se till att vid automatisk anlutning loopa så den ansluts
-        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
-        //log("Requested user enable Location. Try starting the scan again.");
-    }*/
 } // end of Settings.class

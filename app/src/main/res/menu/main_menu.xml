@@ -4,10 +4,10 @@
 
     <!-- Skapar menyraden i main-aktiviteten -->
     <item
-        android:id="@+id/menu_red"
+        android:id="@+id/reset_graphs"
         android:orderInCategory="3"
         app:showAsAction="never"
-        android:title="Meny 1"/>
+        android:title="Reset Graphs"/>
     <item
         android:id="@+id/menu_green"
         android:orderInCategory="4"
@@ -23,7 +23,7 @@
         android:id="@+id/bluetooth"
         android:title="Bluetooth"
         android:orderInCategory="1"
-        android:icon="@drawable/ic_bluetooth_disabled_white_24dp"
+        android:icon="@drawable/ic_bluetooth_disabled_gray_24dp"
         app:showAsAction="ifRoom"/>
 
 </menu>
