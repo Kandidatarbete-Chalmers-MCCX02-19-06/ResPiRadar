@@ -1,6 +1,7 @@
 package com.example.RadarHealthMonitoring;
 
 import android.bluetooth.BluetoothSocket;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -24,6 +25,8 @@ public class ConnectedThread extends Thread {
     public final int MESSAGE_READ = 0;
     public final int MESSAGE_WRITE = 1;
     public final int MESSAGE_TOAST = 2;
+    public static final String READ = "READ";
+    public static final String READ_VALUE = "READ_VALUE";
 
     public ConnectedThread(BluetoothSocket socket) {
         Log.d(TAG,"constructor ConnectedThread");
@@ -64,6 +67,9 @@ public class ConnectedThread extends Thread {
                 readMsg.sendToTarget();
                 String readBuf = new String(mmBuffer,0,numBytes); // received data
                 Log.d(TAG, "Message recieved: " + readBuf);
+                Intent readIntent = new Intent(ConnectedThread.READ);
+                readIntent.putExtra(READ_VALUE,readBuf);
+                b.sendBroadcast(readIntent);
             } catch (IOException e) {
                 Log.e(TAG, "Input stream was disconnected", e);
                 b.bluetoothDisconnected(true);

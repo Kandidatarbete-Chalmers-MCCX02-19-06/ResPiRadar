@@ -1,6 +1,10 @@
 package com.example.RadarHealthMonitoring;
 
+import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -23,6 +27,7 @@ import java.util.List;
 import pub.devrel.easypermissions.EasyPermissions;
 
 import static com.example.RadarHealthMonitoring.Bluetooth.b;
+import static com.example.RadarHealthMonitoring.ConnectedThread.READ_VALUE;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAutoConnect;
 
 
@@ -31,14 +36,16 @@ import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluet
  */
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
 
-    static MainActivity m; // for static activity
+    //static MainActivity m; // for static activity
     private static final String msg = "MainActivity";
     boolean measurementRunning = false;
-    MenuItem bluetoothMenuItem;
+    static MenuItem bluetoothMenuItem;
     Button startStoppMeasureButton;
     TextView pulseValueView;
     TextView breathValueView;
     Intent intentBluetooth;
+
+    private final int REQUEST_FINE_LOCATION = 2;
 
     private double dataNumber = 0;
     private Graph graphPulse;
@@ -50,11 +57,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     HandlerThread handlerThread;
     Looper looper;
-    Handler handler;
-
-    HandlerThread handlerThreadGraph;
-    Looper looperGraph;
-    Handler handlerGraph;
+    static Handler handler;
 
     /**
      * On start up: creates the graphs and starts the Bluetooth service that auto connects to
@@ -66,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        m = MainActivity.this;
+        //m = MainActivity.this;
         PreferenceManager.setDefaultValues(this, R.xml.settings, false); // så systemet inte sätter default
         startStoppMeasureButton = findViewById(R.id.startStoppMeasureButton); // Start button
         pulseValueView = findViewById(R.id.pulseValueView);
@@ -84,10 +87,12 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         looper = handlerThread.getLooper();
         handler = new Handler(looper);*/
 
-        /*handlerThreadGraph = new HandlerThread("HandlerThreadGraph");
-        handlerThreadGraph.start();
-        looperGraph = handlerThreadGraph.getLooper();
-        handlerGraph = new Handler(looperGraph);*/
+        IntentFilter intentFilterRequestPermission = new IntentFilter(Bluetooth.REQUEST_PERMISSION);
+        registerReceiver(PermissionBroadcastReceiver, intentFilterRequestPermission);
+        IntentFilter intentFilterBluetoothIcon = new IntentFilter(Bluetooth.SET_BLUETOOTH_ICON);
+        registerReceiver(BluetoothIconBroadcastReceiver, intentFilterBluetoothIcon);
+        IntentFilter intentFilterReadData = new IntentFilter(ConnectedThread.READ);
+        registerReceiver(ReadDataBroadcastReceiver, intentFilterReadData);
     }
 
     @Override
@@ -95,6 +100,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         super.onDestroy();
         stopService(intentBluetooth);
         measurementRunning = false;
+        unregisterReceiver(PermissionBroadcastReceiver);
+        unregisterReceiver(BluetoothIconBroadcastReceiver);
+        unregisterReceiver(ReadDataBroadcastReceiver);
     }
 
     /**
@@ -235,4 +243,46 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             Toast.makeText(getApplicationContext(), "Location Permissions denied", Toast.LENGTH_LONG).show();
         }
     }
+
+    // ########## ########## Broadcast Receivers ########## ##########
+
+    public BroadcastReceiver PermissionBroadcastReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (Bluetooth.REQUEST_PERMISSION.equals(action)) {
+                Log.d(msg, "got intent request permission");
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
+            }
+        }
+    };
+
+    public BroadcastReceiver BluetoothIconBroadcastReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (Bluetooth.SET_BLUETOOTH_ICON.equals(action)) {
+                String icon = intent.getStringExtra(b.ICON);
+                Log.d(msg,"value: " + icon);
+                switch (icon) {
+                    case "ic_bluetooth_white_24dp":
+                        Log.d(msg, "white");
+                        bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
+                        break;
+                    case "ic_bluetooth_blue_24dp":
+                        Log.d(msg, "blue");
+                        bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_blue_24dp);
+                        break;
+                }
+            }
+        }
+    };
+
+    public BroadcastReceiver ReadDataBroadcastReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (ConnectedThread.READ.equals(action)) {
+                String value = intent.getStringExtra(READ_VALUE);
+                Toast.makeText(getApplicationContext(), value, Toast.LENGTH_LONG).show();
+            }
+        }
+    };
 }

@@ -11,6 +11,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.widget.Toast;
@@ -19,7 +20,7 @@ import java.util.Set;
 
 import androidx.annotation.Nullable;
 
-import static com.example.RadarHealthMonitoring.MainActivity.m;
+import static com.example.RadarHealthMonitoring.MainActivity.bluetoothMenuItem;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAutoConnect;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothConnect;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothList;
@@ -50,6 +51,17 @@ public class Bluetooth extends Service {
     int searchAttempts = 1;
     int delay;
 
+    MainActivity mainActivity;
+
+    private static Handler uiHandler;// = new Handler(Looper.getMainLooper()); // static handler
+    static
+    {
+        uiHandler = new Handler(Looper.getMainLooper());
+    }
+    public static void runOnUI(Runnable runnable) {
+        uiHandler.post(runnable);
+    }
+
     // Boolean indicators for BluetoothSettings
     boolean bluetoothSettingsActive = false;
     boolean bluetoothOnChecked= false;
@@ -66,6 +78,11 @@ public class Bluetooth extends Service {
     public static final int STATE_LISTEN = 1;     // now listening for incoming connections
     public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
+
+    // Constants for Broadcast
+    public static final String REQUEST_PERMISSION = "REQUEST_PERMISSION";
+    public static final String SET_BLUETOOTH_ICON = "SET_BLUETOOTH_ICON";
+    public final String ICON = "ICON";
 
     // ########## ########## onCreate ########## ##########
 
@@ -86,6 +103,7 @@ public class Bluetooth extends Service {
         IntentFilter BTIntentBondChange = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         registerReceiver(BluetoothBroadcastReceiverBondChange, BTIntentBondChange);
         startBluetooth(true); // Autostart bluetoth on start up
+
     } // end off onCreate
 
     @Override
@@ -323,7 +341,7 @@ public class Bluetooth extends Service {
         b.bluetoothWriteEnable = true;
         b.connected = true;
         b.bluetoothSearchEnable = false;
-        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_connected_white_24dp);
+        bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_connected_white_24dp);
         if (b.bluetoothSettingsActive) {
             bluetoothConnect.setChecked(true);
             bluetoothAutoConnect.setChecked(true);
@@ -342,7 +360,7 @@ public class Bluetooth extends Service {
         b.bluetoothAutoConnectChecked = false;
         b.bluetoothSearchEnable = true;
         b.bluetoothWriteEnable = false;
-        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
+        bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
         if (b.bluetoothSettingsActive && !uiThread) {
             bluetoothConnect.setChecked(false);
             bluetoothAutoConnect.setChecked(false);
@@ -409,12 +427,14 @@ public class Bluetooth extends Service {
     /**
      * Requests for Fine Location permission
      * The results are handled either at MainActivity if active or BluetoothSettings if active
+     * A broadcast is sent to MainActivity if handled there
      */
     void requestLocationPermission() {
         if (bluetoothSettingsActive) {
             bs.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
         } else {
-            m.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
+            Intent intent = new Intent(Bluetooth.REQUEST_PERMISSION);
+            sendBroadcast(intent);
         }
     }
 
@@ -487,6 +507,7 @@ public class Bluetooth extends Service {
     /**
      * Starts a new thread to get a flashing bluetooth symbol at the options menu when connecting
      * Updates the symbol every 500 ms
+     * Sends broadcast to MainActivity to update the icons
      */
     synchronized void uiBluetoothConnecting() {
         Thread uiBluetoothConnectingThread = new Thread() { // TODO check if working, if it stops at onDestroy
@@ -494,17 +515,14 @@ public class Bluetooth extends Service {
             public void run() {
                 boolean blueIC = false;
                 while (connectThread.isRunning()) {
-                    Log.d(TAG, "connectThread is alive");
-                    final boolean finalBlueIC = blueIC;
-                    m.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (finalBlueIC)
-                                m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
-                            else
-                                m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_blue_24dp);
-                        }
-                    });
+                    Log.d(TAG, "connectThread is alive " + blueIC);
+                    Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
+                    if (blueIC) {
+                        intent.putExtra(ICON,"ic_bluetooth_white_24dp");
+                    } else {
+                        intent.putExtra(ICON,"ic_bluetooth_blue_24dp");
+                    }
+                    sendBroadcast(intent);
                     blueIC = !blueIC;
                     try {
                         sleep(500);
@@ -513,12 +531,9 @@ public class Bluetooth extends Service {
                     }
                 }
                 if (!connected && blueIC) {
-                    m.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
-                        }
-                    });
+                    Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
+                    intent.putExtra(ICON,"ic_bluetooth_white_24dp");
+                    sendBroadcast(intent);
                 }
             }
         };
@@ -546,7 +561,7 @@ public class Bluetooth extends Service {
                         bluetoothListEnable = false;
                         bluetoothConnectChecked = false;
                         bluetoothAutoConnectChecked = false;
-                        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_disabled_gray_24dp);
+                        bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_disabled_gray_24dp);
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(false);
                             bluetoothOn.setTitle("Bluetooth Off");
@@ -563,7 +578,7 @@ public class Bluetooth extends Service {
                         break;
                     case BluetoothAdapter.STATE_TURNING_ON:
                         bluetoothOnChecked = true;
-                        m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
+                        bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(true);
                             bluetoothOn.setTitle("Bluetooth On");
@@ -616,7 +631,7 @@ public class Bluetooth extends Service {
             if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
                 Log.d(TAG, "Search Started");
                 bluetoothSearchChecked = true;
-                m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_searching_white_24dp);
+                bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_searching_white_24dp);
                 if (bluetoothSettingsActive) {
                     bluetoothSearch.setChecked(true);
                 }
@@ -630,7 +645,7 @@ public class Bluetooth extends Service {
             if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
                 Log.d(TAG,"Finished");
                 bluetoothSearchChecked = false;
-                m.bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
+                bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
                 if (bluetoothSettingsActive) {
                     bluetoothSearch.setChecked(false);
                 }

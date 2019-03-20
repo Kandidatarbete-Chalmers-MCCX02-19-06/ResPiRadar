@@ -11,8 +11,6 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 import com.jjoe64.graphview.series.OnDataPointTapListener;
 import com.jjoe64.graphview.series.Series;
 
-import static com.example.RadarHealthMonitoring.MainActivity.m;
-
 /**
  * Skapar graferna
  */
@@ -34,10 +32,10 @@ class Graph {
         //GraphView graph = (GraphView) findViewById(R.id.graphPulse);
         graph = (GraphView) view;
         //graph.setBackgroundColor(m.getResources().getColor(R.color.colorGraphBackground));
-        graph.getGridLabelRenderer().setGridColor(m.getResources().getColor(R.color.colorGraphGrid));
-        graph.getGridLabelRenderer().setHorizontalLabelsColor(m.getResources().getColor(R.color.colorGraphGrid));
-        graph.getGridLabelRenderer().setVerticalLabelsColor(m.getResources().getColor(R.color.colorGraphGrid));
-        graph.getViewport().setBackgroundColor(m.getResources().getColor(R.color.colorGraphBackground));
+        graph.getGridLabelRenderer().setGridColor(context.getResources().getColor(R.color.colorGraphGrid));
+        graph.getGridLabelRenderer().setHorizontalLabelsColor(context.getResources().getColor(R.color.colorGraphGrid));
+        graph.getGridLabelRenderer().setVerticalLabelsColor(context.getResources().getColor(R.color.colorGraphGrid));
+        graph.getViewport().setBackgroundColor(context.getResources().getColor(R.color.colorGraphBackground));
         graph.getGridLabelRenderer().setTextSize(25);
         graph.getGridLabelRenderer().setPadding(35);
 
