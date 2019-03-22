@@ -82,7 +82,9 @@ public class Bluetooth extends Service {
     // Constants for Broadcast
     public static final String REQUEST_PERMISSION = "REQUEST_PERMISSION";
     public static final String SET_BLUETOOTH_ICON = "SET_BLUETOOTH_ICON";
+    static public final String TOAST = "TOAST";
     public final String ICON = "ICON";
+    public final String TEXT = "TEXT";
 
     // ########## ########## onCreate ########## ##########
 
@@ -323,7 +325,11 @@ public class Bluetooth extends Service {
                     }, 100);
                     break;
                 default :
-                    Toast.makeText(getApplicationContext(), "Error: Couldn't connect to Raspberry Pi", Toast.LENGTH_LONG).show();
+                    // TODO
+                    Intent intent = new Intent(Bluetooth.TOAST);
+                    intent.putExtra(TEXT,"Error: Couldn't connect to Raspberry Pi");
+                    sendBroadcast(intent);
+                    //Toast.makeText(getApplicationContext(), "Error: Couldn't connect to Raspberry Pi", Toast.LENGTH_LONG).show();
                     bluetoothAutoConnectChecked = false;
                     if (bluetoothSettingsActive) {
                         bluetoothAutoConnect.setChecked(false);
@@ -341,7 +347,9 @@ public class Bluetooth extends Service {
         b.bluetoothWriteEnable = true;
         b.connected = true;
         b.bluetoothSearchEnable = false;
-        bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_connected_white_24dp);
+        Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
+        intent.putExtra(ICON,"ic_bluetooth_connected_white_24dp");
+        sendBroadcast(intent);
         if (b.bluetoothSettingsActive) {
             bluetoothConnect.setChecked(true);
             bluetoothAutoConnect.setChecked(true);

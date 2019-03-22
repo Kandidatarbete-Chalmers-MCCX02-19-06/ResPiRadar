@@ -2,9 +2,6 @@ package com.example.RadarHealthMonitoring;
 
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 
 import java.io.IOException;
@@ -21,7 +18,7 @@ public class ConnectedThread extends Thread {
     private byte[] mmBuffer; // mmBuffer store for the stream
 
     private static final String TAG = "MY_APP_DEBUG_TAG";
-    private Handler handler = new Handler(); // handler that gets info from Bluetooth service
+    //private Handler handler = new Handler(); // handler that gets info from Bluetooth service
     public final int MESSAGE_READ = 0;
     public final int MESSAGE_WRITE = 1;
     public final int MESSAGE_TOAST = 2;
@@ -61,10 +58,10 @@ public class ConnectedThread extends Thread {
                 // Read from the InputStream.
                 numBytes = mmInStream.read(mmBuffer);
                 // Send the obtained bytes to the UI activity.
-                Message readMsg = handler.obtainMessage(
+               /* Message readMsg = handler.obtainMessage(
                         MESSAGE_READ, numBytes, -1,
                         mmBuffer);
-                readMsg.sendToTarget();
+                readMsg.sendToTarget();*/
                 String readBuf = new String(mmBuffer,0,numBytes); // received data
                 Log.d(TAG, "Message recieved: " + readBuf);
                 Intent readIntent = new Intent(ConnectedThread.READ);
@@ -84,21 +81,21 @@ public class ConnectedThread extends Thread {
             mmOutStream.write(bytes);
 
             // Share the sent message with the UI activity.
-            Message writtenMsg = handler.obtainMessage(
+            /*Message writtenMsg = handler.obtainMessage(
                     MESSAGE_WRITE, -1, -1, mmBuffer);
             writtenMsg.sendToTarget();
-            Log.d(TAG, writtenMsg.toString());
+            Log.d(TAG, writtenMsg.toString());*/
         } catch (IOException e) {
             Log.e(TAG, "Error occurred when sending data", e);
 
             // Send a failure message back to the activity.
-            Message writeErrorMsg =
+            /*Message writeErrorMsg =
                     handler.obtainMessage(MESSAGE_TOAST);
             Bundle bundle = new Bundle();
             bundle.putString("toast",
                     "Couldn't send data to the other device");
             writeErrorMsg.setData(bundle);
-            handler.sendMessage(writeErrorMsg);
+            handler.sendMessage(writeErrorMsg);*/
         }
     }
 

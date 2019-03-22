@@ -93,6 +93,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         registerReceiver(BluetoothIconBroadcastReceiver, intentFilterBluetoothIcon);
         IntentFilter intentFilterReadData = new IntentFilter(ConnectedThread.READ);
         registerReceiver(ReadDataBroadcastReceiver, intentFilterReadData);
+        IntentFilter intentFilterToast = new IntentFilter(Bluetooth.TOAST);
+        registerReceiver(ToastBroadcastReceiver, intentFilterToast);
     }
 
     @Override
@@ -103,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         unregisterReceiver(PermissionBroadcastReceiver);
         unregisterReceiver(BluetoothIconBroadcastReceiver);
         unregisterReceiver(ReadDataBroadcastReceiver);
+        unregisterReceiver(ToastBroadcastReceiver);
     }
 
     /**
@@ -264,14 +267,25 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 Log.d(msg,"value: " + icon);
                 switch (icon) {
                     case "ic_bluetooth_white_24dp":
-                        Log.d(msg, "white");
                         bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
                         break;
                     case "ic_bluetooth_blue_24dp":
-                        Log.d(msg, "blue");
                         bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_blue_24dp);
                         break;
+                    case "ic_bluetooth_connected_white_24dp":
+                        bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_connected_white_24dp);
+                        break;
                 }
+            }
+        }
+    };
+
+    public BroadcastReceiver ToastBroadcastReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (Bluetooth.TOAST.equals(action)) {
+                //String text = intent.getStringExtra(b.TEXT);
+                Toast.makeText(getApplicationContext(), intent.getStringExtra(b.TEXT), Toast.LENGTH_LONG).show();
             }
         }
     };

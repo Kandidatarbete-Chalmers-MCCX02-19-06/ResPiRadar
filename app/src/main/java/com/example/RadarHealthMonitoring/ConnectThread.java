@@ -2,9 +2,9 @@ package com.example.RadarHealthMonitoring;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Intent;
 import android.os.Handler;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -79,7 +79,10 @@ class ConnectThread extends Thread {
         b.connectedThread = new ConnectedThread(mmSocket);
         b.connectedThread.start();
         Log.d(TAG,"The connection attempt succeeded.");
-        Toast.makeText(b.getApplicationContext(), "Connected to Raspberry Pi", Toast.LENGTH_LONG).show();
+        Intent intent = new Intent(Bluetooth.TOAST);
+        intent.putExtra(b.TEXT,"Connected to Raspberry Pi");
+        b.sendBroadcast(intent);
+        //Toast.makeText(b.getApplicationContext(), "Connected to Raspberry Pi", Toast.LENGTH_LONG).show();
     }
 
     // Closes the client socket and causes the thread to finish.
