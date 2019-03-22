@@ -17,7 +17,7 @@ public class ConnectedThread extends Thread {
     private final OutputStream mmOutStream;
     private byte[] mmBuffer; // mmBuffer store for the stream
 
-    private static final String TAG = "MY_APP_DEBUG_TAG";
+    private static final String TAG = "ConnectedThread";
     //private Handler handler = new Handler(); // handler that gets info from Bluetooth service
     public final int MESSAGE_READ = 0;
     public final int MESSAGE_WRITE = 1;
@@ -70,6 +70,7 @@ public class ConnectedThread extends Thread {
             } catch (IOException e) {
                 Log.e(TAG, "Input stream was disconnected", e);
                 b.bluetoothDisconnected(true);
+                b.connectThread.cancel();
                 break;
             }
         }
@@ -96,16 +97,6 @@ public class ConnectedThread extends Thread {
                     "Couldn't send data to the other device");
             writeErrorMsg.setData(bundle);
             handler.sendMessage(writeErrorMsg);*/
-        }
-    }
-
-    // Call this method from the main activity to shut down the connection.
-    public void cancel() { // TODO Remove
-        b.connected = false;
-        try {
-            mmSocket.close();
-        } catch (IOException e) {
-            Log.e(TAG, "Could not close the connect socket", e);
         }
     }
 }

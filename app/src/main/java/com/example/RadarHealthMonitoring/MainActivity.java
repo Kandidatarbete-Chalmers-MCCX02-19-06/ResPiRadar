@@ -106,6 +106,30 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         unregisterReceiver(BluetoothIconBroadcastReceiver);
         unregisterReceiver(ReadDataBroadcastReceiver);
         unregisterReceiver(ToastBroadcastReceiver);
+
+        //Log.d(msg,"connectedThread " + b.connectedThread.isAlive());
+        /*try {
+            sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }*/
+        try {
+            Log.d(msg, "connectedThread " + b.connectedThread.isAlive() + " interuppted " + b.connectedThread.isInterrupted() + " deamon " + b.connectedThread.isDaemon());
+            Log.d(msg, "connectThread " + b.connectThread.isAlive());
+
+            try {
+                b.connectedThread.join();
+            } catch (InterruptedException e) { // TODO CHECK
+                e.printStackTrace();
+            }
+        } catch (NullPointerException e) {
+        }
+        try {
+            Log.d(msg, "connectedThread " + b.connectedThread.isAlive() + " interuppted " + b.connectedThread.isInterrupted() + " deamon " + b.connectedThread.isDaemon());
+            Log.d(msg, "connectThread " + b.connectThread.isAlive());
+        } catch (NullPointerException e) {
+
+        }
     }
 
     /**
@@ -264,7 +288,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             String action = intent.getAction();
             if (Bluetooth.SET_BLUETOOTH_ICON.equals(action)) {
                 String icon = intent.getStringExtra(b.ICON);
-                Log.d(msg,"value: " + icon);
+                //Log.d(msg,"value: " + icon);
                 switch (icon) {
                     case "ic_bluetooth_white_24dp":
                         bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
@@ -295,7 +319,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             String action = intent.getAction();
             if (ConnectedThread.READ.equals(action)) {
                 String value = intent.getStringExtra(READ_VALUE);
-                Toast.makeText(getApplicationContext(), value, Toast.LENGTH_LONG).show();
+                //Toast.makeText(getApplicationContext(), value, Toast.LENGTH_SHORT).show();
             }
         }
     };

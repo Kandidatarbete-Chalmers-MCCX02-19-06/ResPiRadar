@@ -45,11 +45,12 @@ public class Bluetooth extends Service {
     String raspberryPiName = "raspberrypi";
     final String raspberryPiMAC = "B8:27:EB:FC:22:65";
     boolean autoConnect = false;
-    boolean connected = false; // TODO
+    boolean connected = false;
     boolean foundRaspberryPi = false;
     int connectAttempt = 1;
     int searchAttempts = 1;
     int delay;
+    boolean startBluetooth = false;
 
     MainActivity mainActivity;
 
@@ -64,7 +65,7 @@ public class Bluetooth extends Service {
 
     // Boolean indicators for BluetoothSettings
     boolean bluetoothSettingsActive = false;
-    boolean bluetoothOnChecked= false;
+    boolean bluetoothOnChecked = false;
     boolean bluetoothListEnable = false;
     boolean bluetoothSearchEnable = false;
     boolean bluetoothConnectEnable = false;
@@ -123,7 +124,6 @@ public class Bluetooth extends Service {
         unregisterReceiver(BluetoothBroadcastReceiverSearchFinished);
         unregisterReceiver(BluetoothBroadcastReceiverBondChange);
         startBluetooth(false);
-
     }
 
     @Nullable
@@ -141,6 +141,7 @@ public class Bluetooth extends Service {
      */
     boolean startBluetooth(boolean start) {
         if (start) {
+            startBluetooth = true; // for ending threads on destroy
             if (bluetoothAdapter == null) { // Device doesn't support Bluetooth
                 Toast.makeText(getApplicationContext(),
                         "Bluetooth Not Supported", Toast.LENGTH_LONG).show();
@@ -151,7 +152,7 @@ public class Bluetooth extends Service {
                     bluetoothOnChecked = true;
                     bluetoothOn();
                     if (connectThread != null) {
-                        if (connectThread.isRunning()) {
+                        if (connectThread.isAlive()) {
                             // connectedThread.cancel(); // redudant?
                             connectThread.cancel();
                         }
@@ -159,10 +160,10 @@ public class Bluetooth extends Service {
                 }
             }
         } else {
+            startBluetooth = false;
             if (bluetoothAdapter != null) {
                 if (connectThread != null) {
-                    if (connectThread.isRunning()) {
-                        // connectedThread.cancel(); // redudant?
+                    if (connectThread.isAlive()) {
                         connectThread.cancel();
                     }
                 }
@@ -170,7 +171,6 @@ public class Bluetooth extends Service {
                     bluetoothAdapter.disable();
                 }
             }
-
         }
         return false;
     }
@@ -233,7 +233,7 @@ public class Bluetooth extends Service {
             Log.d(TAG, "start discovery isRaspberryPi: " + isRaspberryPi);
         } else {
             if (activeDevice.getBondState() != 12) {
-                startDiscovery(); // TODO try when stop auto connect
+                startDiscovery();
             } else {
                 connectBluetooth(true);
             }
@@ -288,7 +288,7 @@ public class Bluetooth extends Service {
      * If Raspberry Pi found, it bonds and connects with two attempts
      */
     void connectManager() { // If device did not connect
-        if (autoConnect) {
+        if (autoConnect && startBluetooth) {
             Log.d(TAG, "connectManager: " + connectAttempt);
             switch (connectAttempt) {
                 case 1:
@@ -325,14 +325,17 @@ public class Bluetooth extends Service {
                     }, 100);
                     break;
                 default :
-                    // TODO
                     Intent intent = new Intent(Bluetooth.TOAST);
                     intent.putExtra(TEXT,"Error: Couldn't connect to Raspberry Pi");
                     sendBroadcast(intent);
-                    //Toast.makeText(getApplicationContext(), "Error: Couldn't connect to Raspberry Pi", Toast.LENGTH_LONG).show();
                     bluetoothAutoConnectChecked = false;
                     if (bluetoothSettingsActive) {
-                        bluetoothAutoConnect.setChecked(false);
+                        s.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                bluetoothAutoConnect.setChecked(false);
+                            }
+                        });
                     }
             }
         }
@@ -351,10 +354,15 @@ public class Bluetooth extends Service {
         intent.putExtra(ICON,"ic_bluetooth_connected_white_24dp");
         sendBroadcast(intent);
         if (b.bluetoothSettingsActive) {
-            bluetoothConnect.setChecked(true);
-            bluetoothAutoConnect.setChecked(true);
-            bluetoothSearch.setEnabled(false);
-            bluetoothWrite.setEnabled(true);
+            s.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    bluetoothConnect.setChecked(true);
+                    bluetoothAutoConnect.setChecked(true);
+                    bluetoothSearch.setEnabled(false);
+                    bluetoothWrite.setEnabled(true);
+                }
+            });
         }
     }
 
@@ -368,7 +376,9 @@ public class Bluetooth extends Service {
         b.bluetoothAutoConnectChecked = false;
         b.bluetoothSearchEnable = true;
         b.bluetoothWriteEnable = false;
-        bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
+        Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
+        intent.putExtra(ICON,"ic_bluetooth_white_24dp");
+        sendBroadcast(intent);
         if (b.bluetoothSettingsActive && !uiThread) {
             bluetoothConnect.setChecked(false);
             bluetoothAutoConnect.setChecked(false);
@@ -409,7 +419,7 @@ public class Bluetooth extends Service {
      * Tries to search after Raspberry Pi another time of autoConnect
      */
     void searchManager() {
-        if (autoConnect) {
+        if (autoConnect && startBluetooth) {
             Log.d(TAG, "SearchManager: " + searchAttempts);
             if (searchAttempts < 2) { // will search max 2 times if RPI not found
                 searchAttempts++;
@@ -518,11 +528,11 @@ public class Bluetooth extends Service {
      * Sends broadcast to MainActivity to update the icons
      */
     synchronized void uiBluetoothConnecting() {
-        Thread uiBluetoothConnectingThread = new Thread() { // TODO check if working, if it stops at onDestroy
+        Thread uiBluetoothConnectingThread = new Thread() {
             @Override
             public void run() {
                 boolean blueIC = false;
-                while (connectThread.isRunning()) {
+                while (connectThread.isRunning() && connectThread.isAlive()) {
                     Log.d(TAG, "connectThread is alive " + blueIC);
                     Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
                     if (blueIC) {
@@ -538,7 +548,7 @@ public class Bluetooth extends Service {
                         e.printStackTrace();
                     }
                 }
-                if (!connected && blueIC) {
+                if (!connected && blueIC && !bluetoothSearchChecked) {
                     Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
                     intent.putExtra(ICON,"ic_bluetooth_white_24dp");
                     sendBroadcast(intent);

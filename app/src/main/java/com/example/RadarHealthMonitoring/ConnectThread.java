@@ -47,13 +47,13 @@ class ConnectThread extends Thread {
 
     public void run() {
         // Cancel discovery because it otherwise slows down the connection.
-        b.uiBluetoothConnecting(); // TODO undersök om start funkar, annars run istället för start
+        isRunning = true;
+        b.uiBluetoothConnecting();
         b.bluetoothAdapter.cancelDiscovery();
 
         try {
             // Connect to the remote device through the socket. This call blocks
             // until it succeeds or throws an exception.
-            isRunning = true;
             mmSocket.connect();
             Log.d(TAG,"try mmSocket.connect()");
         } catch (IOException connectException) {
@@ -87,9 +87,10 @@ class ConnectThread extends Thread {
 
     // Closes the client socket and causes the thread to finish.
     void cancel() {
+        Log.d("ConnectThread", "cancel");
+        isRunning = false;
         try {
             Log.d(TAG,"try mmSocket.close()");
-            //b.connectedThread.cancel(); // TODO undersök om behövs?
             mmSocket.close();
             b.bluetoothDisconnected(false);
         } catch (IOException e) {
@@ -101,17 +102,13 @@ class ConnectThread extends Thread {
 
     boolean isRunning() {
         return isRunning;
-    }
+    } // only for run
 
     boolean hasSocket() {
         return hasSocket;
     }
 
-    public BluetoothDevice getDevice() {
-        return mmDevice;
-    }
-
-    public BluetoothSocket getSocket() {
-        return mmSocket;
+    void setHasSocket(boolean hasSocket) {
+        this.hasSocket = hasSocket;
     }
 }
