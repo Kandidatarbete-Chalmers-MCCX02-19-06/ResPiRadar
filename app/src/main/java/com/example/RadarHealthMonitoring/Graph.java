@@ -65,8 +65,11 @@ class Graph {
     }
 
     void resetSeries() {
+        graph.getViewport().setMinX(-60);
+        graph.getViewport().setMaxX(0);
         graph.removeAllSeries();
         graph.addSeries(newSeries());
+
     }
 
     private LineGraphSeries<DataPoint> newSeries() {

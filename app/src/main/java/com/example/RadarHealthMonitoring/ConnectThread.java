@@ -92,7 +92,7 @@ class ConnectThread extends Thread {
         try {
             Log.d(TAG,"try mmSocket.close()");
             mmSocket.close();
-            b.bluetoothDisconnected(false);
+            b.bluetoothDisconnected(true);
         } catch (IOException e) {
             Log.d(TAG, "Could not close the client socket", e);
             Log.d(TAG,"failed mmSocket.close()");

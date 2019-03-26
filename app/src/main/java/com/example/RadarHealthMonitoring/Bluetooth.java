@@ -26,7 +26,6 @@ import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluet
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothList;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothOn;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothSearch;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothWrite;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bs;
 import static com.example.RadarHealthMonitoring.Settings.s;
 
@@ -67,12 +66,14 @@ public class Bluetooth extends Service {
     boolean bluetoothSettingsActive = false;
     boolean bluetoothOnChecked = false;
     boolean bluetoothListEnable = false;
+    boolean commandBluetoothList = false;
     boolean bluetoothSearchEnable = false;
     boolean bluetoothConnectEnable = false;
-    boolean bluetoothWriteEnable = false;
+    //boolean bluetoothWriteEnable = false;
     boolean bluetoothSearchChecked = false;
     boolean bluetoothConnectChecked = false;
     boolean bluetoothAutoConnectChecked = false;
+    boolean commandSimulate = false;
 
     // Constants that indicate the current connection state
     public static final int STATE_NONE = 0;       // we're doing nothing
@@ -188,7 +189,9 @@ public class Bluetooth extends Service {
             bluetoothSearch.setEnabled(true);
             bluetoothConnect.setEnabled(true);
             bluetoothAutoConnect.setEnabled(true);
-            bluetoothList.setEnabled(true);
+            if (commandBluetoothList) {
+                bluetoothList.setEnabled(true);
+            }
         }
         autoConnect();
     }
@@ -216,7 +219,7 @@ public class Bluetooth extends Service {
                     activeDevice = device;
                     isRaspberryPi = true;
                     //bluetoothListIndicator
-                    if (bluetoothSettingsActive) {
+                    if (bluetoothSettingsActive && commandBluetoothList) {
                         bluetoothList.setValue(raspberryPiMAC);
                         bluetoothList.setSummary(bluetoothList.getEntry());
                     }
@@ -347,7 +350,7 @@ public class Bluetooth extends Service {
     synchronized void bluetoothConnected() {
         b.bluetoothConnectChecked = true;
         b.bluetoothAutoConnectChecked = true;
-        b.bluetoothWriteEnable = true;
+        //b.bluetoothWriteEnable = true;
         b.connected = true;
         b.bluetoothSearchEnable = false;
         Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
@@ -360,7 +363,7 @@ public class Bluetooth extends Service {
                     bluetoothConnect.setChecked(true);
                     bluetoothAutoConnect.setChecked(true);
                     bluetoothSearch.setEnabled(false);
-                    bluetoothWrite.setEnabled(true);
+                    //bluetoothWrite.setEnabled(true);
                 }
             });
         }
@@ -375,7 +378,7 @@ public class Bluetooth extends Service {
         b.bluetoothConnectChecked = false;
         b.bluetoothAutoConnectChecked = false;
         b.bluetoothSearchEnable = true;
-        b.bluetoothWriteEnable = false;
+        //b.bluetoothWriteEnable = false;
         Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
         intent.putExtra(ICON,"ic_bluetooth_white_24dp");
         sendBroadcast(intent);
@@ -383,7 +386,7 @@ public class Bluetooth extends Service {
             bluetoothConnect.setChecked(false);
             bluetoothAutoConnect.setChecked(false);
             bluetoothSearch.setEnabled(true);
-            bluetoothWrite.setEnabled(false);
+            //bluetoothWrite.setEnabled(false);
         } else if (b.bluetoothSettingsActive && uiThread) { // TODO Undersök
             //bs.connectedThreadDisconnect();
             s.runOnUiThread(new Runnable() {
@@ -392,7 +395,7 @@ public class Bluetooth extends Service {
                     bluetoothConnect.setChecked(false);
                     bluetoothAutoConnect.setChecked(false);
                     bluetoothSearch.setEnabled(true);
-                    bluetoothWrite.setEnabled(false);
+                    //bluetoothWrite.setEnabled(false);
                 }
             });
         }
@@ -469,7 +472,7 @@ public class Bluetooth extends Service {
     void setActiveDevice() {
         if (!(chosenDeviceIndex==-1)) {
             activeDevice = (BluetoothDevice)pairedDevices.toArray()[chosenDeviceIndex];
-            if (bluetoothSettingsActive) {
+            if (bluetoothSettingsActive && commandBluetoothList) {
                 bluetoothList.setValue(raspberryPiMAC);
                 bluetoothList.setSummary(bluetoothList.getEntry());
             }
@@ -500,24 +503,26 @@ public class Bluetooth extends Service {
     void updateBluetoothList() {
         if (bluetoothSettingsActive) {
             updatePairedDevices();
-            if (pairedDevices.size() > 0) {
-                CharSequence[] deviceName = new CharSequence[pairedDevices.size()];
-                CharSequence[] deviceHardwareAddress = new CharSequence[pairedDevices.size()];
-                int i = 0;
-                for (BluetoothDevice device : pairedDevices) {
-                    deviceName[i] = device.getName();
-                    deviceHardwareAddress[i] = device.getAddress(); // MAC address
-                    i++;
+            if (commandBluetoothList) {
+                if (pairedDevices.size() > 0) {
+                    CharSequence[] deviceName = new CharSequence[pairedDevices.size()];
+                    CharSequence[] deviceHardwareAddress = new CharSequence[pairedDevices.size()];
+                    int i = 0;
+                    for (BluetoothDevice device : pairedDevices) {
+                        deviceName[i] = device.getName();
+                        deviceHardwareAddress[i] = device.getAddress(); // MAC address
+                        i++;
+                    }
+                    bluetoothList.setEntries(deviceName);
+                    bluetoothList.setEntryValues(deviceHardwareAddress);
+                    bluetoothList.setSummary(bluetoothList.getEntry());
+                    if (!bluetoothList.isEnabled()) {
+                        bluetoothList.setEnabled(true);
+                    }
+                } else {
+                    bluetoothList.setSummary("No device avalible");
+                    bluetoothList.setEnabled(false);
                 }
-                bluetoothList.setEntries(deviceName);
-                bluetoothList.setEntryValues(deviceHardwareAddress);
-                bluetoothList.setSummary(bluetoothList.getEntry());
-                if (!bluetoothList.isEnabled()) {
-                    bluetoothList.setEnabled(true);
-                }
-            } else {
-                bluetoothList.setSummary("No device avalible");
-                bluetoothList.setEnabled(false);
             }
         }
     }
@@ -533,7 +538,7 @@ public class Bluetooth extends Service {
             public void run() {
                 boolean blueIC = false;
                 while (connectThread.isRunning() && connectThread.isAlive()) {
-                    Log.d(TAG, "connectThread is alive " + blueIC);
+                    //Log.d(TAG, "connectThread is alive " + blueIC);
                     Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
                     if (blueIC) {
                         intent.putExtra(ICON,"ic_bluetooth_white_24dp");
@@ -583,7 +588,9 @@ public class Bluetooth extends Service {
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(false);
                             bluetoothOn.setTitle("Bluetooth Off");
-                            bluetoothList.setEnabled(false);
+                            if (commandBluetoothList) {
+                                bluetoothList.setEnabled(false);
+                            }
                             bluetoothSearch.setEnabled(false);
                             bluetoothConnect.setEnabled(false);
                             bluetoothAutoConnect.setEnabled(false);
@@ -596,10 +603,16 @@ public class Bluetooth extends Service {
                         break;
                     case BluetoothAdapter.STATE_TURNING_ON:
                         bluetoothOnChecked = true;
-                        bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(true);
                             bluetoothOn.setTitle("Bluetooth On");
+                        }
+                        try {
+                            bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
+                        } catch (NullPointerException e) {
+                            Intent intentIcon = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
+                            intentIcon.putExtra(ICON,"ic_bluetooth_white_24dp");
+                            sendBroadcast(intentIcon);
                         }
                         break;
                 }
@@ -620,7 +633,7 @@ public class Bluetooth extends Service {
                     Toast.makeText(context, "Found " + device.getName(), Toast.LENGTH_SHORT).show();
                     activeDevice = device;
                     foundRaspberryPi = true;
-                    if (bluetoothSettingsActive) {
+                    if (bluetoothSettingsActive && commandBluetoothList) {
                         bluetoothList.setValue(raspberryPiMAC);
                         bluetoothList.setSummary(bluetoothList.getEntry());
                     }

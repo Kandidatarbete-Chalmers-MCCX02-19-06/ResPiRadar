@@ -36,7 +36,6 @@ import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluet
  */
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
 
-    //static MainActivity m; // for static activity
     private static final String msg = "MainActivity";
     boolean measurementRunning = false;
     static MenuItem bluetoothMenuItem;
@@ -97,6 +96,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         registerReceiver(ReadDataBroadcastReceiver, intentFilterReadData);
         IntentFilter intentFilterToast = new IntentFilter(Bluetooth.TOAST);
         registerReceiver(ToastBroadcastReceiver, intentFilterToast);
+        IntentFilter intentFilterResetGraph = new IntentFilter(Settings.BluetoothSettings.RESET_GRAPH);
+        registerReceiver(ResetGraphBroadcastReceiver, intentFilterResetGraph);
     }
 
     @Override
@@ -108,33 +109,10 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         unregisterReceiver(BluetoothIconBroadcastReceiver);
         unregisterReceiver(ReadDataBroadcastReceiver);
         unregisterReceiver(ToastBroadcastReceiver);
-
-        //Log.d(msg,"connectedThread " + b.connectedThread.isAlive());
-        /*try {
-            sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
-        try {
-            Log.d(msg, "connectedThread " + b.connectedThread.isAlive() + " interuppted " + b.connectedThread.isInterrupted() + " deamon " + b.connectedThread.isDaemon());
-            Log.d(msg, "connectThread " + b.connectThread.isAlive());
-
-            try {
-                b.connectedThread.join();
-            } catch (InterruptedException e) { // TODO CHECK
-                e.printStackTrace();
-            }
-        } catch (NullPointerException e) {
-        }
-        try {
-            Log.d(msg, "connectedThread " + b.connectedThread.isAlive() + " interuppted " + b.connectedThread.isInterrupted() + " deamon " + b.connectedThread.isDaemon());
-            Log.d(msg, "connectThread " + b.connectThread.isAlive());
-        } catch (NullPointerException e) {
-
-        }
+        unregisterReceiver(ResetGraphBroadcastReceiver);
     }
 
-    /**
+        /**
      * Creates a options menu with settings, a reset button and a button/indicator that shows the connection state
      */
     @Override
@@ -183,8 +161,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             case R.id.reset_graphs:
                 graphPulse.resetSeries();
                 graphBreathe.resetSeries();
+                pulseValueView.setText("Pulse:   ");
+                breathValueView.setText("Breath rate:   ");
+                if (measurementRunning) {
+                    startTime = System.currentTimeMillis();
+                } else {
+                    firstStartMeasurement = true;
+                }
                 dataNumber = 0;
-                firstStartMeasurement = true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -205,7 +189,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 startTime = System.currentTimeMillis();
             }
             firstStartMeasurement = false;
-            //loopAddData();
+            if (b.commandSimulate) {
+                loopAddData();
+            }
         } else {
             startStoppMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonOn));
             startStoppMeasureButton.setText("Start Measure");
@@ -339,7 +325,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (ConnectedThread.READ.equals(action)) {
-                if (measurementRunning) {
+                if (measurementRunning && !b.commandSimulate) {
                     String value = intent.getStringExtra(READ_VALUE);
                     //Toast.makeText(getApplicationContext(), value, Toast.LENGTH_SHORT).show();
                     String split[] = value.split(" ");
@@ -357,6 +343,19 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                             Log.d(msg, "Could't extract data" + split);
                     }
                 }
+            }
+        }
+    };
+
+    public BroadcastReceiver ResetGraphBroadcastReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (Settings.BluetoothSettings.RESET_GRAPH.equals(action)) {
+                graphPulse.resetSeries();
+                graphBreathe.resetSeries();
+                pulseValueView.setText("Pulse:   ");
+                breathValueView.setText("Breath rate:   ");
+                dataNumber = 0;
             }
         }
     };

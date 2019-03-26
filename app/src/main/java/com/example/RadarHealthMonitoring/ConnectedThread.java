@@ -22,8 +22,8 @@ public class ConnectedThread extends Thread {
     public final int MESSAGE_READ = 0;
     public final int MESSAGE_WRITE = 1;
     public final int MESSAGE_TOAST = 2;
-    public static final String READ = "READ";
-    public static final String READ_VALUE = "READ_VALUE";
+    static final String READ = "READ";
+    static final String READ_VALUE = "READ_VALUE";
 
     public ConnectedThread(BluetoothSocket socket) {
         Log.d(TAG,"constructor ConnectedThread");
@@ -62,7 +62,7 @@ public class ConnectedThread extends Thread {
                         MESSAGE_READ, numBytes, -1,
                         mmBuffer);
                 readMsg.sendToTarget();*/
-                String readBuf = new String(mmBuffer,0,numBytes); // received data
+                String readBuf = new String(mmBuffer,1,numBytes); // received data
                 //Log.d(TAG, "Message recieved: " + readBuf);
                 Intent readIntent = new Intent(ConnectedThread.READ);
                 readIntent.putExtra(READ_VALUE,readBuf);
@@ -70,7 +70,9 @@ public class ConnectedThread extends Thread {
             } catch (IOException e) {
                 Log.e(TAG, "Input stream was disconnected", e);
                 b.bluetoothDisconnected(true);
-                b.connectThread.cancel();
+                if (b.connectThread != null) {
+                    b.connectThread.cancel();
+                }
                 break;
             }
         }

@@ -1,6 +1,7 @@
 package com.example.RadarHealthMonitoring;
 
 import android.annotation.TargetApi;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -123,7 +124,7 @@ public class Settings extends AppCompatPreferenceActivity {
         static SwitchPreference bluetoothSearch;
         static SwitchPreference bluetoothConnect;
         static EditTextPreference bluetoothRaspberryPiName;
-        static EditTextPreference bluetoothWrite;
+        static EditTextPreference commandTerminal;
 
         private static final String key_pref_bluetooth_switch = "bluetooth_switch";
         private static final String key_pref_bluetooth_auto_connect = "bluetooth_auto_connect";
@@ -131,7 +132,10 @@ public class Settings extends AppCompatPreferenceActivity {
         private static final String key_pref_bluetooth_search = "search_bluetooth_device";
         private static final String key_pref_bluetooth_list = "bluetooth_list";
         private static final String key_pref_raspberry_pi_name = "bluetooth_raspberrypi_name";
-        private static final String key_pref_bluetooth_write = "bluetooth_write";
+        private static final String key_pref_command_terminal = "command_terminal";
+
+
+        static final String RESET_GRAPH = "RESET_GRAPH";
 
         static BluetoothSettings bs; // for static service
         private static Handler uiHandler = new Handler(Looper.getMainLooper()); // static handler
@@ -154,7 +158,7 @@ public class Settings extends AppCompatPreferenceActivity {
             bluetoothSearch = (SwitchPreference) findPreference(key_pref_bluetooth_search);
             bluetoothList = (ListPreference) findPreference(key_pref_bluetooth_list);
             bluetoothRaspberryPiName = (EditTextPreference) findPreference(key_pref_raspberry_pi_name);
-            bluetoothWrite = (EditTextPreference) findPreference(key_pref_bluetooth_write);
+            commandTerminal = (EditTextPreference) findPreference(key_pref_command_terminal);
             // On return to bluetooth settings, manually update everything
             if (b.bluetoothOnChecked) {
                 bluetoothOn.setChecked(true);
@@ -170,9 +174,11 @@ public class Settings extends AppCompatPreferenceActivity {
             bluetoothAutoConnect.setChecked(b.bluetoothAutoConnectChecked);
             bluetoothSearch.setEnabled(b.bluetoothSearchEnable);
             bluetoothSearch.setChecked(b.bluetoothSearchChecked);
-            bluetoothList.setEnabled(b.bluetoothListEnable);
-            bluetoothWrite.setEnabled(b.bluetoothWriteEnable);
-            bluetoothList.setEnabled(b.bluetoothListEnable);
+            if (!b.commandBluetoothList) {
+                getPreferenceScreen().removePreference(bluetoothList);
+            }
+            bluetoothList.setEnabled(b.bluetoothListEnable && b.commandBluetoothList);
+            //bluetoothWrite.setEnabled(b.bluetoothWriteEnable);
 
             // ########## Preference Listeners ##########
 
@@ -290,14 +296,55 @@ public class Settings extends AppCompatPreferenceActivity {
             });
 
             // Write to  Raspberry Pi text preference
-            bluetoothWrite.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            commandTerminal.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    byte[] write = ((String)newValue).getBytes();
-                    Log.d(Settingsmsg, "Message: " + newValue + write);
-                    b.connectedThread.write(write);
-                    //b.raspberryPiName = (String) newValue;
-                    preference.setSummary((String)newValue);
+                    String command = (String)newValue;
+                    Log.d(Settingsmsg, "Command: " + command);
+                    switch (command) {
+                        case "poweroff":
+                            if (b.connected) {
+                                byte[] sendCommand = command.getBytes();
+                                b.connectedThread.write(sendCommand);
+                                preference.setSummary((String)newValue);
+                                Toast.makeText(getActivity().getApplicationContext(), "Power off Raspberry Pi", Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(getActivity().getApplicationContext(), "Not connected to Raspberry Pi", Toast.LENGTH_LONG).show();
+                            }
+                            break;
+                        case "list":
+                            if (b.commandBluetoothList) {
+                                //bluetoothList.
+                                b.commandBluetoothList = false;
+                                b.bluetoothListEnable = false;
+                                bluetoothList.setEnabled(false);
+                                getPreferenceScreen().removePreference(bluetoothList);
+                                //bluetoothList.setShouldDisableView(true);
+                            } else {
+                                b.commandBluetoothList = true;
+                                //b.bluetoothListEnable = true;
+                                getPreferenceScreen().addPreference(bluetoothList);
+                                b.updateBluetoothList();
+                                if (b.bluetoothListEnable) {
+                                    bluetoothList.setEnabled(true);
+                                }
+                                //bluetoothList.setShouldDisableView(false);
+                            }
+                            break;
+                        case "simulate":
+                            /*if (b.commandSimulate) {
+                                b.commandSimulate = false;
+                            } else {
+                                b.commandSimulate = true;
+                            }*/
+                            b.commandSimulate = !b.commandSimulate;
+                            Intent readIntent = new Intent(BluetoothSettings.RESET_GRAPH);
+                            s.sendBroadcast(readIntent);
+                            break;
+                        default:
+                            Toast.makeText(getActivity().getApplicationContext(), "Not a command", Toast.LENGTH_LONG).show();
+                            break;
+                    }
                     return true;
                 }
             });
@@ -318,7 +365,7 @@ public class Settings extends AppCompatPreferenceActivity {
                     bluetoothConnect.setChecked(false);
                     bluetoothAutoConnect.setChecked(false);
                     bluetoothSearch.setEnabled(true);
-                    bluetoothWrite.setEnabled(false);
+                    //bluetoothWrite.setEnabled(false);
                 }
             });
         }
