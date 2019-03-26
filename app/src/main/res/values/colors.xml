@@ -7,6 +7,16 @@
     <color name="colorPrimary2">#464646</color>
     <color name="colorPrimaryDark2">#323232</color>
     <color name="colorAccent2">#2196F3</color>
+    <!--<color name="colorAccent3">#0082FC</color>
+    <color name="colorAccent3">#40A0FC</color>-->
+
+    <color name="colorPrimary3">#0091EA</color>
+    <color name="colorPrimaryDark3">#464646</color>
+    <color name="colorAccent3">#2196F3</color>
+
+    <color name="colorPrimary4">#2196f3</color>
+    <color name="colorPrimaryDark4">#143855</color>
+    <color name="colorAccent4">#2196f3</color> <!--557A95 navyblue + E85A4F rödorange-->
 
     <color name="colorActivityBackground">#646464</color>
     <color name="colorGraphBackground">#828282</color>
@@ -19,6 +29,8 @@
 
     <color name="colorMeasureButtonOn2">#50BE6A</color>
     <color name="colorMeasureButtonOn3">#46C87E</color>
-    <color name="colorMeasureButtonOn">#2196F3</color>
+    <color name="colorMeasureButtonOn4">#2196F3</color>
+    <color name="colorMeasureButtonOn">#40A0FC</color>
+    <color name="colorMeasureButtonOn6">#2196f3</color>
     <color name="colorMeasureButtonOff">#FF5F53</color>
 </resources>

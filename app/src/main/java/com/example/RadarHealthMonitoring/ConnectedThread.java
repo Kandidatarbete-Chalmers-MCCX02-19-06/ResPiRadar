@@ -63,7 +63,7 @@ public class ConnectedThread extends Thread {
                         mmBuffer);
                 readMsg.sendToTarget();*/
                 String readBuf = new String(mmBuffer,0,numBytes); // received data
-                Log.d(TAG, "Message recieved: " + readBuf);
+                //Log.d(TAG, "Message recieved: " + readBuf);
                 Intent readIntent = new Intent(ConnectedThread.READ);
                 readIntent.putExtra(READ_VALUE,readBuf);
                 b.sendBroadcast(readIntent);

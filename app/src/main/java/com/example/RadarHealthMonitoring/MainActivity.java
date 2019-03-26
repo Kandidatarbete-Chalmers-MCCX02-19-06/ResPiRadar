@@ -44,6 +44,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     TextView pulseValueView;
     TextView breathValueView;
     Intent intentBluetooth;
+    long startTime;
+    boolean firstStartMeasurement = true;
 
     private final int REQUEST_FINE_LOCATION = 2;
 
@@ -182,6 +184,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 graphPulse.resetSeries();
                 graphBreathe.resetSeries();
                 dataNumber = 0;
+                firstStartMeasurement = true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -198,7 +201,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         if (!measurementRunning) {
             startStoppMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonOff));
             startStoppMeasureButton.setText("Stop Measure");
-            loopAddData();
+            if (firstStartMeasurement) {
+                startTime = System.currentTimeMillis();
+            }
+            firstStartMeasurement = false;
+            //loopAddData();
         } else {
             startStoppMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonOn));
             startStoppMeasureButton.setText("Start Measure");
@@ -245,6 +252,20 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 breathValueView.setText("Breath rate: " + String.format("%.1f",yBreathe));
             }
         });
+    }
+
+    public void setPulseData(int pulseData) {
+        dataPulse = new DataPoint(Math.round((System.currentTimeMillis() - startTime)/1000.0),pulseData);
+        graphPulse.getSeries().appendData(dataPulse, true,1000); // seriesPulse
+        pulseValueView.setText("Pulse: " + pulseData);
+        //Toast.makeText(getApplicationContext(), "Time: " + (System.currentTimeMillis() - startTime), Toast.LENGTH_SHORT).show();
+        //Log.d(msg,"Time: " + System.currentTimeMillis() + " " + startTime);
+    }
+
+    public void setBreathData(int breathData) {
+        dataBreathe = new DataPoint(Math.round((System.currentTimeMillis() - startTime)/1000.0),breathData);
+        graphBreathe.getSeries().appendData(dataBreathe, true,1000); // seriesPulse
+        breathValueView.setText("Breath rate: " + breathData);
     }
 
     // ########## ########## Request Permission ########## ##########
@@ -318,8 +339,24 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (ConnectedThread.READ.equals(action)) {
-                String value = intent.getStringExtra(READ_VALUE);
-                //Toast.makeText(getApplicationContext(), value, Toast.LENGTH_SHORT).show();
+                if (measurementRunning) {
+                    String value = intent.getStringExtra(READ_VALUE);
+                    //Toast.makeText(getApplicationContext(), value, Toast.LENGTH_SHORT).show();
+                    String split[] = value.split(" ");
+                    switch (split[0]) {
+                        case "PR":
+                            setPulseData(Integer.parseInt(split[1]));
+                            break;
+                        case "BR":
+                            setBreathData(Integer.parseInt(split[1]));
+                            break;
+                        case "RTB":
+                            //
+                            break;
+                        default:
+                            Log.d(msg, "Could't extract data" + split);
+                    }
+                }
             }
         }
     };
