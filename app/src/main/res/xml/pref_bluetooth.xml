@@ -16,30 +16,36 @@
         android:singleLine="true"
         android:title="Name or MAC adress for Raspberry Pi"
         android:summary="raspberrypi" />
-    <SwitchPreference
-        android:defaultValue="false"
-        android:key="bluetooth_auto_connect"
-        android:title="Automated Connection" />
-    <ListPreference
-        android:enabled="false"
-        android:key="bluetooth_list"
-        android:title="Available Bluetooth devices" />
-    <SwitchPreference
-        android:defaultValue="false"
-        android:key="search_bluetooth_device"
-        android:title="Search after Raspberry Pi" />
-    <SwitchPreference
-        android:defaultValue="false"
-        android:key="bluetooth_connect"
-        android:title="Connect to Raspberry Pi" />
-    <EditTextPreference
-        android:capitalize="words"
-        android:inputType="textCapWords"
-        android:key="command_terminal"
-        android:maxLines="1"
-        android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:summary=""
-        android:title="Command Terminal" />
+    <PreferenceCategory
+        android:title="Manual connection">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="bluetooth_auto_connect"
+            android:title="Automated Connection" />
+        <ListPreference
+            android:enabled="false"
+            android:key="bluetooth_list"
+            android:title="Available Bluetooth devices" />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="search_bluetooth_device"
+            android:title="Search after Raspberry Pi" />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="bluetooth_connect"
+            android:title="Connect to Raspberry Pi" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="Other settings">
+        <EditTextPreference
+            android:capitalize="words"
+            android:inputType="textCapWords"
+            android:key="command_terminal"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:summary=""
+            android:title="Command Terminal" />
+    </PreferenceCategory>
 
 </PreferenceScreen>

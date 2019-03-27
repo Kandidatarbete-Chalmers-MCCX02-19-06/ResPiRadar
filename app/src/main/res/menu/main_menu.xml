@@ -9,16 +9,16 @@
         app:showAsAction="never"
         android:title="Reset Graphs"/>
     <item
-        android:id="@+id/menu_green"
+        android:id="@+id/help_main"
         android:orderInCategory="4"
         app:showAsAction="never"
-        android:title="Meny 2"/>
+        android:title="Help"/>
     <item
         android:id="@+id/settings"
         android:title="@string/menu_settings"
         android:orderInCategory="2"
         android:icon="@drawable/ic_settings"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="never"/>
     <item
         android:id="@+id/bluetooth"
         android:title="Bluetooth"

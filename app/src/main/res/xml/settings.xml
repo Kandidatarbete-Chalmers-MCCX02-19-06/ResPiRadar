@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settingsView">
 
     <!-- Settings -->
     <PreferenceCategory
         android:title="Settings">
         <Preference
-            android:key="information"
-            android:title="Information"
-            android:icon="@drawable/ic_info_black_24dp"/>
-
-        <Preference
             android:key="bluetoothSettings"
             android:title="Bluetooth Settings"
             android:icon="@drawable/ic_bluetooth_black_24dp"
             android:fragment="com.example.RadarHealthMonitoring.Settings$BluetoothFragment"/>
+        <Preference
+            android:key="information"
+            android:title="About the App"
+            android:icon="@drawable/ic_info_black_24dp" >
+        </Preference>
     </PreferenceCategory>
 
 </PreferenceScreen>

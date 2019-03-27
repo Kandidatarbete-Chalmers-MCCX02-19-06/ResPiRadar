@@ -1,6 +1,7 @@
 package com.example.RadarHealthMonitoring;
 
 import android.annotation.TargetApi;
+import android.app.DialogFragment;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -14,6 +15,8 @@ import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
 import android.support.v7.app.ActionBar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -23,6 +26,8 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 import static com.example.RadarHealthMonitoring.Bluetooth.START_MEAS_BUTTON_ENABLE;
 import static com.example.RadarHealthMonitoring.Bluetooth.b;
+
+//import android.support.v4.app.FragmentManager;
 
 /**
  * Settings är en aktivitet som skapar en panel med inställningar. Innehåller genvägar till flera
@@ -44,6 +49,8 @@ public class Settings extends AppCompatPreferenceActivity {
                 .beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
                 .commit();  // Skapar ett nytt fragment i en ny panel
+
+
     }
 
     @Override
@@ -87,11 +94,24 @@ public class Settings extends AppCompatPreferenceActivity {
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class SettingsFragment extends PreferenceFragment {
+
+        private static final String key_pref_information = "information";
+        static Preference informationPreference;
+
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.settings);  // hämtar preferenserna
             setHasOptionsMenu(true);  // ger menyraden
+            informationPreference = findPreference(key_pref_information);
+            informationPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    DialogFragment newFragment = new InformationSettingsFragment();
+                    newFragment.show(getFragmentManager(), "info_settings");
+                    return false;
+                }
+            });
         }
     }
 
@@ -134,7 +154,6 @@ public class Settings extends AppCompatPreferenceActivity {
         private static final String key_pref_bluetooth_list = "bluetooth_list";
         private static final String key_pref_raspberry_pi_name = "bluetooth_raspberrypi_name";
         private static final String key_pref_command_terminal = "command_terminal";
-
 
         static final String RESET_GRAPH = "RESET_GRAPH";
 
@@ -337,7 +356,7 @@ public class Settings extends AppCompatPreferenceActivity {
                             s.sendBroadcast(readIntent);
                             break;
                         default:
-                            Toast.makeText(getActivity().getApplicationContext(), "Not a command", Toast.LENGTH_LONG).show();
+                            Toast.makeText(getActivity().getApplicationContext(), "Not a regular command", Toast.LENGTH_LONG).show();
                             break;
                     }
                     return true;
@@ -350,6 +369,24 @@ public class Settings extends AppCompatPreferenceActivity {
             super.onDestroy();
             Log.d(Settingsmsg, "BluetoothSettings onDestroy");
             b.bluetoothSettingsActive = false;
+        }
+
+        @Override
+        public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+            super.onCreateOptionsMenu(menu, inflater);
+            inflater.inflate(R.menu.bluetooth_settings_menu, menu);
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.bluetooth_info:
+                    DialogFragment newFragment = new InformationBluetoothSettingsFragment();
+                    newFragment.show(getFragmentManager(), "help_bluetooth");
+                    return true;
+                default:
+                    return super.onOptionsItemSelected(item);
+            }
         }
 
         // ########## ########## Methods ########## ##########

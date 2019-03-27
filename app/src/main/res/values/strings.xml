@@ -4,21 +4,6 @@
     <string name="menu_settings">Settings</string>
 
     <!-- Strings related to Settings -->
-    <!-- Connection Settings -->
-
-    <string name="pref_title_display_name">USB Port</string>
-    <string name="pref_default_display_name">COM3</string>
-
-    <string-array name="pref_connection_list">
-        <item>Bluetooth</item>
-        <item>Wifi</item>
-        <item>USB</item>
-    </string-array>
-    <string-array name="pref_connection_list_values">
-        <item>1</item>
-        <item>0</item>
-        <item>-1</item>
-    </string-array>
 
     <!-- Bluetooth Settings-->
 
@@ -29,25 +14,78 @@
         <item>0</item>
     </string-array>
 
-    <!-- General Settings -->
+    <!-- Information Main Activity -->
 
-    <!-- Developer Settings -->
+    <string name="info_main1">
+        At start, the app will automatically start bluetooth and try to connect to Raspberry Pi if
+        it\'s available and has the following python program running:
+    </string>
+    <string name="info_main2">
+        https://github.com/Kandidatarbete-Chalmers-MCCX02-19-06/RaspberryPiRadarProgram
+    </string>
+    <string name="info_main22">
+        The Raspberry Pi also needs a XC111+XR111 or XC112+XR112 radar chip and module from Acconeer:
+    </string>
+    <string name="info_main23">
+         https://www.acconeer.com/products.
+    </string>
+    <string name="info_main3">
+        The bluetooth icon on the action bar will show the status of the bluetooth connection. Click it to connect/disconnect Raspberry Pi.
+    </string>
+    <string name="info_main4">
+        The Raspberry Py is assumed to be named raspberrypi. If not, set the name or MAC-address in Bluetooth Settings.
+    </string>
+    <string name="info_main5">
+        When connected, start the measurement with the START MEASURE button. It might take some time before the first value arrives.
+    </string>
+    <string name="info_main6">
+        The values are plotted in the graphs. The graphs can be scrolled, zoomed and taped on to get the values.
+        The graphs can be reset with Reset Graphs in the options menu.
+    </string>
 
-    <string-array name="pref_sync_frequency_titles">
-        <item>15 minutes</item>
-        <item>30 minutes</item>
-        <item>1 hour</item>
-        <item>3 hours</item>
-        <item>6 hours</item>
-        <item>Never</item>
-    </string-array>
-    <string-array name="pref_sync_frequency_values">
-        <item>15</item>
-        <item>30</item>
-        <item>60</item>
-        <item>180</item>
-        <item>360</item>
-        <item>-1</item>
-    </string-array>
+    <!-- Information Main Activity -->
+
+    <string name="info_settings1">
+        This application is made in a Bachelor thesis project at Chalmers University of Technology 2019.
+        The purpose is to measure heart rate and breath rate with a radar and display the results in an interactive application.
+    </string>
+    <string name="info_settings2">
+        Developer: Albin Warnicke and Erik Angert Svensson
+    </string>
+    <string name="info_settings3">
+        Licence: CC BY 4.0
+    </string>
+    <string name="copyright">
+        Copyright \u00A9 2019 Albin Warnicke, Erik Angert Svensson, Julia Nystrand, Simon Nordenström, Emil Johansson and Sebastian Göbel
+    </string>
+
+    <!-- Information Bluetooth Settings -->
+
+    <string name="info_bluetooth1">
+        When bluetooth turns on, the app will automatically try to connect to Raspberry Pi.
+        If it doesn\'t succeed it will search for Raspberry Pi. When Raspberry Pi is found, the app will bond to it and then connect.
+    </string>
+    <string name="info_bluetooth2">
+        Set the bluetooth name or MAC-address for the Raspberry Pi (usually raspberrypi).
+    </string>
+    <string name="info_bluetooth3">
+        Automated Connection is the method that is used every time bluetooth starts.
+        It will automatically try to connect to Raspberry Pi, search for it and if needed try connect again.
+    </string>
+    <string name="info_bluetooth4">
+        Search after Raspberry Pi and Connect to Raspberry Pi is methods to manually search and connect to Raspberry Pi.
+    </string>
+    <string name="info_bluetooth5">
+        The Command Terminal is used to get some special features from the app. The commands are case insensitive. The following commands are available:
+    </string>
+    <string name="info_bluetooth6">
+        \u25CF poweroff \u23E4 quit the python program and power off Raspberry Pi
+    </string>
+    <string name="info_bluetooth7">
+        \u25CF simulate \u23E4 simulate data instead of getting the data from Raspberry Pi
+    </string>
+    <string name="info_bluetooth8">
+        \u25CF list \u23E4 get a list of paired bluetooth devices
+    </string>
 
 </resources>

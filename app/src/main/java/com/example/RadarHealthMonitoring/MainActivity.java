@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -115,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         unregisterReceiver(StartMeasButtonBroadcastReceiver);
     }
 
-        /**
+    /**
      * Creates a options menu with settings, a reset button and a button/indicator that shows the connection state
      */
     @Override
@@ -163,6 +164,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 return true;
             case R.id.reset_graphs:
                 resetGraph();
+            case R.id.help_main:
+                DialogFragment newFragment = new InformationMainFragment();
+                newFragment.show(getSupportFragmentManager(), "help_main");
             default:
                 return super.onOptionsItemSelected(item);
         }
