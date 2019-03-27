@@ -33,4 +33,6 @@
     <color name="colorMeasureButtonOn">#40A0FC</color>
     <color name="colorMeasureButtonOn6">#2196f3</color>
     <color name="colorMeasureButtonOff">#FF5F53</color>
+    <color name="colorMeasureButtonDisabled">#C8C8C8</color>
+    <color name="colorMeasureButtonDisabledText">#AAAAAA</color>
 </resources>

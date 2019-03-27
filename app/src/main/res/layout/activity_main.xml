@@ -16,10 +16,11 @@
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        android:background="@color/colorMeasureButtonOn"
+        android:background="@color/colorMeasureButtonDisabled"
+        android:enabled="false"
         android:onClick="measureOnClick"
         android:text="Start Measure"
-        android:textColor="@android:color/background_light"
+        android:textColor="@color/colorMeasureButtonDisabledText"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

@@ -98,6 +98,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         registerReceiver(ToastBroadcastReceiver, intentFilterToast);
         IntentFilter intentFilterResetGraph = new IntentFilter(Settings.BluetoothSettings.RESET_GRAPH);
         registerReceiver(ResetGraphBroadcastReceiver, intentFilterResetGraph);
+        IntentFilter intentFilterStartMeasButton = new IntentFilter(Bluetooth.START_MEAS_BUTTON_ENABLE);
+        registerReceiver(StartMeasButtonBroadcastReceiver, intentFilterStartMeasButton);
     }
 
     @Override
@@ -110,6 +112,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         unregisterReceiver(ReadDataBroadcastReceiver);
         unregisterReceiver(ToastBroadcastReceiver);
         unregisterReceiver(ResetGraphBroadcastReceiver);
+        unregisterReceiver(StartMeasButtonBroadcastReceiver);
     }
 
         /**
@@ -159,16 +162,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 }
                 return true;
             case R.id.reset_graphs:
-                graphPulse.resetSeries();
-                graphBreathe.resetSeries();
-                pulseValueView.setText("Pulse:   ");
-                breathValueView.setText("Breath rate:   ");
-                if (measurementRunning) {
-                    startTime = System.currentTimeMillis();
-                } else {
-                    firstStartMeasurement = true;
-                }
-                dataNumber = 0;
+                resetGraph();
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -254,6 +248,19 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         breathValueView.setText("Breath rate: " + breathData);
     }
 
+    void resetGraph() {
+        graphPulse.resetSeries();
+        graphBreathe.resetSeries();
+        pulseValueView.setText("Pulse:   ");
+        breathValueView.setText("Breath rate:   ");
+        if (measurementRunning) {
+            startTime = System.currentTimeMillis();
+        } else {
+            firstStartMeasurement = true;
+        }
+        dataNumber = 0;
+    }
+
     // ########## ########## Request Permission ########## ##########
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -330,7 +337,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     //Toast.makeText(getApplicationContext(), value, Toast.LENGTH_SHORT).show();
                     String split[] = value.split(" ");
                     switch (split[0]) {
-                        case "PR":
+                        case "HR":
                             setPulseData(Integer.parseInt(split[1]));
                             break;
                         case "BR":
@@ -351,11 +358,26 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (Settings.BluetoothSettings.RESET_GRAPH.equals(action)) {
-                graphPulse.resetSeries();
-                graphBreathe.resetSeries();
-                pulseValueView.setText("Pulse:   ");
-                breathValueView.setText("Breath rate:   ");
-                dataNumber = 0;
+                resetGraph();
+            }
+        }
+    };
+
+    public BroadcastReceiver StartMeasButtonBroadcastReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (Bluetooth.START_MEAS_BUTTON_ENABLE.equals(action)) {
+                boolean value = intent.getBooleanExtra(b.ENABLE_BUTTON,true);
+                startStoppMeasureButton.setEnabled(value);
+                startStoppMeasureButton.setText("Start Measure");
+                measurementRunning = false;
+                if (value) {
+                    startStoppMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonOn));
+                    startStoppMeasureButton.setTextColor(getResources().getColor(android.R.color.white));
+                } else {
+                    startStoppMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonDisabled));
+                    startStoppMeasureButton.setTextColor(getResources().getColor(R.color.colorMeasureButtonDisabledText));
+                }
             }
         }
     };

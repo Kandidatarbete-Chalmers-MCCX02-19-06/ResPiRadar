@@ -21,6 +21,7 @@ import java.util.List;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
+import static com.example.RadarHealthMonitoring.Bluetooth.START_MEAS_BUTTON_ENABLE;
 import static com.example.RadarHealthMonitoring.Bluetooth.b;
 
 /**
@@ -299,7 +300,7 @@ public class Settings extends AppCompatPreferenceActivity {
             commandTerminal.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    String command = (String)newValue;
+                    String command = ((String)newValue).toLowerCase();
                     Log.d(Settingsmsg, "Command: " + command);
                     switch (command) {
                         case "poweroff":
@@ -314,30 +315,24 @@ public class Settings extends AppCompatPreferenceActivity {
                             break;
                         case "list":
                             if (b.commandBluetoothList) {
-                                //bluetoothList.
                                 b.commandBluetoothList = false;
                                 b.bluetoothListEnable = false;
                                 bluetoothList.setEnabled(false);
                                 getPreferenceScreen().removePreference(bluetoothList);
-                                //bluetoothList.setShouldDisableView(true);
                             } else {
                                 b.commandBluetoothList = true;
-                                //b.bluetoothListEnable = true;
                                 getPreferenceScreen().addPreference(bluetoothList);
                                 b.updateBluetoothList();
                                 if (b.bluetoothListEnable) {
                                     bluetoothList.setEnabled(true);
                                 }
-                                //bluetoothList.setShouldDisableView(false);
                             }
                             break;
                         case "simulate":
-                            /*if (b.commandSimulate) {
-                                b.commandSimulate = false;
-                            } else {
-                                b.commandSimulate = true;
-                            }*/
                             b.commandSimulate = !b.commandSimulate;
+                            Intent StartMeasButtonIntent = new Intent(START_MEAS_BUTTON_ENABLE);
+                            StartMeasButtonIntent.putExtra(b.ENABLE_BUTTON,b.commandSimulate || b.connected);
+                            s.sendBroadcast(StartMeasButtonIntent);
                             Intent readIntent = new Intent(BluetoothSettings.RESET_GRAPH);
                             s.sendBroadcast(readIntent);
                             break;
@@ -358,17 +353,7 @@ public class Settings extends AppCompatPreferenceActivity {
         }
 
         // ########## ########## Methods ########## ##########
-        void connectedThreadDisconnect() { // TODO ta bort
-            s.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    bluetoothConnect.setChecked(false);
-                    bluetoothAutoConnect.setChecked(false);
-                    bluetoothSearch.setEnabled(true);
-                    //bluetoothWrite.setEnabled(false);
-                }
-            });
-        }
+
 
         // ########## ########## Request Permission ########## ##########
         @Override

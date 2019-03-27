@@ -80,7 +80,7 @@ class Graph {
             @Override
             public void onTap(Series series, DataPointInterface dataPoint) {
                 //Context context = getApplicationContext();
-                Toast.makeText(context, "" + String.format("%.1f",dataPoint.getY()) + " bpm at time " + String.format("%.1f",dataPoint.getX()) + " s", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "" + String.format("%.0f",dataPoint.getY()) + " bpm at time " + String.format("%.0f",dataPoint.getX()) + " s", Toast.LENGTH_SHORT).show();
             }
         });
         return series;

@@ -48,10 +48,7 @@ public class Bluetooth extends Service {
     boolean foundRaspberryPi = false;
     int connectAttempt = 1;
     int searchAttempts = 1;
-    int delay;
     boolean startBluetooth = false;
-
-    MainActivity mainActivity;
 
     private static Handler uiHandler;// = new Handler(Looper.getMainLooper()); // static handler
     static
@@ -69,7 +66,6 @@ public class Bluetooth extends Service {
     boolean commandBluetoothList = false;
     boolean bluetoothSearchEnable = false;
     boolean bluetoothConnectEnable = false;
-    //boolean bluetoothWriteEnable = false;
     boolean bluetoothSearchChecked = false;
     boolean bluetoothConnectChecked = false;
     boolean bluetoothAutoConnectChecked = false;
@@ -87,6 +83,8 @@ public class Bluetooth extends Service {
     static public final String TOAST = "TOAST";
     public final String ICON = "ICON";
     public final String TEXT = "TEXT";
+    static public final String START_MEAS_BUTTON_ENABLE = "START_MEAS_BUTTON_ENABLE";
+    public final String ENABLE_BUTTON = "ENABLE_BUTTON";
 
     // ########## ########## onCreate ########## ##########
 
@@ -154,7 +152,6 @@ public class Bluetooth extends Service {
                     bluetoothOn();
                     if (connectThread != null) {
                         if (connectThread.isAlive()) {
-                            // connectedThread.cancel(); // redudant?
                             connectThread.cancel();
                         }
                     }
@@ -350,12 +347,16 @@ public class Bluetooth extends Service {
     synchronized void bluetoothConnected() {
         b.bluetoothConnectChecked = true;
         b.bluetoothAutoConnectChecked = true;
-        //b.bluetoothWriteEnable = true;
         b.connected = true;
         b.bluetoothSearchEnable = false;
         Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
         intent.putExtra(ICON,"ic_bluetooth_connected_white_24dp");
         sendBroadcast(intent);
+        if (!commandSimulate) {
+            Intent StartMeasButtonIntent = new Intent(START_MEAS_BUTTON_ENABLE);
+            StartMeasButtonIntent.putExtra(ENABLE_BUTTON, true);
+            sendBroadcast(StartMeasButtonIntent);
+        }
         if (b.bluetoothSettingsActive) {
             s.runOnUiThread(new Runnable() {
                 @Override
@@ -363,7 +364,6 @@ public class Bluetooth extends Service {
                     bluetoothConnect.setChecked(true);
                     bluetoothAutoConnect.setChecked(true);
                     bluetoothSearch.setEnabled(false);
-                    //bluetoothWrite.setEnabled(true);
                 }
             });
         }
@@ -378,24 +378,25 @@ public class Bluetooth extends Service {
         b.bluetoothConnectChecked = false;
         b.bluetoothAutoConnectChecked = false;
         b.bluetoothSearchEnable = true;
-        //b.bluetoothWriteEnable = false;
         Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
         intent.putExtra(ICON,"ic_bluetooth_white_24dp");
         sendBroadcast(intent);
+        if (!commandSimulate) {
+            Intent StartMeasButtonIntent = new Intent(START_MEAS_BUTTON_ENABLE);
+            StartMeasButtonIntent.putExtra(ENABLE_BUTTON, false);
+            sendBroadcast(StartMeasButtonIntent);
+        }
         if (b.bluetoothSettingsActive && !uiThread) {
             bluetoothConnect.setChecked(false);
             bluetoothAutoConnect.setChecked(false);
             bluetoothSearch.setEnabled(true);
-            //bluetoothWrite.setEnabled(false);
         } else if (b.bluetoothSettingsActive && uiThread) { // TODO Undersök
-            //bs.connectedThreadDisconnect();
             s.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     bluetoothConnect.setChecked(false);
                     bluetoothAutoConnect.setChecked(false);
                     bluetoothSearch.setEnabled(true);
-                    //bluetoothWrite.setEnabled(false);
                 }
             });
         }
@@ -538,7 +539,6 @@ public class Bluetooth extends Service {
             public void run() {
                 boolean blueIC = false;
                 while (connectThread.isRunning() && connectThread.isAlive()) {
-                    //Log.d(TAG, "connectThread is alive " + blueIC);
                     Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
                     if (blueIC) {
                         intent.putExtra(ICON,"ic_bluetooth_white_24dp");
