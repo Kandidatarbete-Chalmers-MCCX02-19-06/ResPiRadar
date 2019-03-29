@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -13,10 +15,13 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,14 +43,17 @@ import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluet
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
 
     private static final String msg = "MainActivity";
-    boolean measurementRunning = false;
+    static final String REAL_TIME_BREATHING = "REAL_TIME_BREATHING";
+    static final String BREATHING_VALUE = "BREATHING_VALUE";
+    static boolean measurementRunning = false;
     static MenuItem bluetoothMenuItem;
     Button startStoppMeasureButton;
     TextView pulseValueView;
     TextView breathValueView;
     Intent intentBluetooth;
-    long startTime;
+    static long startTime;
     boolean firstStartMeasurement = true;
+    boolean waitLoopRunning = false;
 
     private final int REQUEST_FINE_LOCATION = 2;
 
@@ -56,6 +64,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     double yBreathe;
     DataPoint dataPulse;
     DataPoint dataBreathe;
+
+    static Display display;
 
     HandlerThread handlerThread;
     Looper looper;
@@ -71,15 +81,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //m = MainActivity.this;
         PreferenceManager.setDefaultValues(this, R.xml.settings, false); // så systemet inte sätter default
         startStoppMeasureButton = findViewById(R.id.startStoppMeasureButton); // Start button
         pulseValueView = findViewById(R.id.pulseValueView);
         breathValueView = findViewById(R.id.breathValueView);
 
         /* Graphs */
-        graphPulse = new Graph(findViewById(R.id.graphPulse),getApplicationContext(),getResources().getColor(R.color.colorGraphPulse));
-        graphBreathe = new Graph(findViewById(R.id.graphBreathe),getApplicationContext(),getResources().getColor(R.color.colorGraphBreath));
+        graphPulse = new Graph(findViewById(R.id.graphPulse),getApplicationContext(),getResources().getColor(R.color.colorGraphPulse), true);
+        graphBreathe = new Graph(findViewById(R.id.graphBreathe),getApplicationContext(),getResources().getColor(R.color.colorGraphBreath), true);
         /* Bluetooth */
         intentBluetooth = new Intent(this, Bluetooth.class);
         startService(intentBluetooth);
@@ -101,6 +110,20 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         registerReceiver(ResetGraphBroadcastReceiver, intentFilterResetGraph);
         IntentFilter intentFilterStartMeasButton = new IntentFilter(Bluetooth.START_MEAS_BUTTON_ENABLE);
         registerReceiver(StartMeasButtonBroadcastReceiver, intentFilterStartMeasButton);
+
+        display = ((WindowManager)
+                getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (display.getRotation() == Surface.ROTATION_0) {
+            this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+        } else {
+            waitForOrientation();
+            this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
     }
 
     @Override
@@ -153,7 +176,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                         if (b.connectThread != null) {
                             b.connectThread.cancel();
                         } else {
-                            //b.bluetoothDisconnected(false); // TODO undersök
                             b.bluetoothAutoConnectChecked = false;
                             if (b.bluetoothSettingsActive) {
                                 bluetoothAutoConnect.setChecked(false);
@@ -164,11 +186,31 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 return true;
             case R.id.reset_graphs:
                 resetGraph();
+                return true;
             case R.id.help_main:
                 DialogFragment newFragment = new InformationMainFragment();
                 newFragment.show(getSupportFragmentManager(), "help_main");
+                return true;
+            case R.id.real_time:
+                Intent intentRealTimeBreath = new Intent(this, RealTimeBreathActivity.class);
+                this.startActivity(intentRealTimeBreath);
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Checks the orientation of the screen
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            Intent intentRealTimeBreath = new Intent(this, RealTimeBreathActivity.class);
+            this.startActivity(intentRealTimeBreath);
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+            if (!waitLoopRunning) {
+                this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+            }
         }
     }
 
@@ -197,6 +239,23 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         measurementRunning = !measurementRunning;
     }
 
+    void waitForOrientation() {
+        Thread waitLoop = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+                waitLoopRunning = false;
+            }
+        };
+        waitLoopRunning = true;
+        waitLoop.start();
+    }
+
     /**
      * Creates a new thread to create simulated data to the graphs every 500 ms
      */
@@ -221,7 +280,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     /**
      * Add simulated data to the graps
      */
-    public void addData() {        //knapp för att lägga till ett värde till serien
+    public void addData() {
         yPulse = Math.sin(dataNumber*3/30)/2+70+Math.random()/2;
         yBreathe = Math.sin(dataNumber/20)/2+22+Math.random()/3;
         dataPulse = new DataPoint(dataNumber,yPulse);
@@ -348,7 +407,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                             setBreathData(Integer.parseInt(split[1]));
                             break;
                         case "RTB":
-                            //
+                            if (RealTimeBreathActivity.isActive) {
+                                Intent valueIntent = new Intent(REAL_TIME_BREATHING);
+                                valueIntent.putExtra(BREATHING_VALUE,Integer.parseInt(split[1]));
+                                sendBroadcast(valueIntent);
+                            }
                             break;
                         default:
                             Log.d(msg, "Could't extract data" + split);
