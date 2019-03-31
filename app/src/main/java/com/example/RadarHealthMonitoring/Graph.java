@@ -49,8 +49,8 @@ class Graph {
         //graph.getViewport().setScalableY(true);
         graph.getViewport().setXAxisBoundsManual(true);     //set Viewport window size
         //graph.getViewport().setYAxisBoundsManual(true);
-        graph.getViewport().setMinX(-60);
-        graph.getViewport().setMaxX(0);
+        graph.getViewport().setMinX(0);
+        graph.getViewport().setMaxX(60);
         //graph.getViewport().setMaxXAxisSize(1);
         //graph.getViewport().setMinY(-1.5);      //begränsar y-axeln med värden
         //graph.getViewport().setMaxY(1.5);
@@ -68,8 +68,8 @@ class Graph {
     }
 
     void resetSeries() {
-        graph.getViewport().setMinX(-60);
-        graph.getViewport().setMaxX(0);
+        graph.getViewport().setMinX(0);
+        graph.getViewport().setMaxX(60);
         graph.removeAllSeries();
         graph.addSeries(newSeries());
     }
@@ -92,5 +92,13 @@ class Graph {
 
     Viewport getViewport() {
         return graph.getViewport();
+    }
+
+    void fixGraphView(Object[] dataPoints) {
+        graph.removeAllSeries();
+        graph.addSeries(newSeries());
+        for (Object data : dataPoints) {
+            series.appendData((DataPoint) data, false, 1000, true);
+        }
     }
 }

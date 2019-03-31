@@ -7,12 +7,14 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.Surface;
+import android.widget.Toast;
 
 import com.jjoe64.graphview.Viewport;
 import com.jjoe64.graphview.series.DataPoint;
@@ -24,7 +26,9 @@ import static com.example.RadarHealthMonitoring.MainActivity.measurementRunning;
 
 public class RealTimeBreathActivity extends AppCompatActivity {
 
-    boolean waitLoopRunning;
+    boolean waitSetScreenOrientationRunning = false;
+    Handler handler = new Handler();
+
     static boolean isActive = false;
     boolean isTaping = false;
     boolean tapWaitLoopRunning = false;
@@ -52,7 +56,6 @@ public class RealTimeBreathActivity extends AppCompatActivity {
         graphRealTimeBreathe.getViewport().setOnXAxisBoundsChangedListener(new Viewport.OnXAxisBoundsChangedListener() {
             @Override
             public void onXAxisBoundsChanged(double minX, double maxX, Viewport.OnXAxisBoundsChangedListener.Reason reason) {
-                Log.d("RTB", "Taped");
                 isTaping = true;
                 if (!tapWaitLoopRunning) {
                     tapWaitLoop();
@@ -65,7 +68,14 @@ public class RealTimeBreathActivity extends AppCompatActivity {
         // Screen Orientation
         switch (MainActivity.display.getRotation()) {
             case Surface.ROTATION_0:
-                waitForOrientation();
+                waitSetScreenOrientationRunning = true; // TODO
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+                        waitSetScreenOrientationRunning = false;
+                    }
+                }, 3000);
                 this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
                 break;
             case Surface.ROTATION_90:
@@ -100,17 +110,14 @@ public class RealTimeBreathActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {  // Ger en fungerande tillbaka-pil
         if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
+            if (MainActivity.startRealTimeBreathingWithRotate) {
+                onBackPressed();
+            } else {
+                Toast.makeText(this, "Rotate the device to portrait orientation", Toast.LENGTH_LONG).show();
+            }
         }
         return super.onOptionsItemSelected(item);
     }
-
-    /*@Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main_menu, menu);
-        return true;
-    }*/
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -119,23 +126,6 @@ public class RealTimeBreathActivity extends AppCompatActivity {
         if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
             finish();
         }
-    }
-
-    void waitForOrientation() {
-        Thread waitLoop = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
-                waitLoopRunning = false;
-            }
-        };
-        waitLoopRunning = true;
-        waitLoop.start();
     }
 
     void tapWaitLoop() {
@@ -195,7 +185,7 @@ public class RealTimeBreathActivity extends AppCompatActivity {
         if (!isTaping) {
             double diff = graphRealTimeBreathe.getViewport().getMaxX(false) -
                     graphRealTimeBreathe.getViewport().getMinX(false);
-            if (xValue > graphRealTimeBreathe.getViewport().getMinX(false) + diff*0.95 && xValue < graphRealTimeBreathe.getViewport().getMinX(false) + diff*1.05) {
+            if (xValue > graphRealTimeBreathe.getViewport().getMinX(false) + diff && xValue < graphRealTimeBreathe.getViewport().getMinX(false) + diff*1.1) {
                 graphRealTimeBreathe.getViewport().setMaxX(graphRealTimeBreathe.getViewport().getMaxX(false) + diff * 0.9);
                 graphRealTimeBreathe.getViewport().setMinX(graphRealTimeBreathe.getViewport().getMinX(false) + diff * 0.9);
             } else if (graphRealTimeBreathe.getViewport().getMinX(true) > graphRealTimeBreathe.getViewport().getMaxX(false) - 0.2*diff) {
@@ -207,7 +197,7 @@ public class RealTimeBreathActivity extends AppCompatActivity {
 
     void setBreathData(int breathData) {
         setGraphViewBounds(System.currentTimeMillis() - MainActivity.startTime);
-        dataRealTimeBreathe = new DataPoint(Math.round((System.currentTimeMillis() - MainActivity.startTime)/1000.0),breathData);
+        dataRealTimeBreathe = new DataPoint(Math.round((System.currentTimeMillis() - MainActivity.startTime)/1000.0),breathData); // TODO round?
         graphRealTimeBreathe.getSeries().appendData(dataRealTimeBreathe, false,1000); // seriesPulse
     }
 

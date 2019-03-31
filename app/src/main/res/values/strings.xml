@@ -42,6 +42,9 @@
         The values are plotted in the graphs. The graphs can be scrolled, zoomed and taped on to get the values.
         The graphs can be reset with Reset Graphs in the options menu.
     </string>
+    <string name="info_main7">
+        Rotate the phone to landscape to se a real time breathing amplitude graph, or just click Real Time Breathing in the options menu.
+    </string>
 
     <!-- Information Main Activity -->
 

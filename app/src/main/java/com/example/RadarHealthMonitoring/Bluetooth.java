@@ -69,7 +69,7 @@ public class Bluetooth extends Service {
     boolean bluetoothSearchChecked = false;
     boolean bluetoothConnectChecked = false;
     boolean bluetoothAutoConnectChecked = false;
-    boolean commandSimulate = false;
+    boolean commandSimulate = true; // TODO false, ändra startbutton to disabled
 
     // Constants that indicate the current connection state
     public static final int STATE_NONE = 0;       // we're doing nothing

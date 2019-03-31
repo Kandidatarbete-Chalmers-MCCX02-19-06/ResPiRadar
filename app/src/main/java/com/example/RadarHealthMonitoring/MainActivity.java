@@ -9,8 +9,6 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
@@ -26,14 +24,17 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.jjoe64.graphview.Viewport;
 import com.jjoe64.graphview.series.DataPoint;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
 import static com.example.RadarHealthMonitoring.Bluetooth.b;
 import static com.example.RadarHealthMonitoring.ConnectedThread.READ_VALUE;
+import static com.example.RadarHealthMonitoring.RealTimeBreathActivity.isActive;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAutoConnect;
 
 
@@ -47,13 +48,35 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     static final String BREATHING_VALUE = "BREATHING_VALUE";
     static boolean measurementRunning = false;
     static MenuItem bluetoothMenuItem;
+    MenuItem realTimeBreathingMenuItem;
+    int maxDataPoints = 1000;
     Button startStoppMeasureButton;
     TextView pulseValueView;
     TextView breathValueView;
     Intent intentBluetooth;
     static long startTime;
     boolean firstStartMeasurement = true;
-    boolean waitLoopRunning = false;
+
+    boolean waitSetScreenOrientationRunning = false;
+    Handler handler = new Handler();
+
+    static boolean startRealTimeBreathingWithRotate = false;
+
+    // Booleans for taping
+    boolean isTapingPulse = false;
+    boolean tapWaitLoopRunningPulse = false;
+    boolean newTapPulse = false;
+    boolean isTapingBreath = false;
+    boolean tapWaitLoopRunningBreath = false;
+    boolean newTapBreath = false;
+
+    // fix the graph view bug
+    boolean firstDataPulse = true;
+    boolean firstDataBreath = true;
+    boolean resume = false;
+    static int scrollToEnd = 100;
+    ArrayList<DataPoint> dataPointsPulse = new ArrayList<>();
+    ArrayList<DataPoint> dataPointsBreath = new ArrayList<>();
 
     private final int REQUEST_FINE_LOCATION = 2;
 
@@ -67,9 +90,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     static Display display;
 
-    HandlerThread handlerThread;
+    /*HandlerThread handlerThread;
     Looper looper;
-    static Handler handler;
+    static Handler handler;*/
 
     /**
      * On start up: creates the graphs and starts the Bluetooth service that auto connects to
@@ -85,10 +108,33 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         startStoppMeasureButton = findViewById(R.id.startStoppMeasureButton); // Start button
         pulseValueView = findViewById(R.id.pulseValueView);
         breathValueView = findViewById(R.id.breathValueView);
+        //this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         /* Graphs */
         graphPulse = new Graph(findViewById(R.id.graphPulse),getApplicationContext(),getResources().getColor(R.color.colorGraphPulse), true);
         graphBreathe = new Graph(findViewById(R.id.graphBreathe),getApplicationContext(),getResources().getColor(R.color.colorGraphBreath), true);
+        graphPulse.getViewport().setOnXAxisBoundsChangedListener(new Viewport.OnXAxisBoundsChangedListener() {
+            @Override
+            public void onXAxisBoundsChanged(double minX, double maxX, Viewport.OnXAxisBoundsChangedListener.Reason reason) {
+                isTapingPulse = true;
+                if (!tapWaitLoopRunningPulse) {
+                    tapWaitLoopPulse();
+                } else {
+                    newTapPulse = true;
+                }
+            }
+        });
+        graphBreathe.getViewport().setOnXAxisBoundsChangedListener(new Viewport.OnXAxisBoundsChangedListener() {
+            @Override
+            public void onXAxisBoundsChanged(double minX, double maxX, Viewport.OnXAxisBoundsChangedListener.Reason reason) {
+                isTapingBreath = true;
+                if (!tapWaitLoopRunningBreath) {
+                    tapWaitLoopBreath();
+                } else {
+                    newTapBreath = true;
+                }
+            }
+        });
         /* Bluetooth */
         intentBluetooth = new Intent(this, Bluetooth.class);
         startService(intentBluetooth);
@@ -117,13 +163,52 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     @Override
     public void onResume() {
-        super.onResume();
-        if (display.getRotation() == Surface.ROTATION_0) {
-            this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
-        } else {
-            waitForOrientation();
-            this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        Log.d(msg,"onResume");
+        if(isActive) {
+            fixGraphOnReturn();
+            resume = true;
         }
+        if (measurementRunning) {
+            if (display.getRotation() == Surface.ROTATION_0) {
+                this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+            } else {
+                waitSetScreenOrientationRunning = true;
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (measurementRunning) {
+                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+                        }
+                        waitSetScreenOrientationRunning = false;
+                    }
+                }, 3000);
+                this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            }
+        }
+        super.onResume();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        // Always call the superclass so it can restore the view hierarchy
+        super.onRestoreInstanceState(savedInstanceState);
+    }
+
+    @Override
+    public void onPause() {
+        Log.d(msg,"onPause");
+        super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        Log.d(msg,"onStop");
+        super.onStop();
     }
 
     @Override
@@ -147,6 +232,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_menu, menu);
         bluetoothMenuItem = menu.findItem(R.id.bluetooth);
+        realTimeBreathingMenuItem = menu.findItem(R.id.real_time);
+        realTimeBreathingMenuItem.setEnabled(false);
         if(b.bluetoothOnChecked) {
             bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
         }
@@ -192,8 +279,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 newFragment.show(getSupportFragmentManager(), "help_main");
                 return true;
             case R.id.real_time:
-                Intent intentRealTimeBreath = new Intent(this, RealTimeBreathActivity.class);
-                this.startActivity(intentRealTimeBreath);
+                if (measurementRunning) {
+                    startRealTimeBreathingWithRotate = false;
+                    Intent intentRealTimeBreath = new Intent(this, RealTimeBreathActivity.class);
+                    this.startActivity(intentRealTimeBreath);
+                }
+                return true;
+            case R.id.scroll_to_end:
+                scrollToEnd = 0;
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -204,12 +297,15 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         // Checks the orientation of the screen
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            Intent intentRealTimeBreath = new Intent(this, RealTimeBreathActivity.class);
-            this.startActivity(intentRealTimeBreath);
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
-            if (!waitLoopRunning) {
-                this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+        if (measurementRunning) {
+            if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                startRealTimeBreathingWithRotate = true;
+                Intent intentRealTimeBreath = new Intent(this, RealTimeBreathActivity.class);
+                this.startActivity(intentRealTimeBreath);
+            } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                if (!waitSetScreenOrientationRunning) {
+                    this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+                }
             }
         }
     }
@@ -232,28 +328,75 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             if (b.commandSimulate) {
                 loopAddData();
             }
+            this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+            realTimeBreathingMenuItem.setEnabled(true);
         } else {
             startStoppMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonOn));
             startStoppMeasureButton.setText("Start Measure");
+            this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            realTimeBreathingMenuItem.setEnabled(false);
         }
         measurementRunning = !measurementRunning;
     }
 
-    void waitForOrientation() {
-        Thread waitLoop = new Thread() {
+    void tapWaitLoopPulse() {
+        Thread tapWaitLoopThread = new Thread() {
             @Override
             public void run() {
-                try {
-                    sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
-                waitLoopRunning = false;
+                do {
+                    newTapPulse = false;
+                    try {
+                        sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } while (newTapPulse);
+                tapWaitLoopRunningPulse = false;
+                isTapingPulse = false;
             }
         };
-        waitLoopRunning = true;
-        waitLoop.start();
+        tapWaitLoopRunningPulse = true;
+        tapWaitLoopThread.start();
+    }
+
+    void tapWaitLoopBreath() {
+        Thread tapWaitLoopThread = new Thread() {
+            @Override
+            public void run() {
+                do {
+                    newTapBreath = false;
+                    try {
+                        sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } while (newTapBreath);
+                tapWaitLoopRunningBreath = false;
+                isTapingBreath = false;
+            }
+        };
+        tapWaitLoopRunningBreath = true;
+        tapWaitLoopThread.start();
+    }
+
+    boolean setGraphViewBounds(double value, Graph graph, boolean isTaping) {
+        if (!isTaping) {
+            double diff = graph.getViewport().getMaxX(false) -
+                    graph.getViewport().getMinX(false);
+            if (scrollToEnd < 20) {
+                if (value > graph.getViewport().getMinX(false) + diff) {
+                    scrollToEnd ++;
+                    return true;
+                }
+            }
+            if (value > graph.getViewport().getMinX(false) + diff && value < graph.getViewport().getMinX(false) + diff*1.1) {
+                return true;
+            } else if (graph.getViewport().getMinX(true) > graph.getViewport().getMaxX(false) - 0.2*diff) {
+                graph.getViewport().setMaxX(graph.getViewport().getMaxX(false) + diff * 0.9);
+                graph.getViewport().setMinX(graph.getViewport().getMinX(false) + diff * 0.9);
+            }
+        }
+        return false;
     }
 
     /**
@@ -289,39 +432,75 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                graphPulse.getSeries().appendData(dataPulse, true,1000); // seriesPulse
-                pulseValueView.setText("Pulse: " + String.format("%.1f",yPulse));
-                graphBreathe.getSeries().appendData(dataBreathe, true,1000); // seriesBreathe
-                breathValueView.setText("Breath rate: " + String.format("%.1f",yBreathe));
+                if (!resume) {
+                    dataPointsPulse.add(dataPulse);
+                    dataPointsBreath.add(dataBreathe);
+                    if (dataPointsPulse.size() > maxDataPoints) {
+                        dataPointsPulse.remove(0);
+                        dataPointsBreath.remove(0);
+                    }
+                    //Log.d(msg,"dataNumber: " + dataNumber + " datapoins: " + dataPointsPulse.get(dataPointsPulse.size()-1));
+                    graphPulse.getSeries().appendData(dataPulse,
+                            setGraphViewBounds(dataNumber, graphPulse, isTapingPulse) || firstDataPulse, maxDataPoints, isActive); // seriesPulse
+                    pulseValueView.setText("Pulse: " + String.format("%.1f", yPulse));
+                    graphBreathe.getSeries().appendData(dataBreathe,
+                            setGraphViewBounds(dataNumber, graphBreathe, isTapingBreath) || firstDataPulse, maxDataPoints, isActive); // seriesBreathe
+                    breathValueView.setText("Breath rate: " + String.format("%.1f", yBreathe));
+                    if (firstDataPulse) {
+                        graphPulse.getViewport().setMinX(0);
+                        graphPulse.getViewport().setMaxX(60);
+                        graphBreathe.getViewport().setMinX(0);
+                        graphBreathe.getViewport().setMaxX(60);
+                    }
+                    firstDataPulse = false;
+                }
             }
         });
     }
 
+    void fixGraphOnReturn() {
+        handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d(msg,"resume false");
+                    graphPulse.fixGraphView(dataPointsPulse.toArray());
+                    graphBreathe.fixGraphView(dataPointsBreath.toArray());
+                    resume = false;
+                    scrollToEnd = 0;
+                }
+            }, 100);
+    }
+
     public void setPulseData(int pulseData) {
         dataPulse = new DataPoint(Math.round((System.currentTimeMillis() - startTime)/1000.0),pulseData);
-        graphPulse.getSeries().appendData(dataPulse, true,1000); // seriesPulse
+        graphPulse.getSeries().appendData(dataPulse, setGraphViewBounds(
+                Math.round((System.currentTimeMillis() - startTime)/1000.0), graphPulse, isTapingPulse),1000); // seriesPulse
         pulseValueView.setText("Pulse: " + pulseData);
-        //Toast.makeText(getApplicationContext(), "Time: " + (System.currentTimeMillis() - startTime), Toast.LENGTH_SHORT).show();
-        //Log.d(msg,"Time: " + System.currentTimeMillis() + " " + startTime);
     }
 
     public void setBreathData(int breathData) {
         dataBreathe = new DataPoint(Math.round((System.currentTimeMillis() - startTime)/1000.0),breathData);
-        graphBreathe.getSeries().appendData(dataBreathe, true,1000); // seriesPulse
+        graphBreathe.getSeries().appendData(dataBreathe, setGraphViewBounds(
+                Math.round((System.currentTimeMillis() - startTime)/1000.0), graphBreathe, isTapingBreath),1000); // seriesPulse
         breathValueView.setText("Breath rate: " + breathData);
     }
 
     void resetGraph() {
+        Log.d(msg,"Reset");
+        dataNumber = 0;
         graphPulse.resetSeries();
         graphBreathe.resetSeries();
         pulseValueView.setText("Pulse:   ");
         breathValueView.setText("Breath rate:   ");
+        dataPointsPulse = new ArrayList<>();
+        dataPointsBreath = new ArrayList<>();
         if (measurementRunning) {
             startTime = System.currentTimeMillis();
         } else {
             firstStartMeasurement = true;
         }
-        dataNumber = 0;
+        firstDataPulse = true;
+        firstDataBreath = true;
     }
 
     // ########## ########## Request Permission ########## ##########
@@ -407,7 +586,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                             setBreathData(Integer.parseInt(split[1]));
                             break;
                         case "RTB":
-                            if (RealTimeBreathActivity.isActive) {
+                            if (isActive) {
                                 Intent valueIntent = new Intent(REAL_TIME_BREATHING);
                                 valueIntent.putExtra(BREATHING_VALUE,Integer.parseInt(split[1]));
                                 sendBroadcast(valueIntent);

@@ -15,19 +15,24 @@
         app:showAsAction="never"
         android:title="Real Time Breathing"/>
     <item
-        android:id="@+id/reset_graphs"
+        android:id="@+id/scroll_to_end"
         android:orderInCategory="3"
+        app:showAsAction="never"
+        android:title="Scroll To End"/>
+    <item
+        android:id="@+id/reset_graphs"
+        android:orderInCategory="4"
         app:showAsAction="never"
         android:title="Reset Graphs"/>
     <item
         android:id="@+id/settings"
         android:title="@string/menu_settings"
-        android:orderInCategory="4"
+        android:orderInCategory="5"
         android:icon="@drawable/ic_settings"
         app:showAsAction="never"/>
     <item
         android:id="@+id/help_main"
-        android:orderInCategory="5"
+        android:orderInCategory="6"
         app:showAsAction="never"
         android:title="Help"/>
 
