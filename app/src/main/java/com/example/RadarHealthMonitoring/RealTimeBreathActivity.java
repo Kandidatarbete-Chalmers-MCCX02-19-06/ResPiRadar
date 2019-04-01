@@ -33,6 +33,7 @@ public class RealTimeBreathActivity extends AppCompatActivity {
     boolean isTaping = false;
     boolean tapWaitLoopRunning = false;
     boolean newTap = false;
+    boolean firstValue = false;
 
     private double dataNumber = 0;
     private Graph graphRealTimeBreathe;
@@ -45,6 +46,7 @@ public class RealTimeBreathActivity extends AppCompatActivity {
         setContentView(R.layout.activity_real_time_breath);
         setupActionBar();
         isActive = true;
+        firstValue = true;
         // Receiver
         IntentFilter intentFilterBreathing = new IntentFilter(REAL_TIME_BREATHING);
         registerReceiver(BreathingBroadcastReceiver, intentFilterBreathing);
@@ -68,7 +70,7 @@ public class RealTimeBreathActivity extends AppCompatActivity {
         // Screen Orientation
         switch (MainActivity.display.getRotation()) {
             case Surface.ROTATION_0:
-                waitSetScreenOrientationRunning = true; // TODO
+                waitSetScreenOrientationRunning = true;
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -88,9 +90,15 @@ public class RealTimeBreathActivity extends AppCompatActivity {
                 break;
         }
         if (b.commandSimulate && measurementRunning) {
-            loopAddData();
+            //loopAddData();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    loopAddData();
+                }
+            }, 100);
         }
-    }
+    } // end of onCreate
 
     @Override
     public void onDestroy() {
@@ -185,7 +193,11 @@ public class RealTimeBreathActivity extends AppCompatActivity {
         if (!isTaping) {
             double diff = graphRealTimeBreathe.getViewport().getMaxX(false) -
                     graphRealTimeBreathe.getViewport().getMinX(false);
-            if (xValue > graphRealTimeBreathe.getViewport().getMinX(false) + diff && xValue < graphRealTimeBreathe.getViewport().getMinX(false) + diff*1.1) {
+            if (firstValue && !b.commandSimulate) {
+                graphRealTimeBreathe.getViewport().setMaxX((System.currentTimeMillis() - MainActivity.startTime)/1000.0 + diff);
+                graphRealTimeBreathe.getViewport().setMinX((System.currentTimeMillis() - MainActivity.startTime)/1000.0);
+                firstValue = false;
+            } else if(xValue > graphRealTimeBreathe.getViewport().getMinX(false) + diff && xValue < graphRealTimeBreathe.getViewport().getMinX(false) + diff*1.5) { // TODO
                 graphRealTimeBreathe.getViewport().setMaxX(graphRealTimeBreathe.getViewport().getMaxX(false) + diff * 0.9);
                 graphRealTimeBreathe.getViewport().setMinX(graphRealTimeBreathe.getViewport().getMinX(false) + diff * 0.9);
             } else if (graphRealTimeBreathe.getViewport().getMinX(true) > graphRealTimeBreathe.getViewport().getMaxX(false) - 0.2*diff) {
@@ -196,8 +208,9 @@ public class RealTimeBreathActivity extends AppCompatActivity {
     }
 
     void setBreathData(int breathData) {
-        setGraphViewBounds(System.currentTimeMillis() - MainActivity.startTime);
-        dataRealTimeBreathe = new DataPoint(Math.round((System.currentTimeMillis() - MainActivity.startTime)/1000.0),breathData); // TODO round?
+        Log.d("RTB", "setBData " + breathData);
+        setGraphViewBounds((System.currentTimeMillis() - MainActivity.startTime)/1000.0);
+        dataRealTimeBreathe = new DataPoint(((System.currentTimeMillis() - MainActivity.startTime)/1000.0),breathData); // TODO round?
         graphRealTimeBreathe.getSeries().appendData(dataRealTimeBreathe, false,1000); // seriesPulse
     }
 

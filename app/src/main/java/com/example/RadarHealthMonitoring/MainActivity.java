@@ -328,6 +328,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             if (b.commandSimulate) {
                 loopAddData();
             }
+            scrollToEnd = 0;
             this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
             realTimeBreathingMenuItem.setEnabled(true);
         } else {
@@ -472,16 +473,25 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     }
 
     public void setPulseData(int pulseData) {
-        dataPulse = new DataPoint(Math.round((System.currentTimeMillis() - startTime)/1000.0),pulseData);
+        Log.d(msg,"setPulseData " + pulseData);
+        dataPulse = new DataPoint(((System.currentTimeMillis() - startTime)/1000.0),pulseData);
+        dataPointsPulse.add(dataPulse);
+        if (dataPointsPulse.size() > maxDataPoints) {
+            dataPointsPulse.remove(0);
+        }
         graphPulse.getSeries().appendData(dataPulse, setGraphViewBounds(
-                Math.round((System.currentTimeMillis() - startTime)/1000.0), graphPulse, isTapingPulse),1000); // seriesPulse
+                ((System.currentTimeMillis() - startTime)/1000.0), graphPulse, isTapingPulse),maxDataPoints,isActive); // TODO avrunda med decimaler
         pulseValueView.setText("Pulse: " + pulseData);
     }
 
     public void setBreathData(int breathData) {
-        dataBreathe = new DataPoint(Math.round((System.currentTimeMillis() - startTime)/1000.0),breathData);
+        dataBreathe = new DataPoint(((System.currentTimeMillis() - startTime)/1000.0),breathData);
+        dataPointsBreath.add(dataBreathe);
+        if (dataPointsBreath.size() > maxDataPoints) {
+            dataPointsBreath.remove(0);
+        }
         graphBreathe.getSeries().appendData(dataBreathe, setGraphViewBounds(
-                Math.round((System.currentTimeMillis() - startTime)/1000.0), graphBreathe, isTapingBreath),1000); // seriesPulse
+                ((System.currentTimeMillis() - startTime)/1000.0), graphBreathe, isTapingBreath),maxDataPoints,isActive);
         breathValueView.setText("Breath rate: " + breathData);
     }
 
