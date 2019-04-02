@@ -197,7 +197,7 @@ public class RealTimeBreathActivity extends AppCompatActivity {
                 graphRealTimeBreathe.getViewport().setMaxX((System.currentTimeMillis() - MainActivity.startTime)/1000.0 + diff);
                 graphRealTimeBreathe.getViewport().setMinX((System.currentTimeMillis() - MainActivity.startTime)/1000.0);
                 firstValue = false;
-            } else if(xValue > graphRealTimeBreathe.getViewport().getMinX(false) + diff && xValue < graphRealTimeBreathe.getViewport().getMinX(false) + diff*1.5) { // TODO
+            } else if(xValue > graphRealTimeBreathe.getViewport().getMinX(false) + diff && xValue < graphRealTimeBreathe.getViewport().getMinX(false) + diff*1.1) {
                 graphRealTimeBreathe.getViewport().setMaxX(graphRealTimeBreathe.getViewport().getMaxX(false) + diff * 0.9);
                 graphRealTimeBreathe.getViewport().setMinX(graphRealTimeBreathe.getViewport().getMinX(false) + diff * 0.9);
             } else if (graphRealTimeBreathe.getViewport().getMinX(true) > graphRealTimeBreathe.getViewport().getMaxX(false) - 0.2*diff) {
@@ -210,7 +210,7 @@ public class RealTimeBreathActivity extends AppCompatActivity {
     void setBreathData(int breathData) {
         Log.d("RTB", "setBData " + breathData);
         setGraphViewBounds((System.currentTimeMillis() - MainActivity.startTime)/1000.0);
-        dataRealTimeBreathe = new DataPoint(((System.currentTimeMillis() - MainActivity.startTime)/1000.0),breathData); // TODO round?
+        dataRealTimeBreathe = new DataPoint(((System.currentTimeMillis() - MainActivity.startTime)/1000.0),breathData);
         graphRealTimeBreathe.getSeries().appendData(dataRealTimeBreathe, false,1000); // seriesPulse
     }
 

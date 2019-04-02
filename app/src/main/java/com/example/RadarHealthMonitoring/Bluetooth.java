@@ -21,6 +21,7 @@ import java.util.Set;
 import androidx.annotation.Nullable;
 
 import static com.example.RadarHealthMonitoring.MainActivity.bluetoothMenuItem;
+import static com.example.RadarHealthMonitoring.MainActivity.measurementRunning;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAutoConnect;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothConnect;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothList;
@@ -356,6 +357,11 @@ public class Bluetooth extends Service {
             Intent StartMeasButtonIntent = new Intent(START_MEAS_BUTTON_ENABLE);
             StartMeasButtonIntent.putExtra(ENABLE_BUTTON, true);
             sendBroadcast(StartMeasButtonIntent);
+            if (measurementRunning) {
+                String command = "startMeasure";
+                byte[] sendCommand = command.getBytes();
+                b.connectedThread.write(sendCommand);
+            }
         }
         if (b.bluetoothSettingsActive) {
             s.runOnUiThread(new Runnable() {

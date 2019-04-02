@@ -331,11 +331,21 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             scrollToEnd = 0;
             this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
             realTimeBreathingMenuItem.setEnabled(true);
+            if (!b.commandSimulate) {
+                String command = "startMeasure";
+                byte[] sendCommand = command.getBytes();
+                b.connectedThread.write(sendCommand);
+            }
         } else {
             startStoppMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonOn));
             startStoppMeasureButton.setText("Start Measure");
             this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             realTimeBreathingMenuItem.setEnabled(false);
+            if (!b.commandSimulate) {
+                String command = "stopMeasure";
+                byte[] sendCommand = command.getBytes();
+                b.connectedThread.write(sendCommand);
+            }
         }
         measurementRunning = !measurementRunning;
     }
@@ -480,7 +490,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             dataPointsPulse.remove(0);
         }
         graphPulse.getSeries().appendData(dataPulse, setGraphViewBounds(
-                ((System.currentTimeMillis() - startTime)/1000.0), graphPulse, isTapingPulse),maxDataPoints,isActive); // TODO avrunda med decimaler
+                ((System.currentTimeMillis() - startTime)/1000.0), graphPulse, isTapingPulse),maxDataPoints,isActive);
         pulseValueView.setText("Pulse: " + pulseData);
     }
 
