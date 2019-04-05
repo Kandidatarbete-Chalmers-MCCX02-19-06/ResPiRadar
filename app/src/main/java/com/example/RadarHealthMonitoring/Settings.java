@@ -5,29 +5,21 @@ import android.app.DialogFragment;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
 import android.support.v7.app.ActionBar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
-
 import java.util.List;
-
 import pub.devrel.easypermissions.EasyPermissions;
 
 import static com.example.RadarHealthMonitoring.Bluetooth.START_MEAS_BUTTON_ENABLE;
 import static com.example.RadarHealthMonitoring.Bluetooth.b;
-
-//import android.support.v4.app.FragmentManager;
 
 /**
  * Settings är en aktivitet som skapar en panel med inställningar. Innehåller genvägar till flera
@@ -37,25 +29,20 @@ import static com.example.RadarHealthMonitoring.Bluetooth.b;
 public class Settings extends AppCompatPreferenceActivity {
 
     static Settings s; // for static activity
-    private static final String Settingsmsg = "Settings";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(Settingsmsg, "onCreate for Settings");
         s = Settings.this;
         setupActionBar();
         getFragmentManager()
                 .beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
                 .commit();  // Skapar ett nytt fragment i en ny panel
-
-
     }
 
     @Override
         public void onDestroy() {
-            Log.d(Settingsmsg, "onDestroy: called for Settings.");
             super.onDestroy();
         }
 
@@ -84,9 +71,7 @@ public class Settings extends AppCompatPreferenceActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    // ########## ########## ########## ########## ########## ########## ##########
-    // Start of Settings Fragments
-    // ########## ########## ########## ########## ########## ########## ##########
+    // ########## ########## Settings Fragment ########## ##########
 
     /**
      * Huvudpanelen för Settings. Innehåller både en lista där anslutning väljs.
@@ -154,18 +139,15 @@ public class Settings extends AppCompatPreferenceActivity {
         private static final String key_pref_bluetooth_list = "bluetooth_list";
         private static final String key_pref_raspberry_pi_name = "bluetooth_raspberrypi_name";
         private static final String key_pref_command_terminal = "command_terminal";
-
         static final String RESET_GRAPH = "RESET_GRAPH";
 
         static BluetoothSettings bs; // for static service
-        private static Handler uiHandler = new Handler(Looper.getMainLooper()); // static handler
 
         // ########## ########## onCreate ########## ##########
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            Log.d(Settingsmsg, "BluetoothSettings onCreate");
             bs = BluetoothSettings.this;
             b.bluetoothSettingsActive = true;
             addPreferencesFromResource(R.xml.pref_bluetooth);
@@ -198,7 +180,6 @@ public class Settings extends AppCompatPreferenceActivity {
                 getPreferenceScreen().removePreference(bluetoothList);
             }
             bluetoothList.setEnabled(b.bluetoothListEnable && b.commandBluetoothList);
-            //bluetoothWrite.setEnabled(b.bluetoothWriteEnable);
 
             // ########## Preference Listeners ##########
 
@@ -222,7 +203,6 @@ public class Settings extends AppCompatPreferenceActivity {
                         b.autoConnect = false;
                         b.bluetoothAdapter.cancelDiscovery();
                         if (b.connectThread != null) {
-                            Log.d(Settingsmsg, "cancel Thread");
                             b.connectThread.cancel();
                         } else {
                             b.bluetoothAutoConnectChecked = false;
@@ -278,7 +258,6 @@ public class Settings extends AppCompatPreferenceActivity {
                         b.startDiscovery();
                     } else {
                         b.bluetoothAdapter.cancelDiscovery();
-                        Log.d(Settingsmsg, "Disable search");
                         b.autoConnect = false;
                         if (!b.connected) {
                             b.bluetoothAutoConnectChecked = false;
@@ -305,7 +284,6 @@ public class Settings extends AppCompatPreferenceActivity {
                         }
                     } else {
                         if (b.connectThread != null) {
-                            Log.d(Settingsmsg, "cancel Thread");
                             b.connectThread.cancel();
                         } else {
                             return true;
@@ -320,7 +298,6 @@ public class Settings extends AppCompatPreferenceActivity {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     String command = ((String)newValue).toLowerCase();
-                    Log.d(Settingsmsg, "Command: " + command);
                     switch (command) {
                         case "poweroff":
                             if (b.connected) {
@@ -367,7 +344,6 @@ public class Settings extends AppCompatPreferenceActivity {
         @Override
         public void onDestroy() {
             super.onDestroy();
-            Log.d(Settingsmsg, "BluetoothSettings onDestroy");
             b.bluetoothSettingsActive = false;
         }
 
@@ -418,42 +394,4 @@ public class Settings extends AppCompatPreferenceActivity {
         }
 
     } // end of BluetoothSettings
-
-
-    // ########## ########## ########## ########## ########## ########## ##########
-    // End of Settings Fragments. Start of shared preferences and listeners
-    // ########## ########## ########## ########## ########## ########## ##########
-
-    /**
-     * Lyssnar efter ändringar. Gör bland annat att alla preferenser som har en key och är bundet med
-     * bindPreferenceSummaryToValue kan få sitt värde utskrivet i summary. Dessutom får listan
-     * med olika anslutningsmöjligheter sina figurer här.
-     */
-    private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object value) {
-            String stringValue = value.toString();
-            if (preference instanceof ListPreference) {
-                ListPreference listPreference = (ListPreference) preference;
-                int index = listPreference.findIndexOfValue(stringValue);
-                preference.setSummary(  // ändrar summary till värdet
-                        index >= 0
-                                ? listPreference.getEntries()[index]
-                                : null);
-            } else {
-                preference.setSummary(stringValue);
-            }
-            return true;
-        }
-    };
-
-    private static void bindPreferenceSummaryToValue(Preference preference) { // TODO undersök om behövs
-        // Set the listener to watch for value changes.
-        preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
-        // Trigger the listener immediately with the preference's current value.
-        sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-                PreferenceManager
-                        .getDefaultSharedPreferences(preference.getContext())
-                        .getString(preference.getKey(), ""));
-    }
 } // end of Settings.class

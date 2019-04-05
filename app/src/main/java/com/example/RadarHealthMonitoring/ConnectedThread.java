@@ -11,23 +11,16 @@ import java.io.OutputStream;
 import static com.example.RadarHealthMonitoring.Bluetooth.b;
 
 
-public class ConnectedThread extends Thread {
-    private final BluetoothSocket mmSocket;
+class ConnectedThread extends Thread {
+
     private final InputStream mmInStream;
     private final OutputStream mmOutStream;
     private byte[] mmBuffer; // mmBuffer store for the stream
-
     private static final String TAG = "ConnectedThread";
-    //private Handler handler = new Handler(); // handler that gets info from Bluetooth service
-    public final int MESSAGE_READ = 0;
-    public final int MESSAGE_WRITE = 1;
-    public final int MESSAGE_TOAST = 2;
     static final String READ = "READ";
     static final String READ_VALUE = "READ_VALUE";
 
-    public ConnectedThread(BluetoothSocket socket) {
-        Log.d(TAG,"constructor ConnectedThread");
-        mmSocket = socket;
+    ConnectedThread(BluetoothSocket socket) {
         InputStream tmpIn = null;
         OutputStream tmpOut = null;
 
@@ -43,7 +36,6 @@ public class ConnectedThread extends Thread {
         } catch (IOException e) {
             Log.e(TAG, "Error occurred when creating output stream", e);
         }
-
         mmInStream = tmpIn;
         mmOutStream = tmpOut;
     }
@@ -51,24 +43,17 @@ public class ConnectedThread extends Thread {
     public void run() {
         mmBuffer = new byte[1024];
         int numBytes; // bytes returned from read()
-
         // Keep listening to the InputStream until an exception occurs.
         while (true) {
             try {
                 // Read from the InputStream.
                 numBytes = mmInStream.read(mmBuffer);
-                // Send the obtained bytes to the UI activity.
-               /* Message readMsg = handler.obtainMessage(
-                        MESSAGE_READ, numBytes, -1,
-                        mmBuffer);
-                readMsg.sendToTarget();*/
+                // Send the String data to MainActivity
                 String readBuf = new String(mmBuffer,1,numBytes); // received data
-                //Log.d(TAG, "Message recieved: " + readBuf);
                 Intent readIntent = new Intent(ConnectedThread.READ);
                 readIntent.putExtra(READ_VALUE,readBuf);
                 b.sendBroadcast(readIntent);
             } catch (IOException e) {
-                Log.e(TAG, "Input stream was disconnected", e);
                 b.bluetoothDisconnected(true);
                 if (b.connectThread != null) {
                     b.connectThread.cancel();
@@ -79,26 +64,11 @@ public class ConnectedThread extends Thread {
     }
 
     // Call this from the main activity to send data to the remote device.
-    public void write(byte[] bytes) {
+    void write(byte[] bytes) {
         try {
             mmOutStream.write(bytes);
-
-            // Share the sent message with the UI activity.
-            /*Message writtenMsg = handler.obtainMessage(
-                    MESSAGE_WRITE, -1, -1, mmBuffer);
-            writtenMsg.sendToTarget();
-            Log.d(TAG, writtenMsg.toString());*/
         } catch (IOException e) {
             Log.e(TAG, "Error occurred when sending data", e);
-
-            // Send a failure message back to the activity.
-            /*Message writeErrorMsg =
-                    handler.obtainMessage(MESSAGE_TOAST);
-            Bundle bundle = new Bundle();
-            bundle.putString("toast",
-                    "Couldn't send data to the other device");
-            writeErrorMsg.setData(bundle);
-            handler.sendMessage(writeErrorMsg);*/
         }
     }
 }

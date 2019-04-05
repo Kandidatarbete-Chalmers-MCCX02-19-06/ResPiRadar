@@ -453,10 +453,10 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     //Log.d(msg,"dataNumber: " + dataNumber + " datapoins: " + dataPointsPulse.get(dataPointsPulse.size()-1));
                     graphPulse.getSeries().appendData(dataPulse,
                             setGraphViewBounds(dataNumber, graphPulse, isTapingPulse) || firstDataPulse, maxDataPoints, isActive); // seriesPulse
-                    pulseValueView.setText("Pulse: " + String.format("%.1f", yPulse));
+                    pulseValueView.setText("Pulse: " + String.format("%.1f", yPulse) + " bpm");
                     graphBreathe.getSeries().appendData(dataBreathe,
                             setGraphViewBounds(dataNumber, graphBreathe, isTapingBreath) || firstDataPulse, maxDataPoints, isActive); // seriesBreathe
-                    breathValueView.setText("Breath rate: " + String.format("%.1f", yBreathe));
+                    breathValueView.setText("Breath rate: " + String.format("%.1f", yBreathe) + " bpm");
                     if (firstDataPulse) {
                         graphPulse.getViewport().setMinX(0);
                         graphPulse.getViewport().setMaxX(60);
@@ -491,7 +491,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
         graphPulse.getSeries().appendData(dataPulse, setGraphViewBounds(
                 ((System.currentTimeMillis() - startTime)/1000.0), graphPulse, isTapingPulse),maxDataPoints,isActive);
-        pulseValueView.setText("Pulse: " + pulseData);
+        pulseValueView.setText("Pulse: " + pulseData + " bpm");
     }
 
     public void setBreathData(int breathData) {
@@ -502,7 +502,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
         graphBreathe.getSeries().appendData(dataBreathe, setGraphViewBounds(
                 ((System.currentTimeMillis() - startTime)/1000.0), graphBreathe, isTapingBreath),maxDataPoints,isActive);
-        breathValueView.setText("Breath rate: " + breathData);
+        breathValueView.setText("Breath rate: " + breathData + " bpm");
     }
 
     void resetGraph() {

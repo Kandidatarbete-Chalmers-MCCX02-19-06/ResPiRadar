@@ -32,31 +32,21 @@ class Graph {
         this.context = context;
         this.color = color;
         this.tapListener = tapListener;
-        //GraphView graph = (GraphView) findViewById(R.id.graphPulse);
+        // Graph
         graph = (GraphView) view;
-        //graph.setBackgroundColor(m.getResources().getColor(R.color.colorGraphBackground));
         graph.getGridLabelRenderer().setGridColor(context.getResources().getColor(R.color.colorGraphGrid));
         graph.getGridLabelRenderer().setHorizontalLabelsColor(context.getResources().getColor(R.color.colorGraphGrid));
         graph.getGridLabelRenderer().setVerticalLabelsColor(context.getResources().getColor(R.color.colorGraphGrid));
         graph.getViewport().setBackgroundColor(context.getResources().getColor(R.color.colorGraphBackground));
         graph.getGridLabelRenderer().setTextSize(25);
         graph.getGridLabelRenderer().setPadding(35);
-
+        // Series
         graph.addSeries(newSeries());        //lägger till serien med mätvärden till grafen.
         graph.getViewport().setScrollable(true);        //scrollable in horizontal (x-axis)
-        //graph.getViewport().setScrollableY(true);
         graph.getViewport().setScalable(true);      //för zoomning
-        //graph.getViewport().setScalableY(true);
         graph.getViewport().setXAxisBoundsManual(true);     //set Viewport window size
-        //graph.getViewport().setYAxisBoundsManual(true);
         graph.getViewport().setMinX(0);
         graph.getViewport().setMaxX(60);
-        //graph.getViewport().setMaxXAxisSize(1);
-        //graph.getViewport().setMinY(-1.5);      //begränsar y-axeln med värden
-        //graph.getViewport().setMaxY(1.5);
-        //graph.getGridLabelRenderer().setHorizontalAxisTitle("Time (s)");
-        //graph.getGridLabelRenderer().setVerticalAxisTitle("Heartrate (beats/min)");
-        //graph.setTitle("Heartrate");
     }
 
     /**

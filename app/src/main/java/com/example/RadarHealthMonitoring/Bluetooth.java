@@ -11,13 +11,9 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
 import android.util.Log;
 import android.widget.Toast;
-
 import java.util.Set;
-
 import androidx.annotation.Nullable;
 
 import static com.example.RadarHealthMonitoring.MainActivity.bluetoothMenuItem;
@@ -43,22 +39,12 @@ public class Bluetooth extends Service {
     Set<BluetoothDevice> pairedDevices;
     int chosenDeviceIndex;
     String raspberryPiName = "raspberrypi";
-    final String raspberryPiMAC = "B8:27:EB:FC:22:65";
     boolean autoConnect = false;
     boolean connected = false;
     boolean foundRaspberryPi = false;
     int connectAttempt = 1;
     int searchAttempts = 1;
     boolean startBluetooth = false;
-
-    private static Handler uiHandler;// = new Handler(Looper.getMainLooper()); // static handler
-    static
-    {
-        uiHandler = new Handler(Looper.getMainLooper());
-    }
-    public static void runOnUI(Runnable runnable) {
-        uiHandler.post(runnable);
-    }
 
     // Boolean indicators for BluetoothSettings
     boolean bluetoothSettingsActive = false;
@@ -71,12 +57,6 @@ public class Bluetooth extends Service {
     boolean bluetoothConnectChecked = false;
     boolean bluetoothAutoConnectChecked = false;
     boolean commandSimulate = false;
-
-    // Constants that indicate the current connection state
-    public static final int STATE_NONE = 0;       // we're doing nothing
-    public static final int STATE_LISTEN = 1;     // now listening for incoming connections
-    public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
-    public static final int STATE_CONNECTED = 3;  // now connected to a remote device
 
     // Constants for Broadcast
     public static final String REQUEST_PERMISSION = "REQUEST_PERMISSION";
@@ -91,7 +71,6 @@ public class Bluetooth extends Service {
 
     @Override
     public void onCreate() {
-        Log.d(TAG, "onCreate");
         b = Bluetooth.this;
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // Gets the device's Bluetooth adapter
         // Receivers
@@ -105,19 +84,12 @@ public class Bluetooth extends Service {
         registerReceiver(BluetoothBroadcastReceiverSearchFinished, BTIntentSearchFinished);
         IntentFilter BTIntentBondChange = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         registerReceiver(BluetoothBroadcastReceiverBondChange, BTIntentBondChange);
-        startBluetooth(true); // Autostart bluetoth on start up
+        startBluetooth(true); // Autostart bluetooth on start up
 
     } // end off onCreate
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand");
-        return super.onStartCommand(intent,flags,startId);
-    }
-
-    @Override
     public void onDestroy() {
-        Log.d(TAG, "onDestroy");
         unregisterReceiver(BluetoothBroadcastReceiverState);
         unregisterReceiver(BluetoothBroadcastReceiverAction);
         unregisterReceiver(BluetoothBroadcastReceiverSearch);
@@ -129,7 +101,6 @@ public class Bluetooth extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d(TAG, "onBind");
         return null;
     }
 
@@ -207,9 +178,7 @@ public class Bluetooth extends Service {
         if (bluetoothSettingsActive) {
             bluetoothAutoConnect.setChecked(true);
         }
-        Log.d(TAG, "activeDevice" + activeDevice);
         boolean isRaspberryPi = isRaspberryPi(activeDevice);
-        Log.d(TAG, "start isRaspberryPi: " + isRaspberryPi);
         if (!isRaspberryPi) {
             updatePairedDevices();
             for (BluetoothDevice device : pairedDevices) {
@@ -218,20 +187,17 @@ public class Bluetooth extends Service {
                     isRaspberryPi = true;
                     //bluetoothListIndicator
                     if (bluetoothSettingsActive && commandBluetoothList) {
-                        bluetoothList.setValue(raspberryPiMAC);
+                        bluetoothList.setValue(activeDevice.getAddress());
                         bluetoothList.setSummary(bluetoothList.getEntry());
                     }
                     break;
                 }
             }
-            Log.d(TAG, "update device isRaspberryPi: " + isRaspberryPi);
             if (!isRaspberryPi) {
                 startDiscovery();
             } else {
-                Log.d(TAG, "bonded: " + activeDevice.getBondState());
                 connectBluetooth(true);
             }
-            Log.d(TAG, "start discovery isRaspberryPi: " + isRaspberryPi);
         } else {
             if (activeDevice.getBondState() != 12) {
                 startDiscovery();
@@ -245,13 +211,12 @@ public class Bluetooth extends Service {
      * Connects to Raspberry Pi with bluetooth rfcomm serial communication
      * @param connect used to differ auto connect to regular connect with boolean autoConnect
      */
-    void connectBluetooth(boolean connect) { // TODO Callback Manager
+    void connectBluetooth(boolean connect) {
         if (connect) {
             if (!(activeDevice == null)) {
                 if (connectThread != null) {
                     if (!connectThread.hasSocket()) { // do nothing if already has socket
                         connectThread = new ConnectThread(activeDevice);
-                        Log.d(TAG, "Create Refcomm Socket: " + activeDevice.getName());
                     }
                 } else {
                     handler.postDelayed(new Runnable() {
@@ -259,7 +224,6 @@ public class Bluetooth extends Service {
                         public void run() {
                             if (!connected) {
                                 connectThread = new ConnectThread(activeDevice);
-                                Log.d(TAG, "Create Refcomm Socket: " + activeDevice.getName());
                             }
                         }
                     }, 1);
@@ -271,7 +235,6 @@ public class Bluetooth extends Service {
                         if (!connected) {
                             try {
                                 connectThread.start();
-                                Log.d(TAG, "Run thread");
                             } catch (IllegalThreadStateException e) {
                                 Log.e(TAG, "Thread already started",e);
                             }
@@ -290,7 +253,6 @@ public class Bluetooth extends Service {
      */
     void connectManager() { // If device did not connect
         if (autoConnect && startBluetooth) {
-            Log.d(TAG, "connectManager: " + connectAttempt);
             switch (connectAttempt) {
                 case 1:
                     handler.postDelayed(new Runnable() {
@@ -396,7 +358,7 @@ public class Bluetooth extends Service {
             bluetoothConnect.setChecked(false);
             bluetoothAutoConnect.setChecked(false);
             bluetoothSearch.setEnabled(true);
-        } else if (b.bluetoothSettingsActive && uiThread) { // TODO Undersök
+        } else if (b.bluetoothSettingsActive && uiThread) {
             s.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -418,7 +380,6 @@ public class Bluetooth extends Service {
         foundRaspberryPi = false;
         if (hasLocationPermissions()) {
             bluetoothAdapter.startDiscovery();
-            Log.d(TAG, "Enable search");
         } else {
             requestLocationPermission();
         }
@@ -430,7 +391,6 @@ public class Bluetooth extends Service {
      */
     void searchManager() {
         if (autoConnect && startBluetooth) {
-            Log.d(TAG, "SearchManager: " + searchAttempts);
             if (searchAttempts < 2) { // will search max 2 times if RPI not found
                 searchAttempts++;
                 startDiscovery();
@@ -480,7 +440,7 @@ public class Bluetooth extends Service {
         if (!(chosenDeviceIndex==-1)) {
             activeDevice = (BluetoothDevice)pairedDevices.toArray()[chosenDeviceIndex];
             if (bluetoothSettingsActive && commandBluetoothList) {
-                bluetoothList.setValue(raspberryPiMAC);
+                bluetoothList.setValue(activeDevice.getAddress());
                 bluetoothList.setSummary(bluetoothList.getEntry());
             }
         }
@@ -493,11 +453,12 @@ public class Bluetooth extends Service {
      */
     boolean isRaspberryPi(BluetoothDevice device) {
         if (device != null) {
-            if (device.getName() == null) {
-                return device.getAddress().equals(raspberryPiMAC);
-            } else {
+            Log.d(TAG, device.getAddress());
+            if (device.getName() != null) {
                 return (device.getName().equals(raspberryPiName) ||
-                        device.getAddress().equals(raspberryPiName) || device.getAddress().equals(raspberryPiMAC));
+                        device.getAddress().equals(raspberryPiName));
+            } else {
+                return (device.getAddress().equals(raspberryPiName));
             }
         } else {
             return false;
@@ -527,7 +488,7 @@ public class Bluetooth extends Service {
                         bluetoothList.setEnabled(true);
                     }
                 } else {
-                    bluetoothList.setSummary("No device avalible");
+                    bluetoothList.setSummary("No device available");
                     bluetoothList.setEnabled(false);
                 }
             }
@@ -578,7 +539,7 @@ public class Bluetooth extends Service {
     public BroadcastReceiver BluetoothBroadcastReceiverState = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action.equals(bluetoothAdapter.ACTION_STATE_CHANGED)) {
+            if (bluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
                 final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, bluetoothAdapter.ERROR);
                 switch(state){
                     case BluetoothAdapter.STATE_OFF:
@@ -634,13 +595,12 @@ public class Bluetooth extends Service {
                 // Discovery has found a device. Get the BluetoothDevice
                 // object and its info from the Intent.
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                Log.d(TAG, "Found: " + device.getName() + " " + device.getAddress() + " " + device.getBondState());
                 if (isRaspberryPi(device)) { // Raspberry Pi detected
                     Toast.makeText(context, "Found " + device.getName(), Toast.LENGTH_SHORT).show();
                     activeDevice = device;
                     foundRaspberryPi = true;
                     if (bluetoothSettingsActive && commandBluetoothList) {
-                        bluetoothList.setValue(raspberryPiMAC);
+                        bluetoothList.setValue(activeDevice.getAddress());
                         bluetoothList.setSummary(bluetoothList.getEntry());
                     }
                     bluetoothAdapter.cancelDiscovery();
@@ -648,12 +608,10 @@ public class Bluetooth extends Service {
                         handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                Log.d(TAG, "Trying to bond");
                                 activeDevice.createBond();
                             }
                         }, 1); // delay needed
                     } else {
-                        Log.d(TAG, "search finnished, foudn RPI, bonded, autoconnect: " + autoConnect);
                         connectBluetooth(autoConnect);
                     }
                 }
@@ -666,7 +624,6 @@ public class Bluetooth extends Service {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
-                Log.d(TAG, "Search Started");
                 bluetoothSearchChecked = true;
                 bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_searching_white_24dp);
                 if (bluetoothSettingsActive) {
@@ -680,7 +637,6 @@ public class Bluetooth extends Service {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                Log.d(TAG,"Finished");
                 bluetoothSearchChecked = false;
                 bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
                 if (bluetoothSettingsActive) {
@@ -704,87 +660,23 @@ public class Bluetooth extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            if(action.equals(BluetoothDevice.ACTION_BOND_STATE_CHANGED)){
+            if(BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)){
                 BluetoothDevice mDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 if (mDevice.getBondState() == BluetoothDevice.BOND_BONDED){
-                    Log.d(TAG, "BroadcastReceiver: BOND_BONDED.");
                     updateBluetoothList();
                     handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            Log.d(TAG, "search finnished, foudn RPI, bonded, autoconnect: " + autoConnect);
                             if (!connected) {
                                 connectBluetooth(autoConnect);
                             }
                         }
                     }, 1); // delay needed
-                    if (isRaspberryPi(activeDevice)) {
-                    }
-                }
-                if (mDevice.getBondState() == BluetoothDevice.BOND_BONDING) {
-                    Log.d(TAG, "BroadcastReceiver: BOND_BONDING.");
                 }
                 if (mDevice.getBondState() == BluetoothDevice.BOND_NONE) {
-                    Log.d(TAG, "BroadcastReceiver: BOND_NONE.");
                     updateBluetoothList();
                 }
             }
         }
     };
-
-    // ########## ########## bluetoothHandler ########## ##########
-
-    /**
-     * The Handler that gets information back from the BluetoothChatService
-     */
-    private final Handler bluetoothHandler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            switch (msg.what) {
-                case Constants.MESSAGE_STATE_CHANGE:
-                    switch (msg.arg1) {
-                        case STATE_CONNECTED:
-                            Log.d(TAG, "STATE_CONNECTED");
-                            // TODO
-                            break;
-                        case STATE_CONNECTING:
-                            Log.d(TAG, "STATE_CONNECTING");
-                            break;
-                        case STATE_LISTEN:
-                        case STATE_NONE:
-                            Log.d(TAG, "STATE_NONE");
-                            break;
-                    }
-                    break;
-                case Constants.MESSAGE_WRITE:
-                    byte[] writeBuf = (byte[]) msg.obj;
-                    // construct a string from the buffer
-                    String writeMessage = new String(writeBuf);
-                    //mConversationArrayAdapter.add("Me:  " + writeMessage);
-                    break;
-                case Constants.MESSAGE_READ:
-                    byte[] readBuf = (byte[]) msg.obj;
-                    // construct a string from the valid bytes in the buffer
-                    String readMessage = new String(readBuf, 0, msg.arg1);
-                    //mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
-                    break;
-                case Constants.MESSAGE_DEVICE_NAME:
-                    // save the connected device's name
-                    //mConnectedDeviceName = msg.getData().getString(Constants.DEVICE_NAME);
-
-                    //Toast.makeText(getApplicationContext(), "Connected to "
-                    //        + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
-
-                    break;
-                case Constants.MESSAGE_TOAST:
-
-                    Toast.makeText(getApplicationContext(), msg.getData().getString(Constants.TOAST),
-                            Toast.LENGTH_SHORT).show();
-
-                    break;
-            }
-            return true;
-        }
-    });
-
 }
