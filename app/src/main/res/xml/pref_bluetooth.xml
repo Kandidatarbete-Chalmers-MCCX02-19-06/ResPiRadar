@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:tools="http://schemas.android.com/tools"
+<PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android">
     <SwitchPreference
         android:defaultValue="false"
@@ -16,16 +16,16 @@
         android:singleLine="true"
         android:title="Name or MAC adress for Raspberry Pi"
         android:summary="raspberrypi" />
+    <ListPreference
+        android:enabled="false"
+        android:key="bluetooth_list"
+        android:title="Available Bluetooth devices" />
     <PreferenceCategory
         android:title="Manual connection">
         <SwitchPreference
             android:defaultValue="false"
             android:key="bluetooth_auto_connect"
             android:title="Automated Connection" />
-        <ListPreference
-            android:enabled="false"
-            android:key="bluetooth_list"
-            android:title="Available Bluetooth devices" />
         <SwitchPreference
             android:defaultValue="false"
             android:key="search_bluetooth_device"

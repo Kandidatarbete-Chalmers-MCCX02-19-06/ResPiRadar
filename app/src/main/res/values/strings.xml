@@ -49,7 +49,7 @@
     <!-- Information Main Activity -->
 
     <string name="info_settings1">
-        This application is made in a Bachelor thesis project at Chalmers University of Technology 2019.
+        This application is made in a Bachelor\'s thesis project at Chalmers University of Technology 2019.
         The purpose is to measure heart rate and breath rate with a radar and display the results in an interactive application.
     </string>
     <string name="info_settings2">
