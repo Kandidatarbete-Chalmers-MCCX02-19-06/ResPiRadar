@@ -556,7 +556,7 @@ public class BluetoothService extends Service {
                         bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_disabled_gray_24dp);
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(false);
-                            bluetoothOn.setTitle("BluetoothService Off");
+                            bluetoothOn.setTitle("Bluetooth Off");
                             if (commandBluetoothList) {
                                 bluetoothList.setEnabled(false);
                             }
@@ -574,7 +574,7 @@ public class BluetoothService extends Service {
                         bluetoothOnChecked = true;
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(true);
-                            bluetoothOn.setTitle("BluetoothService On");
+                            bluetoothOn.setTitle("Bluetooth On");
                         }
                         try {
                             bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);

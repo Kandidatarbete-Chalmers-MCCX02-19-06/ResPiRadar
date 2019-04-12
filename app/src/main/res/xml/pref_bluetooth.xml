@@ -5,8 +5,8 @@
     <SwitchPreference
         android:defaultValue="false"
         android:key="bluetooth_switch"
-        android:title="BluetoothService Off"
-        android:summary="Switch BluetoothService on or off" />
+        android:title="Bluetooth Off"
+        android:summary="Switch Bluetooth on or off" />
     <EditTextPreference
         android:capitalize="words"
         android:defaultValue="raspberrypi"

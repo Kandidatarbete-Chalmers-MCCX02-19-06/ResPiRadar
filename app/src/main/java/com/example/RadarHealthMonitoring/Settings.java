@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import java.util.List;
 
+import androidx.annotation.NonNull;
 import pub.devrel.easypermissions.EasyPermissions;
 
 import static com.example.RadarHealthMonitoring.BluetoothService.START_MEAS_BUTTON_ENABLE;
@@ -66,6 +67,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
     /*protected boolean isValidFragment(String fragmentName) {
         return PreferenceFragment.class.getName().equals(fragmentName)
                 || Settings.SettingsFragment.class.getName().equals(fragmentName)
+                || Settings.BluetoothSettings.class.getName().equals(fragmentName)
                 || Settings.BluetoothFragment.class.getName().equals(fragmentName);
     }*/
 
@@ -92,6 +94,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
         //int count = getFragmentManager().getBackStackEntryCount();
         //Log.d("set","BSEC: " + getFragmentManager().getBackStackEntryCount() + " fragment " + getFragmentManager().getBackStackEntryAt(count-1).getName());
         super.onBackPressed();
+        setTitle("Settings");
         /*Fragment currentFragment = getSupportFragmentManager().getFragments().get(getSupportFragmentManager().getBackStackEntryCount() - 1);
         if (currentFragment instanceof OnBackPressed) {
             ((OnBackPressed) currentFragment).onBackPressed();
@@ -130,22 +133,16 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
         }*/
     }
 
-    /*private void tellFragments(){
-        //List<Fragment> fragments = getSupportFragmentManager().getFragments();
-        for(Fragment f : fragments){
-            if(f != null && f instanceof BaseFragment)
-                ((BaseFragment)f).onBackPressed();
-        }
-    }*/
-
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragment caller, Preference pref) {
+        Log.d("set","onPreferenceStartFragment");
         replaceCurrentFragmentsWith(pref.getFragment(), pref.getExtras(), pref.getTitleRes(),
                 pref.getTitle());
         return true;
     }
     private void replaceCurrentFragmentsWith(String fragmentClass, Bundle args, @StringRes int titleRes,
                                              CharSequence titleText) {
+        Log.d("set","replaceCurrentFragmentsWith");
         Fragment f = Fragment.instantiate(this, fragmentClass, args);
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         transaction.replace(R.id.empty, f);
@@ -249,7 +246,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
             b.bluetoothSettingsActive = true;
             addPreferencesFromResource(R.xml.pref_bluetooth);
             setHasOptionsMenu(true);
-            getActivity().setTitle("BluetoothService Settings");  // Change title
+            getActivity().setTitle("Bluetooth Settings");
             // BluetoothService preferences
             bluetoothOn = (SwitchPreference) findPreference(key_pref_bluetooth_switch);
             bluetoothAutoConnect = (SwitchPreference) findPreference(key_pref_bluetooth_auto_connect);
@@ -261,11 +258,11 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
             // On return to bluetooth settings, manually update everything
             if (b.bluetoothOnChecked) {
                 bluetoothOn.setChecked(true);
-                bluetoothOn.setTitle("BluetoothService On");
+                bluetoothOn.setTitle("Bluetooth On");
                 b.updateBluetoothList();
             } else {
                 bluetoothOn.setChecked(false);
-                bluetoothOn.setTitle("BluetoothService Off");
+                bluetoothOn.setTitle("Bluetooth Off");
             }
             bluetoothConnect.setEnabled(b.bluetoothConnectEnable);
             bluetoothConnect.setChecked(b.bluetoothConnectChecked);
@@ -468,13 +465,13 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
 
         // ########## ########## Request Permission ########## ##########
         @Override
-        public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
             EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
         }
 
         @Override
-        public void onPermissionsGranted(int requestCode, List<String> list) {
+        public void onPermissionsGranted(int requestCode, @NonNull List<String> list) {
             // Some permissions have been granted
             if (requestCode == 2) {
                 b.startDiscovery();
@@ -482,7 +479,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
         }
 
         @Override
-        public void onPermissionsDenied(int requestCode, List<String> list) {
+        public void onPermissionsDenied(int requestCode, @NonNull List<String> list) {
             // Some permissions have been denied
             if (requestCode == 2) {
                 b.bluetoothAutoConnectChecked = false;

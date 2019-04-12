@@ -17,7 +17,7 @@
     <!-- Information Main Activity -->
 
     <string name="info_main1">
-        At start, the app will automatically start bluetooth and try to connect to Raspberry Pi if
+        At start, the app will automatically start Bluetooth and try to connect to Raspberry Pi if
         it\'s available and has the following python program running:
     </string>
     <string name="info_main2">
@@ -30,7 +30,7 @@
          https://www.acconeer.com/products.
     </string>
     <string name="info_main3">
-        The bluetooth icon on the action bar will show the status of the bluetooth connection. Click it to connect/disconnect Raspberry Pi.
+        The Bluetooth icon on the action bar will show the status of the Bluetooth connection. Click it to connect/disconnect Raspberry Pi.
     </string>
     <string name="info_main4">
         The Raspberry Py is assumed to be named raspberrypi. If not, set the name or MAC-address in Bluetooth Settings.
@@ -65,14 +65,14 @@
     <!-- Information BluetoothService Settings -->
 
     <string name="info_bluetooth1">
-        When bluetooth turns on, the app will automatically try to connect to Raspberry Pi.
+        When Bluetooth turns on, the app will automatically try to connect to Raspberry Pi.
         If it doesn\'t succeed it will search for Raspberry Pi. When Raspberry Pi is found, the app will bond to it and then connect.
     </string>
     <string name="info_bluetooth2">
-        Set the bluetooth name or MAC-address for the Raspberry Pi (usually raspberrypi).
+        Set the Bluetooth name or MAC-address for the Raspberry Pi (usually raspberrypi).
     </string>
     <string name="info_bluetooth3">
-        Automated Connection is the method that is used every time bluetooth starts.
+        Automated Connection is the method that is used every time Bluetooth starts.
         It will automatically try to connect to Raspberry Pi, search for it and if needed try connect again.
     </string>
     <string name="info_bluetooth4">
@@ -88,7 +88,7 @@
         \u25CF simulate \u23E4 simulate data instead of getting the data from Raspberry Pi
     </string>
     <string name="info_bluetooth8">
-        \u25CF list \u23E4 get a list of paired bluetooth devices
+        \u25CF list \u23E4 get a list of paired Bluetooth devices
     </string>
 
 </resources>
