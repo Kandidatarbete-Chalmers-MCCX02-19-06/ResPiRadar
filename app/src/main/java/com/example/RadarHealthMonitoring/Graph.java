@@ -28,7 +28,7 @@ class Graph {
      * @param view
      * @param context
      */
-    Graph(View view, final Context context, int color, boolean tapListener) {
+    Graph(View view, final Context context, int color, boolean tapListener, int screenWidth) {
         this.context = context;
         this.color = color;
         this.tapListener = tapListener;
@@ -38,8 +38,8 @@ class Graph {
         graph.getGridLabelRenderer().setHorizontalLabelsColor(context.getResources().getColor(R.color.colorGraphGrid));
         graph.getGridLabelRenderer().setVerticalLabelsColor(context.getResources().getColor(R.color.colorGraphGrid));
         graph.getViewport().setBackgroundColor(context.getResources().getColor(R.color.colorGraphBackground));
-        graph.getGridLabelRenderer().setTextSize(25);
-        graph.getGridLabelRenderer().setPadding(35);
+        graph.getGridLabelRenderer().setTextSize((float)(25*screenWidth/720)); // Scale text size and padding to screen size
+        graph.getGridLabelRenderer().setPadding((int)(35*screenWidth/720));
         // Series
         graph.addSeries(newSeries());        //lägger till serien med mätvärden till grafen.
         graph.getViewport().setScrollable(true);        //scrollable in horizontal (x-axis)

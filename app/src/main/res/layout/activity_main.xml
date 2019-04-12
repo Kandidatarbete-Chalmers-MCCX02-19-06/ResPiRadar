@@ -79,6 +79,28 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!--&lt;!&ndash; Grafen för andningen &ndash;&gt;
+    <com.jjoe64.graphview.GraphView
+        android:id="@+id/graphBreathe"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="15dp"
+        app:layout_constraintBottom_toTopOf="@+id/breathValueView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pulseValueView" />
+
+    &lt;!&ndash; Grafen för pulsen &ndash;&gt;
+    <com.jjoe64.graphview.GraphView
+        android:id="@+id/graphPulse"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="15dp"
+        app:layout_constraintBottom_toTopOf="@+id/pulseValueView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />-->
+
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
@@ -145,6 +167,5 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/graphBreathe"
         app:layout_constraintVertical_bias="0.45" />
-
 
 </android.support.constraint.ConstraintLayout>

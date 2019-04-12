@@ -39,7 +39,9 @@ import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluet
 
 
 /**
- * Huvudaktiviteten för appen
+ * Main Activity for the Application
+ * Visualize respiration rate and heart rate in two graphs
+ * Starts a Bluetooth Service to automatically connect to a Raspberry Pi with a radar and
  */
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
 
@@ -56,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     Intent intentBluetooth;
     static long startTime;
     boolean firstStartMeasurement = true;
+    static int screenWidth;
 
     boolean waitSetScreenOrientationRunning = false;
     Handler handler = new Handler();
@@ -109,10 +112,13 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         pulseValueView = findViewById(R.id.pulseValueView);
         breathValueView = findViewById(R.id.breathValueView);
         //this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        screenWidth =  getResources().getDisplayMetrics().widthPixels;
 
         /* Graphs */
-        graphPulse = new Graph(findViewById(R.id.graphPulse),getApplicationContext(),getResources().getColor(R.color.colorGraphPulse), true);
-        graphBreathe = new Graph(findViewById(R.id.graphBreathe),getApplicationContext(),getResources().getColor(R.color.colorGraphBreath), true);
+        graphPulse = new Graph(findViewById(R.id.graphPulse),getApplicationContext(),
+                getResources().getColor(R.color.colorGraphPulse), true, screenWidth);
+        graphBreathe = new Graph(findViewById(R.id.graphBreathe),getApplicationContext(),
+                getResources().getColor(R.color.colorGraphBreath), true, screenWidth);
         graphPulse.getViewport().setOnXAxisBoundsChangedListener(new Viewport.OnXAxisBoundsChangedListener() {
             @Override
             public void onXAxisBoundsChanged(double minX, double maxX, Viewport.OnXAxisBoundsChangedListener.Reason reason) {
@@ -138,11 +144,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         /* BluetoothService */
         intentBluetooth = new Intent(this, BluetoothService.class);
         startService(intentBluetooth);
-
-        /*handlerThread = new HandlerThread("HandlerThread");
-        handlerThread.start();
-        looper = handlerThread.getLooper();
-        handler = new Handler(looper);*/
 
         IntentFilter intentFilterRequestPermission = new IntentFilter(BluetoothService.REQUEST_PERMISSION);
         registerReceiver(PermissionBroadcastReceiver, intentFilterRequestPermission);
@@ -416,7 +417,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     return true;
                 }
             }
-            if (value > graph.getViewport().getMinX(false) + diff && value < graph.getViewport().getMinX(false) + diff*1.1) {
+            if (value > graph.getViewport().getMinX(false) + diff && value <
+                    graph.getViewport().getMinX(false) + diff*1.1) {
                 return true;
             } else if (graph.getViewport().getMinX(true) > graph.getViewport().getMaxX(false) - 0.2*diff) {
                 graph.getViewport().setMaxX(graph.getViewport().getMaxX(false) + diff * 0.9);
@@ -468,10 +470,12 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     }
                     //Log.d(msg,"dataNumber: " + dataNumber + " datapoins: " + dataPointsPulse.get(dataPointsPulse.size()-1));
                     graphPulse.getSeries().appendData(dataPulse,
-                            setGraphViewBounds(dataNumber, graphPulse, isTapingPulse) || firstDataPulse, maxDataPoints, isActive); // seriesPulse
+                            setGraphViewBounds(dataNumber, graphPulse, isTapingPulse) ||
+                                    firstDataPulse, maxDataPoints, isActive); // seriesPulse
                     pulseValueView.setText("Pulse: " + String.format("%.1f", yPulse) + " bpm");
                     graphBreathe.getSeries().appendData(dataBreathe,
-                            setGraphViewBounds(dataNumber, graphBreathe, isTapingBreath) || firstDataPulse, maxDataPoints, isActive); // seriesBreathe
+                            setGraphViewBounds(dataNumber, graphBreathe, isTapingBreath) ||
+                                    firstDataPulse, maxDataPoints, isActive); // seriesBreathe
                     breathValueView.setText("Breath rate: " + String.format("%.1f", yBreathe) + " bpm");
                     if (firstDataPulse) {
                         graphPulse.getViewport().setMinX(0);

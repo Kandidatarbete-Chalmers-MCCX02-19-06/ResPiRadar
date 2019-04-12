@@ -117,7 +117,7 @@ public class BluetoothService extends Service {
             startBluetooth = true; // for ending threads on destroy
             if (bluetoothAdapter == null) { // Device doesn't support BluetoothService
                 Toast.makeText(getApplicationContext(),
-                        "BluetoothService Not Supported", Toast.LENGTH_LONG).show();
+                        "Bluetooth Not Supported", Toast.LENGTH_LONG).show();
             } else {
                 if (!bluetoothAdapter.isEnabled()) { // Enable BluetoothService
                     bluetoothAdapter.enable();

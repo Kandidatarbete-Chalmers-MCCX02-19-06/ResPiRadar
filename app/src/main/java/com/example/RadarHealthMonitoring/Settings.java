@@ -36,40 +36,26 @@ import static com.example.RadarHealthMonitoring.BluetoothService.b;
  * olika paneler med olika kategorier av inställningar. Alla paneler finns under R.xml och
  * dessa styrs av aktiviteten.
  */
-public class Settings extends AppCompatActivity implements PreferenceFragment.OnPreferenceStartFragmentCallback { // AppCompatPreferenceActivity   implements PreferenceFragment.OnPreferenceStartFragmentCallback
+public class Settings extends AppCompatActivity implements PreferenceFragment.OnPreferenceStartFragmentCallback {
 
     static Settings s; // for static activity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d("set","Settings Activity onCreate");
         s = Settings.this;
         setupActionBar();
         setContentView(R.layout.empty);
         getFragmentManager()
                 .beginTransaction()
                 .replace(R.id.empty, new SettingsFragment())
-                //.addToBackStack("SET")
                 .commit();  // Skapar ett nytt fragment i en ny panel
     }
 
     @Override
         public void onDestroy() {
-            Log.d("set","Settings Activity onDestroy");
             super.onDestroy();
         }
-
-    /**
-     * Viktigt att få med alla fragment som länkas i panelerna, annars krasar appen. Är en
-     * säkerhetsåtgärd för att förhindra att malware får åtkommst till fragmenten.
-     */
-    /*protected boolean isValidFragment(String fragmentName) {
-        return PreferenceFragment.class.getName().equals(fragmentName)
-                || Settings.SettingsFragment.class.getName().equals(fragmentName)
-                || Settings.BluetoothSettings.class.getName().equals(fragmentName)
-                || Settings.BluetoothFragment.class.getName().equals(fragmentName);
-    }*/
 
     private void setupActionBar() {
         ActionBar actionBar = getSupportActionBar();
@@ -81,8 +67,8 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {  // Ger en fungerande tillbaka-pil
         if (item.getItemId() == android.R.id.home) {
-            Log.d("set","onBackPressed");
-            onBackPressed(); // TODO
+            onBackPressed();
+            setTitle("Settings");
             return true;
         } else {
             return super.onOptionsItemSelected(item);
@@ -90,59 +76,13 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
     }
 
     @Override
-    public void onBackPressed() {
-        //int count = getFragmentManager().getBackStackEntryCount();
-        //Log.d("set","BSEC: " + getFragmentManager().getBackStackEntryCount() + " fragment " + getFragmentManager().getBackStackEntryAt(count-1).getName());
-        super.onBackPressed();
-        setTitle("Settings");
-        /*Fragment currentFragment = getSupportFragmentManager().getFragments().get(getSupportFragmentManager().getBackStackEntryCount() - 1);
-        if (currentFragment instanceof OnBackPressed) {
-            ((OnBackPressed) currentFragment).onBackPressed();
-        }
-        super.onBackPressed();*/
-
-        /*if (count == 0) {
-            super.onBackPressed();
-            //additional code
-            //finish();
-        } else if (getFragmentManager().getBackStackEntryAt(count-1).getName().equals("com.example.RadarHealthMonitoring.Settings$BluetoothFragment")) {
-                //getFragmentManager().popBackStack();
-            Fragment f = getFragmentManager().findFragmentByTag("com.example.RadarHealthMonitoring.Settings$BluetoothFragment");
-            //if (f instanceof BluetoothFragment) {
-            //    if (f != null)
-                    Log.d("st","pop");
-                    getFragmentManager().beginTransaction().remove(f).commit();
-            //}
-                //((android.support.v14.preference.PreferenceFragment)getFragmentManager().getBackStackEntryAt(count-1)).addPreferencesFromResource(R.xml.settings);
-        } else {
-            super.onBackPressed();
-        }*/
-        /*
-        } else if (getFragmentManager().getBackStackEntryAt(count-1).getName().equals("com.example.RadarHealthMonitoring.Settings$BluetoothFragment")) {
-            getFragmentManager().popBackStack();
-            Log.d("st","pop");
-            //((android.support.v14.preference.PreferenceFragment)getFragmentManager().getBackStackEntryAt(count-1)).addPreferencesFromResource(R.xml.settings);
-        }*/
-
-        /*if (getFragmentManager().getBackStackEntryAt())
-        if(getFragmentManager().getBackStackEntryCount()>1){
-            super.onBackPressed();
-        }else{
-            Log.d("set","finish");
-            finish();
-        }*/
-    }
-
-    @Override
     public boolean onPreferenceStartFragment(PreferenceFragment caller, Preference pref) {
-        Log.d("set","onPreferenceStartFragment");
         replaceCurrentFragmentsWith(pref.getFragment(), pref.getExtras(), pref.getTitleRes(),
                 pref.getTitle());
         return true;
     }
     private void replaceCurrentFragmentsWith(String fragmentClass, Bundle args, @StringRes int titleRes,
                                              CharSequence titleText) {
-        Log.d("set","replaceCurrentFragmentsWith");
         Fragment f = Fragment.instantiate(this, fragmentClass, args);
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         transaction.replace(R.id.empty, f);
@@ -153,7 +93,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
         }
         transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         transaction.addToBackStack(null);
-        transaction.commit(); // commitAllowingStateLoss
+        transaction.commitAllowingStateLoss();
     }
 
     // ########## ########## Settings Fragment ########## ##########
@@ -187,29 +127,6 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
     }
 
     // ########## ########## ########## BluetoothSettings ########## ########## ##########
-
-    /**
-     * Bluetoothfragment
-     */
-    /*@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class BluetoothFragment extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            //getActivity().setContentView(R.layout.empty);
-            getFragmentManager() // getChildFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.empty, new BluetoothSettings()) // add? android.R.id.content
-                    //.addToBackStack("BT")
-                    .commit();
-            //getChildFragmentManager().executePendingTransactions();
-            *//*getFragmentManager()
-                    .beginTransaction()
-                    .replace(android.R.id.content, new BluetoothSettings()) // add? android.R.id.content
-                    .commit();*//*
-            setHasOptionsMenu(true);
-        }
-    }*/
 
     /**
      *  Inställningar för BluetoothService

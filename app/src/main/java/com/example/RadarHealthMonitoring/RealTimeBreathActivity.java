@@ -52,7 +52,7 @@ public class RealTimeBreathActivity extends AppCompatActivity {
         registerReceiver(BreathingBroadcastReceiver, intentFilterBreathing);
         // Graph
         graphRealTimeBreathe = new Graph(findViewById(R.id.graphRealTimeBreathe),getApplicationContext(),
-                ContextCompat.getColor(getBaseContext(), R.color.colorGraphBreath), false);
+                ContextCompat.getColor(getBaseContext(), R.color.colorGraphBreath), false, MainActivity.screenWidth);
         graphRealTimeBreathe.getViewport().setMinX(0);
         graphRealTimeBreathe.getViewport().setMaxX(10);
         graphRealTimeBreathe.getViewport().setOnXAxisBoundsChangedListener(new Viewport.OnXAxisBoundsChangedListener() {
