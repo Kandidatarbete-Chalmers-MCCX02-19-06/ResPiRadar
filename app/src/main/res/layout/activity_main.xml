@@ -10,7 +10,7 @@
 
     <!-- Startknappen för mätningarna -->
     <Button
-        android:id="@+id/startStoppMeasureButton"
+        android:id="@+id/startStopMeasureButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -27,79 +27,57 @@
 
     <!-- Värdet på pulen -->
     <TextView
-        android:id="@+id/pulseValueView"
+        android:id="@+id/heartRateValueView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        android:text="Pulse:   "
+        android:text="Heart Rate:   "
         android:textColor="@android:color/white"
         android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@+id/breathValueView"
+        app:layout_constraintBottom_toTopOf="@+id/respirationValueView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Värdet på andingsfrekvensen -->
     <TextView
-        android:id="@+id/breathValueView"
+        android:id="@+id/respirationValueView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        android:text="Breath rate:   "
+        android:text="Respiration rate:   "
         android:textColor="@android:color/white"
         android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@+id/startStoppMeasureButton"
+        app:layout_constraintBottom_toTopOf="@+id/startStopMeasureButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <!-- Grafen för andningen -->
     <com.jjoe64.graphview.GraphView
-        android:id="@+id/graphBreathe"
+        android:id="@+id/graphRespiration"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="15dp"
-        app:layout_constraintBottom_toTopOf="@+id/breathValueView"
+        app:layout_constraintBottom_toTopOf="@+id/respirationValueView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/pulseValueView" />
+        app:layout_constraintTop_toBottomOf="@+id/heartRateValueView" />
 
-    <!-- Grafen för pulsen -->
+    <!-- Grafen för heartRaten -->
     <com.jjoe64.graphview.GraphView
-        android:id="@+id/graphPulse"
+        android:id="@+id/graphHeartRate"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="15dp"
-        app:layout_constraintBottom_toTopOf="@+id/pulseValueView"
+        app:layout_constraintBottom_toTopOf="@+id/heartRateValueView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <!--&lt;!&ndash; Grafen för andningen &ndash;&gt;
-    <com.jjoe64.graphview.GraphView
-        android:id="@+id/graphBreathe"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="15dp"
-        app:layout_constraintBottom_toTopOf="@+id/breathValueView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/pulseValueView" />
-
-    &lt;!&ndash; Grafen för pulsen &ndash;&gt;
-    <com.jjoe64.graphview.GraphView
-        android:id="@+id/graphPulse"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="15dp"
-        app:layout_constraintBottom_toTopOf="@+id/pulseValueView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />-->
 
     <TextView
         android:id="@+id/textView"
@@ -111,10 +89,10 @@
         android:text="Time (s)"
         android:textColor="@color/colorGraphGrid"
         android:textSize="12sp"
-        app:layout_constraintBottom_toTopOf="@+id/pulseValueView"
+        app:layout_constraintBottom_toTopOf="@+id/heartRateValueView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/graphPulse"
+        app:layout_constraintTop_toTopOf="@+id/graphHeartRate"
         app:layout_constraintVertical_bias="1.0" />
 
     <TextView
@@ -126,38 +104,38 @@
         android:text="Time (s)"
         android:textColor="@color/colorGraphGrid"
         android:textSize="12sp"
-        app:layout_constraintBottom_toBottomOf="@+id/graphBreathe"
+        app:layout_constraintBottom_toBottomOf="@+id/graphRespiration"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/graphBreathe"
+        app:layout_constraintTop_toTopOf="@+id/graphRespiration"
         app:layout_constraintVertical_bias="1.0" />
 
     <TextView
         android:id="@+id/textView3"
         android:layout_width="wrap_content"
-        android:layout_height="63dp"
+        android:layout_height="85dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:rotation="-90"
-        android:text="Pulse (bpm)"
+        android:text="Heart Rate (bpm)"
         android:textColor="@color/colorGraphGrid"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="@+id/textView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/graphPulse"
+        app:layout_constraintTop_toTopOf="@+id/graphHeartRate"
         app:layout_constraintVertical_bias="0.45" />
 
     <TextView
         android:id="@+id/textView4"
         android:layout_width="wrap_content"
-        android:layout_height="93dp"
+        android:layout_height="112dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:rotation="270"
-        android:text="Breath rate (bpm)"
+        android:text="Respiration rate (bpm)"
         android:textAllCaps="false"
         android:textColor="@color/colorGraphGrid"
         android:textSize="12sp"
@@ -165,7 +143,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/graphBreathe"
+        app:layout_constraintTop_toTopOf="@+id/graphRespiration"
         app:layout_constraintVertical_bias="0.45" />
 
 </android.support.constraint.ConstraintLayout>

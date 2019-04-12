@@ -31,20 +31,20 @@ public class BluetoothService extends Service {
     static BluetoothService b; // for static service
     private final String TAG = "BluetoothService";
     private final int REQUEST_FINE_LOCATION = 2;
-    ConnectThread connectThread;
-    ConnectedThread connectedThread;
+    ConnectThread connectThread; // runs when try to connect with Bluetooth
+    ConnectedThread connectedThread; // runs when connected to read serial data
     Handler handler = new Handler();
     BluetoothAdapter bluetoothAdapter;
-    BluetoothDevice activeDevice;
-    Set<BluetoothDevice> pairedDevices;
-    int chosenDeviceIndex;
-    String raspberryPiName = "raspberrypi";
-    boolean autoConnect = false;
-    boolean connected = false;
-    boolean foundRaspberryPi = false;
-    int connectAttempt = 1;
+    BluetoothDevice activeDevice; // the Bluetooth device to connect to (Raspberry Pi)
+    Set<BluetoothDevice> pairedDevices; // a list of paired devices on the phone
+    int chosenDeviceIndex; // the chosen device in the list
+    String raspberryPiName = "raspberrypi"; // the Bluetooth name of Raspberry Pi
+    boolean autoConnect = false; // true if the app tries to auto connect to Raspberry Pi
+    boolean connected = false; // to show connection state, true if connected
+    boolean foundRaspberryPi = false; // if the app found Raspberry Pi
+    int connectAttempts = 1; // number of attempts to connect. The app will try to connect two times if it failed the first time
     int searchAttempts = 1;
-    boolean startBluetooth = false;
+    boolean startBluetooth = false; // used to start or stop Bluetooth
 
     // Boolean indicators for BluetoothSettings
     boolean bluetoothSettingsActive = false;
@@ -72,7 +72,6 @@ public class BluetoothService extends Service {
     @Override
     public void onCreate() {
         b = BluetoothService.this;
-        Log.d(TAG,"BluetoothService onCreate");
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // Gets the device's BluetoothService adapter
         // Receivers
         IntentFilter BTIntentChange = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
@@ -91,7 +90,6 @@ public class BluetoothService extends Service {
 
     @Override
     public void onDestroy() {
-        Log.d(TAG,"BluetoothService onDestroy");
         unregisterReceiver(BluetoothBroadcastReceiverState);
         unregisterReceiver(BluetoothBroadcastReceiverAction);
         unregisterReceiver(BluetoothBroadcastReceiverSearch);
@@ -174,7 +172,7 @@ public class BluetoothService extends Service {
      */
     void autoConnect() {
         autoConnect = true; // eventually remove
-        connectAttempt = 1;
+        connectAttempts = 1;
         searchAttempts = 1;
         bluetoothAutoConnectChecked = true;
         if (bluetoothSettingsActive) {
@@ -255,13 +253,13 @@ public class BluetoothService extends Service {
      */
     void connectManager() { // If device did not connect
         if (autoConnect && startBluetooth) {
-            switch (connectAttempt) {
+            switch (connectAttempts) {
                 case 1:
                     handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
                             if (!connected) {
-                                connectAttempt ++;
+                                connectAttempts++;
                                 connectBluetooth(true);
                             }
                         }
@@ -272,7 +270,7 @@ public class BluetoothService extends Service {
                         @Override
                         public void run() {
                             if (!connected) {
-                                connectAttempt ++;
+                                connectAttempts++;
                                 startDiscovery();
                             }
                         }
@@ -283,7 +281,7 @@ public class BluetoothService extends Service {
                         @Override
                         public void run() {
                             if (!connected) {
-                                connectAttempt ++;
+                                connectAttempts++;
                                 connectBluetooth(true);
                             }
                         }

@@ -15,7 +15,6 @@ import android.preference.SwitchPreference;
 import android.support.annotation.StringRes;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -111,7 +110,6 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            Log.d("set","SettingsFragment onCreate");
             addPreferencesFromResource(R.xml.settings);  // hämtar preferenserna
             setHasOptionsMenu(true);  // ger menyraden
             informationPreference = findPreference(key_pref_information);
@@ -157,7 +155,6 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
-            Log.d("btSettings","onCrete");
             super.onCreate(savedInstanceState);
             bs = BluetoothSettings.this;
             b.bluetoothSettingsActive = true;
@@ -287,7 +284,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                     if ((boolean) newValue) {
                         if (b.activeDevice != null) {
                             b.autoConnect = false;
-                            b.connectAttempt = 4;
+                            b.connectAttempts = 4;
                             b.connectBluetooth(true);
                         } else {
                             Toast.makeText(getActivity().getApplicationContext(),
@@ -355,7 +352,6 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
         @Override
         public void onDestroy() {
             super.onDestroy();
-            Log.d("set","BluetoothFragment onDestroy");
             b.bluetoothSettingsActive = false;
         }
 

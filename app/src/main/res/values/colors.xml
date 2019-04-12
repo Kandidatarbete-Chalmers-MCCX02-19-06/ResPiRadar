@@ -22,10 +22,10 @@
     <color name="colorGraphBackground">#828282</color>
     <color name="colorGraphGrid">#DCDCDC</color>
 
-    <color name="colorGraphBreath">#E6E6E6</color>
-    <color name="colorGraphPulse2">#CE443A</color>
-    <color name="colorGraphPulse3">#EC584E</color>
-    <color name="colorGraphPulse">#FF5F53</color>
+    <color name="colorGraphRespiration">#E6E6E6</color>
+    <color name="colorGraphHeartRate2">#CE443A</color>
+    <color name="colorGraphHeartRate3">#EC584E</color>
+    <color name="colorGraphHeartRate">#FF5F53</color>
 
     <color name="colorMeasureButtonOn2">#50BE6A</color>
     <color name="colorMeasureButtonOn3">#46C87E</color>

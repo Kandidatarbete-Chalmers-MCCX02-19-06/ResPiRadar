@@ -42,6 +42,7 @@
 
         <activity android:name=".RealTimeBreathActivity"
             android:label="Real Time Breathing"
+            android:parentActivityName=".MainActivity"
             android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
