@@ -9,7 +9,7 @@
             android:key="bluetoothSettings"
             android:title="Bluetooth Settings"
             android:icon="@drawable/ic_bluetooth_black_24dp"
-            android:fragment="com.example.RadarHealthMonitoring.Settings$BluetoothFragment"/>
+            android:fragment="com.example.RadarHealthMonitoring.Settings$BluetoothSettings" />
         <Preference
             android:key="information"
             android:title="About the App"

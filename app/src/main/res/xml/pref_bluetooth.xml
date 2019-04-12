@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/btView">
     <SwitchPreference
         android:defaultValue="false"
         android:key="bluetooth_switch"
-        android:title="Bluetooth Off"
-        android:summary="Switch Bluetooth on or off" />
+        android:title="BluetoothService Off"
+        android:summary="Switch BluetoothService on or off" />
     <EditTextPreference
         android:capitalize="words"
         android:defaultValue="raspberrypi"

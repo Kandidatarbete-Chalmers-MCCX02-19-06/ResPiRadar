@@ -49,7 +49,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".Bluetooth" />
+        <service android:name=".BluetoothService" />
 
     </application>
 

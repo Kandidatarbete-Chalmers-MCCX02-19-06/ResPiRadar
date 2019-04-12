@@ -19,7 +19,7 @@ import android.widget.Toast;
 import com.jjoe64.graphview.Viewport;
 import com.jjoe64.graphview.series.DataPoint;
 
-import static com.example.RadarHealthMonitoring.Bluetooth.b;
+import static com.example.RadarHealthMonitoring.BluetoothService.b;
 import static com.example.RadarHealthMonitoring.MainActivity.BREATHING_VALUE;
 import static com.example.RadarHealthMonitoring.MainActivity.REAL_TIME_BREATHING;
 import static com.example.RadarHealthMonitoring.MainActivity.measurementRunning;

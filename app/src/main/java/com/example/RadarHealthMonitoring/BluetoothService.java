@@ -26,10 +26,10 @@ import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluet
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bs;
 import static com.example.RadarHealthMonitoring.Settings.s;
 
-public class Bluetooth extends Service {
+public class BluetoothService extends Service {
 
-    static Bluetooth b; // for static service
-    private final String TAG = "Bluetooth";
+    static BluetoothService b; // for static service
+    private final String TAG = "BluetoothService";
     private final int REQUEST_FINE_LOCATION = 2;
     ConnectThread connectThread;
     ConnectedThread connectedThread;
@@ -71,8 +71,9 @@ public class Bluetooth extends Service {
 
     @Override
     public void onCreate() {
-        b = Bluetooth.this;
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // Gets the device's Bluetooth adapter
+        b = BluetoothService.this;
+        Log.d(TAG,"BluetoothService onCreate");
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // Gets the device's BluetoothService adapter
         // Receivers
         IntentFilter BTIntentChange = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(BluetoothBroadcastReceiverState, BTIntentChange);
@@ -90,6 +91,7 @@ public class Bluetooth extends Service {
 
     @Override
     public void onDestroy() {
+        Log.d(TAG,"BluetoothService onDestroy");
         unregisterReceiver(BluetoothBroadcastReceiverState);
         unregisterReceiver(BluetoothBroadcastReceiverAction);
         unregisterReceiver(BluetoothBroadcastReceiverSearch);
@@ -107,17 +109,17 @@ public class Bluetooth extends Service {
     // ########## ########## Methods ########## ##########
 
     /**
-     * Starts or disables Bluetooth
+     * Starts or disables BluetoothService
      * Starts at app start up
      */
     boolean startBluetooth(boolean start) {
         if (start) {
             startBluetooth = true; // for ending threads on destroy
-            if (bluetoothAdapter == null) { // Device doesn't support Bluetooth
+            if (bluetoothAdapter == null) { // Device doesn't support BluetoothService
                 Toast.makeText(getApplicationContext(),
-                        "Bluetooth Not Supported", Toast.LENGTH_LONG).show();
+                        "BluetoothService Not Supported", Toast.LENGTH_LONG).show();
             } else {
-                if (!bluetoothAdapter.isEnabled()) { // Enable Bluetooth
+                if (!bluetoothAdapter.isEnabled()) { // Enable BluetoothService
                     bluetoothAdapter.enable();
                 } else { // bluetooth already on
                     bluetoothOnChecked = true;
@@ -288,7 +290,7 @@ public class Bluetooth extends Service {
                     }, 100);
                     break;
                 default :
-                    Intent intent = new Intent(Bluetooth.TOAST);
+                    Intent intent = new Intent(BluetoothService.TOAST);
                     intent.putExtra(TEXT,"Error: Couldn't connect to Raspberry Pi");
                     sendBroadcast(intent);
                     bluetoothAutoConnectChecked = false;
@@ -312,7 +314,7 @@ public class Bluetooth extends Service {
         b.bluetoothAutoConnectChecked = true;
         b.connected = true;
         b.bluetoothSearchEnable = false;
-        Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
+        Intent intent = new Intent(BluetoothService.SET_BLUETOOTH_ICON);
         intent.putExtra(ICON,"ic_bluetooth_connected_white_24dp");
         sendBroadcast(intent);
         if (!commandSimulate) {
@@ -346,7 +348,7 @@ public class Bluetooth extends Service {
         b.bluetoothConnectChecked = false;
         b.bluetoothAutoConnectChecked = false;
         b.bluetoothSearchEnable = true;
-        Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
+        Intent intent = new Intent(BluetoothService.SET_BLUETOOTH_ICON);
         intent.putExtra(ICON,"ic_bluetooth_white_24dp");
         sendBroadcast(intent);
         if (!commandSimulate) {
@@ -421,7 +423,7 @@ public class Bluetooth extends Service {
         if (bluetoothSettingsActive) {
             bs.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
         } else {
-            Intent intent = new Intent(Bluetooth.REQUEST_PERMISSION);
+            Intent intent = new Intent(BluetoothService.REQUEST_PERMISSION);
             sendBroadcast(intent);
         }
     }
@@ -506,7 +508,7 @@ public class Bluetooth extends Service {
             public void run() {
                 boolean blueIC = false;
                 while (connectThread.isRunning() && connectThread.isAlive()) {
-                    Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
+                    Intent intent = new Intent(BluetoothService.SET_BLUETOOTH_ICON);
                     if (blueIC) {
                         intent.putExtra(ICON,"ic_bluetooth_white_24dp");
                     } else {
@@ -521,7 +523,7 @@ public class Bluetooth extends Service {
                     }
                 }
                 if (!connected && blueIC && !bluetoothSearchChecked) {
-                    Intent intent = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
+                    Intent intent = new Intent(BluetoothService.SET_BLUETOOTH_ICON);
                     intent.putExtra(ICON,"ic_bluetooth_white_24dp");
                     sendBroadcast(intent);
                 }
@@ -554,7 +556,7 @@ public class Bluetooth extends Service {
                         bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_disabled_gray_24dp);
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(false);
-                            bluetoothOn.setTitle("Bluetooth Off");
+                            bluetoothOn.setTitle("BluetoothService Off");
                             if (commandBluetoothList) {
                                 bluetoothList.setEnabled(false);
                             }
@@ -572,12 +574,12 @@ public class Bluetooth extends Service {
                         bluetoothOnChecked = true;
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(true);
-                            bluetoothOn.setTitle("Bluetooth On");
+                            bluetoothOn.setTitle("BluetoothService On");
                         }
                         try {
                             bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
                         } catch (NullPointerException e) {
-                            Intent intentIcon = new Intent(Bluetooth.SET_BLUETOOTH_ICON);
+                            Intent intentIcon = new Intent(BluetoothService.SET_BLUETOOTH_ICON);
                             intentIcon.putExtra(ICON,"ic_bluetooth_white_24dp");
                             sendBroadcast(intentIcon);
                         }

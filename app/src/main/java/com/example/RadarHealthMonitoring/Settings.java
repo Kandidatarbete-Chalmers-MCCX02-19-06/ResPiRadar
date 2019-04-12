@@ -2,6 +2,8 @@ package com.example.RadarHealthMonitoring;
 
 import android.annotation.TargetApi;
 import android.app.DialogFragment;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -10,39 +12,50 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.SwitchPreference;
+import android.support.annotation.StringRes;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
+
 import java.util.List;
+
 import pub.devrel.easypermissions.EasyPermissions;
 
-import static com.example.RadarHealthMonitoring.Bluetooth.START_MEAS_BUTTON_ENABLE;
-import static com.example.RadarHealthMonitoring.Bluetooth.b;
+import static com.example.RadarHealthMonitoring.BluetoothService.START_MEAS_BUTTON_ENABLE;
+import static com.example.RadarHealthMonitoring.BluetoothService.b;
+
+//import android.support.v4.app.Fragment;
 
 /**
  * Settings är en aktivitet som skapar en panel med inställningar. Innehåller genvägar till flera
  * olika paneler med olika kategorier av inställningar. Alla paneler finns under R.xml och
  * dessa styrs av aktiviteten.
  */
-public class Settings extends AppCompatPreferenceActivity {
+public class Settings extends AppCompatActivity implements PreferenceFragment.OnPreferenceStartFragmentCallback { // AppCompatPreferenceActivity   implements PreferenceFragment.OnPreferenceStartFragmentCallback
 
     static Settings s; // for static activity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("set","Settings Activity onCreate");
         s = Settings.this;
         setupActionBar();
+        setContentView(R.layout.empty);
         getFragmentManager()
                 .beginTransaction()
-                .replace(android.R.id.content, new SettingsFragment())
+                .replace(R.id.empty, new SettingsFragment())
+                //.addToBackStack("SET")
                 .commit();  // Skapar ett nytt fragment i en ny panel
     }
 
     @Override
         public void onDestroy() {
+            Log.d("set","Settings Activity onDestroy");
             super.onDestroy();
         }
 
@@ -50,11 +63,11 @@ public class Settings extends AppCompatPreferenceActivity {
      * Viktigt att få med alla fragment som länkas i panelerna, annars krasar appen. Är en
      * säkerhetsåtgärd för att förhindra att malware får åtkommst till fragmenten.
      */
-    protected boolean isValidFragment(String fragmentName) {
+    /*protected boolean isValidFragment(String fragmentName) {
         return PreferenceFragment.class.getName().equals(fragmentName)
                 || Settings.SettingsFragment.class.getName().equals(fragmentName)
                 || Settings.BluetoothFragment.class.getName().equals(fragmentName);
-    }
+    }*/
 
     private void setupActionBar() {
         ActionBar actionBar = getSupportActionBar();
@@ -66,9 +79,84 @@ public class Settings extends AppCompatPreferenceActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {  // Ger en fungerande tillbaka-pil
         if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
+            Log.d("set","onBackPressed");
+            onBackPressed(); // TODO
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        //int count = getFragmentManager().getBackStackEntryCount();
+        //Log.d("set","BSEC: " + getFragmentManager().getBackStackEntryCount() + " fragment " + getFragmentManager().getBackStackEntryAt(count-1).getName());
+        super.onBackPressed();
+        /*Fragment currentFragment = getSupportFragmentManager().getFragments().get(getSupportFragmentManager().getBackStackEntryCount() - 1);
+        if (currentFragment instanceof OnBackPressed) {
+            ((OnBackPressed) currentFragment).onBackPressed();
+        }
+        super.onBackPressed();*/
+
+        /*if (count == 0) {
+            super.onBackPressed();
+            //additional code
+            //finish();
+        } else if (getFragmentManager().getBackStackEntryAt(count-1).getName().equals("com.example.RadarHealthMonitoring.Settings$BluetoothFragment")) {
+                //getFragmentManager().popBackStack();
+            Fragment f = getFragmentManager().findFragmentByTag("com.example.RadarHealthMonitoring.Settings$BluetoothFragment");
+            //if (f instanceof BluetoothFragment) {
+            //    if (f != null)
+                    Log.d("st","pop");
+                    getFragmentManager().beginTransaction().remove(f).commit();
+            //}
+                //((android.support.v14.preference.PreferenceFragment)getFragmentManager().getBackStackEntryAt(count-1)).addPreferencesFromResource(R.xml.settings);
+        } else {
+            super.onBackPressed();
+        }*/
+        /*
+        } else if (getFragmentManager().getBackStackEntryAt(count-1).getName().equals("com.example.RadarHealthMonitoring.Settings$BluetoothFragment")) {
+            getFragmentManager().popBackStack();
+            Log.d("st","pop");
+            //((android.support.v14.preference.PreferenceFragment)getFragmentManager().getBackStackEntryAt(count-1)).addPreferencesFromResource(R.xml.settings);
+        }*/
+
+        /*if (getFragmentManager().getBackStackEntryAt())
+        if(getFragmentManager().getBackStackEntryCount()>1){
+            super.onBackPressed();
+        }else{
+            Log.d("set","finish");
+            finish();
+        }*/
+    }
+
+    /*private void tellFragments(){
+        //List<Fragment> fragments = getSupportFragmentManager().getFragments();
+        for(Fragment f : fragments){
+            if(f != null && f instanceof BaseFragment)
+                ((BaseFragment)f).onBackPressed();
+        }
+    }*/
+
+    @Override
+    public boolean onPreferenceStartFragment(PreferenceFragment caller, Preference pref) {
+        replaceCurrentFragmentsWith(pref.getFragment(), pref.getExtras(), pref.getTitleRes(),
+                pref.getTitle());
+        return true;
+    }
+    private void replaceCurrentFragmentsWith(String fragmentClass, Bundle args, @StringRes int titleRes,
+                                             CharSequence titleText) {
+        Fragment f = Fragment.instantiate(this, fragmentClass, args);
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        transaction.replace(R.id.empty, f);
+        if (titleRes != 0) {
+            transaction.setBreadCrumbTitle(titleRes);
+        } else if (titleText != null) {
+            transaction.setBreadCrumbTitle(titleText);
+        }
+        transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        transaction.addToBackStack(null);
+        transaction.commit(); // commitAllowingStateLoss
     }
 
     // ########## ########## Settings Fragment ########## ##########
@@ -86,6 +174,7 @@ public class Settings extends AppCompatPreferenceActivity {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+            Log.d("set","SettingsFragment onCreate");
             addPreferencesFromResource(R.xml.settings);  // hämtar preferenserna
             setHasOptionsMenu(true);  // ger menyraden
             informationPreference = findPreference(key_pref_information);
@@ -100,26 +189,33 @@ public class Settings extends AppCompatPreferenceActivity {
         }
     }
 
-    // ########## ########## ########## Bluetooth ########## ########## ##########
+    // ########## ########## ########## BluetoothSettings ########## ########## ##########
 
     /**
      * Bluetoothfragment
      */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    /*@TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class BluetoothFragment extends PreferenceFragment {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            getFragmentManager()
+            //getActivity().setContentView(R.layout.empty);
+            getFragmentManager() // getChildFragmentManager
                     .beginTransaction()
-                    .replace(android.R.id.content, new BluetoothSettings()) // add?
+                    .replace(R.id.empty, new BluetoothSettings()) // add? android.R.id.content
+                    //.addToBackStack("BT")
                     .commit();
+            //getChildFragmentManager().executePendingTransactions();
+            *//*getFragmentManager()
+                    .beginTransaction()
+                    .replace(android.R.id.content, new BluetoothSettings()) // add? android.R.id.content
+                    .commit();*//*
             setHasOptionsMenu(true);
         }
-    }
+    }*/
 
     /**
-     *  Inställningar för Bluetooth
+     *  Inställningar för BluetoothService
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class BluetoothSettings extends PreferenceFragment implements EasyPermissions.PermissionCallbacks {
@@ -147,13 +243,14 @@ public class Settings extends AppCompatPreferenceActivity {
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
+            Log.d("btSettings","onCrete");
             super.onCreate(savedInstanceState);
             bs = BluetoothSettings.this;
             b.bluetoothSettingsActive = true;
             addPreferencesFromResource(R.xml.pref_bluetooth);
             setHasOptionsMenu(true);
-            getActivity().setTitle("Bluetooth Settings");  // Change title
-            // Bluetooth preferences
+            getActivity().setTitle("BluetoothService Settings");  // Change title
+            // BluetoothService preferences
             bluetoothOn = (SwitchPreference) findPreference(key_pref_bluetooth_switch);
             bluetoothAutoConnect = (SwitchPreference) findPreference(key_pref_bluetooth_auto_connect);
             bluetoothConnect = (SwitchPreference) findPreference(key_pref_bluetooth_connect);
@@ -164,11 +261,11 @@ public class Settings extends AppCompatPreferenceActivity {
             // On return to bluetooth settings, manually update everything
             if (b.bluetoothOnChecked) {
                 bluetoothOn.setChecked(true);
-                bluetoothOn.setTitle("Bluetooth On");
+                bluetoothOn.setTitle("BluetoothService On");
                 b.updateBluetoothList();
             } else {
                 bluetoothOn.setChecked(false);
-                bluetoothOn.setTitle("Bluetooth Off");
+                bluetoothOn.setTitle("BluetoothService Off");
             }
             bluetoothConnect.setEnabled(b.bluetoothConnectEnable);
             bluetoothConnect.setChecked(b.bluetoothConnectChecked);
@@ -183,7 +280,7 @@ public class Settings extends AppCompatPreferenceActivity {
 
             // ########## Preference Listeners ##########
 
-            // Starta Bluetooth Swithc Listener
+            // Starta BluetoothService Swithc Listener
             bluetoothOn.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -344,6 +441,7 @@ public class Settings extends AppCompatPreferenceActivity {
         @Override
         public void onDestroy() {
             super.onDestroy();
+            Log.d("set","BluetoothFragment onDestroy");
             b.bluetoothSettingsActive = false;
         }
 

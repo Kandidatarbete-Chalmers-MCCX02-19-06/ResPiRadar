@@ -32,7 +32,7 @@ import java.util.List;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
-import static com.example.RadarHealthMonitoring.Bluetooth.b;
+import static com.example.RadarHealthMonitoring.BluetoothService.b;
 import static com.example.RadarHealthMonitoring.ConnectedThread.READ_VALUE;
 import static com.example.RadarHealthMonitoring.RealTimeBreathActivity.isActive;
 import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAutoConnect;
@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     static Handler handler;*/
 
     /**
-     * On start up: creates the graphs and starts the Bluetooth service that auto connects to
+     * On start up: creates the graphs and starts the BluetoothService service that auto connects to
      * a Raspberry Pi with bluetooth
      * The MainActivity hosts the graphs, a button to start measuring pulse and breath rate,
      * an options menu with settings, a reset button and a button/indicator that shows the connection state
@@ -135,8 +135,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 }
             }
         });
-        /* Bluetooth */
-        intentBluetooth = new Intent(this, Bluetooth.class);
+        /* BluetoothService */
+        intentBluetooth = new Intent(this, BluetoothService.class);
         startService(intentBluetooth);
 
         /*handlerThread = new HandlerThread("HandlerThread");
@@ -144,17 +144,17 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         looper = handlerThread.getLooper();
         handler = new Handler(looper);*/
 
-        IntentFilter intentFilterRequestPermission = new IntentFilter(Bluetooth.REQUEST_PERMISSION);
+        IntentFilter intentFilterRequestPermission = new IntentFilter(BluetoothService.REQUEST_PERMISSION);
         registerReceiver(PermissionBroadcastReceiver, intentFilterRequestPermission);
-        IntentFilter intentFilterBluetoothIcon = new IntentFilter(Bluetooth.SET_BLUETOOTH_ICON);
+        IntentFilter intentFilterBluetoothIcon = new IntentFilter(BluetoothService.SET_BLUETOOTH_ICON);
         registerReceiver(BluetoothIconBroadcastReceiver, intentFilterBluetoothIcon);
         IntentFilter intentFilterReadData = new IntentFilter(ConnectedThread.READ);
         registerReceiver(ReadDataBroadcastReceiver, intentFilterReadData);
-        IntentFilter intentFilterToast = new IntentFilter(Bluetooth.TOAST);
+        IntentFilter intentFilterToast = new IntentFilter(BluetoothService.TOAST);
         registerReceiver(ToastBroadcastReceiver, intentFilterToast);
         IntentFilter intentFilterResetGraph = new IntentFilter(Settings.BluetoothSettings.RESET_GRAPH);
         registerReceiver(ResetGraphBroadcastReceiver, intentFilterResetGraph);
-        IntentFilter intentFilterStartMeasButton = new IntentFilter(Bluetooth.START_MEAS_BUTTON_ENABLE);
+        IntentFilter intentFilterStartMeasButton = new IntentFilter(BluetoothService.START_MEAS_BUTTON_ENABLE);
         registerReceiver(StartMeasButtonBroadcastReceiver, intentFilterStartMeasButton);
 
         display = ((WindowManager)
@@ -213,6 +213,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     @Override
     public void onDestroy() {
+        Log.d(msg,"onDestroy");
         super.onDestroy();
         stopService(intentBluetooth);
         measurementRunning = false;
@@ -248,6 +249,21 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         switch (item.getItemId()) {
             case R.id.settings:
                 Intent intentSettings = new Intent(this, Settings.class);
+
+                // Use TaskStackBuilder to build the back stack and get the PendingIntent
+                /*PendingIntent pendingIntent =
+                        TaskStackBuilder.create(this)
+                                // add all of DetailsActivity's parents to the stack,
+                                // followed by DetailsActivity itself
+                                .addNextIntentWithParentStack(intentSettings)
+                                .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+                builder.setContentIntent(pendingIntent);
+                Intent[] intents = new Intent[1];
+                intents[0] = intentSettings;
+                startActivities(intents);*/
+
                 this.startActivity(intentSettings);
                 return true;
             case R.id.bluetooth:
@@ -552,7 +568,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     public BroadcastReceiver PermissionBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (Bluetooth.REQUEST_PERMISSION.equals(action)) {
+            if (BluetoothService.REQUEST_PERMISSION.equals(action)) {
                 Log.d(msg, "got intent request permission");
                 requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
             }
@@ -562,7 +578,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     public BroadcastReceiver BluetoothIconBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (Bluetooth.SET_BLUETOOTH_ICON.equals(action)) {
+            if (BluetoothService.SET_BLUETOOTH_ICON.equals(action)) {
                 String icon = intent.getStringExtra(b.ICON);
                 //Log.d(msg,"value: " + icon);
                 switch (icon) {
@@ -583,7 +599,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     public BroadcastReceiver ToastBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (Bluetooth.TOAST.equals(action)) {
+            if (BluetoothService.TOAST.equals(action)) {
                 //String text = intent.getStringExtra(b.TEXT);
                 Toast.makeText(getApplicationContext(), intent.getStringExtra(b.TEXT), Toast.LENGTH_LONG).show();
             }
@@ -632,7 +648,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     public BroadcastReceiver StartMeasButtonBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (Bluetooth.START_MEAS_BUTTON_ENABLE.equals(action)) {
+            if (BluetoothService.START_MEAS_BUTTON_ENABLE.equals(action)) {
                 boolean value = intent.getBooleanExtra(b.ENABLE_BUTTON,true);
                 startStoppMeasureButton.setEnabled(value);
                 startStoppMeasureButton.setText("Start Measure");

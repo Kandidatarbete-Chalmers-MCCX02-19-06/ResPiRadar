@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.util.Log;
 import java.io.IOException;
 import java.util.UUID;
-import static com.example.RadarHealthMonitoring.Bluetooth.b;
+import static com.example.RadarHealthMonitoring.BluetoothService.b;
 
 class ConnectThread extends Thread {
     private static final String TAG = "ConnectThread";
@@ -65,7 +65,7 @@ class ConnectThread extends Thread {
         b.bluetoothConnected();
         b.connectedThread = new ConnectedThread(mmSocket);
         b.connectedThread.start();
-        Intent intent = new Intent(Bluetooth.TOAST);
+        Intent intent = new Intent(BluetoothService.TOAST);
         intent.putExtra(b.TEXT,"Connected to Raspberry Pi");
         b.sendBroadcast(intent);
         //Toast.makeText(b.getApplicationContext(), "Connected to Raspberry Pi", Toast.LENGTH_LONG).show();

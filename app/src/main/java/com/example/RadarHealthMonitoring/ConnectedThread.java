@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import static com.example.RadarHealthMonitoring.Bluetooth.b;
+import static com.example.RadarHealthMonitoring.BluetoothService.b;
 
 
 class ConnectedThread extends Thread {

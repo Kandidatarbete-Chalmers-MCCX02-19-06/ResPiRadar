@@ -5,7 +5,7 @@
 
     <!-- Strings related to Settings -->
 
-    <!-- Bluetooth Settings-->
+    <!-- BluetoothService Settings-->
 
     <string-array name="pref_bluetooth_list">
         <item>None available</item>
@@ -62,7 +62,7 @@
         Copyright \u00A9 2019 Albin Warnicke, Erik Angert Svensson, Julia Nystrand, Simon Nordenström, Emil Johansson and Sebastian Göbel
     </string>
 
-    <!-- Information Bluetooth Settings -->
+    <!-- Information BluetoothService Settings -->
 
     <string name="info_bluetooth1">
         When bluetooth turns on, the app will automatically try to connect to Raspberry Pi.
