@@ -4,15 +4,15 @@
 
     <!-- Settings -->
     <PreferenceCategory
-        android:title="Settings">
+        android:title="@string/title_activity_settings">
         <Preference
             android:key="bluetoothSettings"
-            android:title="Bluetooth Settings"
+            android:title="@string/title_bluetooth_settings"
             android:icon="@drawable/ic_bluetooth_black_24dp"
             android:fragment="com.chalmers.respiradar.Settings$BluetoothSettings" />
         <Preference
             android:key="information"
-            android:title="About the App"
+            android:title="@string/about_the_app"
             android:icon="@drawable/ic_info_black_24dp" >
         </Preference>
     </PreferenceCategory>

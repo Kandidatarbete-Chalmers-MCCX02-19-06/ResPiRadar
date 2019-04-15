@@ -5,8 +5,8 @@
     <SwitchPreference
         android:defaultValue="false"
         android:key="bluetooth_switch"
-        android:title="Bluetooth Off"
-        android:summary="Switch Bluetooth on or off" />
+        android:title="@string/bluetooth_off"
+        android:summary="@string/switch_bluetooth_on_off" />
     <EditTextPreference
         android:capitalize="words"
         android:defaultValue="raspberrypi"
@@ -15,29 +15,29 @@
         android:maxLines="1"
         android:selectAllOnFocus="true"
         android:singleLine="true"
-        android:title="Name or MAC adress for Raspberry Pi"
+        android:title="@string/name_or_mac_address_rpi"
         android:summary="raspberrypi" />
     <ListPreference
         android:enabled="false"
         android:key="bluetooth_list"
-        android:title="Available Bluetooth devices" />
+        android:title="@string/available_bluetooth_devices" />
     <PreferenceCategory
-        android:title="Manual connection">
+        android:title="@string/manual_connection">
         <SwitchPreference
             android:defaultValue="false"
             android:key="bluetooth_auto_connect"
-            android:title="Automated Connection" />
+            android:title="@string/automated_connection" />
         <SwitchPreference
             android:defaultValue="false"
             android:key="search_bluetooth_device"
-            android:title="Search after Raspberry Pi" />
+            android:title="@string/search_after_rpi" />
         <SwitchPreference
             android:defaultValue="false"
             android:key="bluetooth_connect"
-            android:title="Connect to Raspberry Pi" />
+            android:title="@string/connect_to_rpi" />
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="Other settings">
+        android:title="@string/other_settins">
         <EditTextPreference
             android:capitalize="words"
             android:inputType="textCapWords"
@@ -46,7 +46,7 @@
             android:selectAllOnFocus="true"
             android:singleLine="true"
             android:summary=""
-            android:title="Command Terminal" />
+            android:title="@string/command_terminal" />
     </PreferenceCategory>
 
 </PreferenceScreen>

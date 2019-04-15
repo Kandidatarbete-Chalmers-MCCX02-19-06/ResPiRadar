@@ -12,6 +12,8 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 import com.jjoe64.graphview.series.OnDataPointTapListener;
 import com.jjoe64.graphview.series.Series;
 
+import java.util.Locale;
+
 /**
  * Skapar graferna
  */
@@ -73,7 +75,9 @@ class Graph {
                 @Override
                 public void onTap(Series series, DataPointInterface dataPoint) {
                     //Context context = getApplicationContext();
-                    Toast.makeText(context, "" + String.format("%.0f", dataPoint.getY()) + " bpm at time " + String.format("%.0f", dataPoint.getX()) + " s", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, String.format(Locale.getDefault(),"%.0f",
+                            dataPoint.getY()) + " bpm at time " + String.format(Locale.getDefault(),"%.0f",
+                            dataPoint.getX()) + " s", Toast.LENGTH_SHORT).show();
                 }
             });
         }

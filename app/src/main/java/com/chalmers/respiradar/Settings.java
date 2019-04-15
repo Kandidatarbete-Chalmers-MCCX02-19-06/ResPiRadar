@@ -67,7 +67,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
     public boolean onOptionsItemSelected(MenuItem item) {  // Ger en fungerande tillbaka-pil
         if (item.getItemId() == android.R.id.home) {
             onBackPressed();
-            setTitle("Settings");
+            setTitle(getString(R.string.title_activity_settings));
             return true;
         } else {
             return super.onOptionsItemSelected(item);
@@ -160,7 +160,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
             b.bluetoothSettingsActive = true;
             addPreferencesFromResource(R.xml.pref_bluetooth);
             setHasOptionsMenu(true);
-            getActivity().setTitle("Bluetooth Settings");
+            getActivity().setTitle(getString(R.string.title_bluetooth_settings));
             // BluetoothService preferences
             bluetoothOn = (SwitchPreference) findPreference(key_pref_bluetooth_switch);
             bluetoothAutoConnect = (SwitchPreference) findPreference(key_pref_bluetooth_auto_connect);
@@ -172,11 +172,11 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
             // On return to bluetooth settings, manually update everything
             if (b.bluetoothOnChecked) {
                 bluetoothOn.setChecked(true);
-                bluetoothOn.setTitle("Bluetooth On");
+                bluetoothOn.setTitle(getString(R.string.bluetooth_on));
                 b.updateBluetoothList();
             } else {
                 bluetoothOn.setChecked(false);
-                bluetoothOn.setTitle("Bluetooth Off");
+                bluetoothOn.setTitle(getString(R.string.bluetooth_off));
             }
             bluetoothConnect.setEnabled(b.bluetoothConnectEnable);
             bluetoothConnect.setChecked(b.bluetoothConnectChecked);
@@ -246,7 +246,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                                 if (b.connectThread.isRunning()) {
                                     b.connectThread.cancel();
                                     Toast.makeText(getActivity().getApplicationContext(),
-                                            "Connection canceled", Toast.LENGTH_LONG).show();
+                                            getString(R.string.connection_canceled), Toast.LENGTH_LONG).show();
                                 }
                             }
                             b.setActiveDevice();
@@ -288,7 +288,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                             b.connectBluetooth(true);
                         } else {
                             Toast.makeText(getActivity().getApplicationContext(),
-                                    "No device selected", Toast.LENGTH_LONG).show();
+                                    getString(R.string.no_device_selected), Toast.LENGTH_LONG).show();
                         }
                     } else {
                         if (b.connectThread != null) {
@@ -312,9 +312,9 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                                 byte[] sendCommand = command.getBytes();
                                 b.connectedThread.write(sendCommand);
                                 preference.setSummary((String)newValue);
-                                Toast.makeText(getActivity().getApplicationContext(), "Power off Raspberry Pi", Toast.LENGTH_LONG).show();
+                                Toast.makeText(getActivity().getApplicationContext(), getString(R.string.power_off_rpi), Toast.LENGTH_LONG).show();
                             } else {
-                                Toast.makeText(getActivity().getApplicationContext(), "Not connected to Raspberry Pi", Toast.LENGTH_LONG).show();
+                                Toast.makeText(getActivity().getApplicationContext(), getString(R.string.not_connected_to_rpi), Toast.LENGTH_LONG).show();
                             }
                             break;
                         case "list":
@@ -341,7 +341,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                             s.sendBroadcast(readIntent);
                             break;
                         default:
-                            Toast.makeText(getActivity().getApplicationContext(), "Not a regular command", Toast.LENGTH_LONG).show();
+                            Toast.makeText(getActivity().getApplicationContext(), getString(R.string.not_a_command), Toast.LENGTH_LONG).show();
                             break;
                     }
                     return true;
@@ -397,7 +397,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
             if (requestCode == 2) {
                 b.bluetoothAutoConnectChecked = false;
                 Settings.BluetoothSettings.bluetoothAutoConnect.setChecked(false);
-                Toast.makeText(getActivity().getApplicationContext(), "Location Permissions denied", Toast.LENGTH_LONG).show();
+                Toast.makeText(getActivity().getApplicationContext(), getString(R.string.location_permissions_denied), Toast.LENGTH_LONG).show();
             }
         }
 

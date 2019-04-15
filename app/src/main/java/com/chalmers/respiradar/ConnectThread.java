@@ -12,7 +12,7 @@ class ConnectThread extends Thread {
     private static final String TAG = "ConnectThread";
     private final BluetoothSocket mmSocket;
     private boolean isRunning;
-    private boolean hasSocket = false;
+    private boolean hasSocket;
 
     ConnectThread(BluetoothDevice device) {
         // Use a temporary object that is later assigned to mmSocket
@@ -22,7 +22,7 @@ class ConnectThread extends Thread {
         if (!(device.getUuids() == null)) {
             deviceUUID = device.getUuids()[0].getUuid();
         } else {
-            deviceUUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
+            deviceUUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb"); // default uuid
         }
         try {
             // Get a BluetoothSocket to connect with the given BluetoothDevice.
@@ -66,9 +66,8 @@ class ConnectThread extends Thread {
         b.connectedThread = new ConnectedThread(mmSocket);
         b.connectedThread.start();
         Intent intent = new Intent(BluetoothService.TOAST);
-        intent.putExtra(b.TEXT,"Connected to Raspberry Pi");
+        intent.putExtra(b.TEXT,b.getString(R.string.connected_to_rpi));
         b.sendBroadcast(intent);
-        //Toast.makeText(b.getApplicationContext(), "Connected to Raspberry Pi", Toast.LENGTH_LONG).show();
     }
 
     // Closes the client socket and causes the thread to finish.

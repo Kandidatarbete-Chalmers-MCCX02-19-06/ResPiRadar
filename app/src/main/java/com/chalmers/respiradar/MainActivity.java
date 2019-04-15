@@ -29,7 +29,9 @@ import com.jjoe64.graphview.series.DataPoint;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
+import androidx.annotation.NonNull;
 import pub.devrel.easypermissions.EasyPermissions;
 
 import static com.chalmers.respiradar.BluetoothService.b;
@@ -111,7 +113,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         startStopMeasureButton = findViewById(R.id.startStopMeasureButton); // Start button
         heartRateValueView = findViewById(R.id.heartRateValueView);
         respirationValueView = findViewById(R.id.respirationValueView);
-        //this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         screenWidth =  getResources().getDisplayMetrics().widthPixels;
 
         /* Graphs */
@@ -164,7 +165,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     @Override
     public void onResume() {
-        Log.d(msg,"onResume");
         if(isActive) {
             fixGraphOnReturn();
             resume = true;
@@ -190,31 +190,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     }
 
     @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        super.onSaveInstanceState(savedInstanceState);
-    }
-
-    @Override
-    public void onRestoreInstanceState(Bundle savedInstanceState) {
-        // Always call the superclass so it can restore the view hierarchy
-        super.onRestoreInstanceState(savedInstanceState);
-    }
-
-    @Override
-    public void onPause() {
-        Log.d(msg,"onPause");
-        super.onPause();
-    }
-
-    @Override
-    public void onStop() {
-        Log.d(msg,"onStop");
-        super.onStop();
-    }
-
-    @Override
     public void onDestroy() {
-        Log.d(msg,"onDestroy");
         super.onDestroy();
         stopService(intentBluetooth);
         measurementRunning = false;
@@ -322,7 +298,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     public void measureOnClick(View view) {
         if (!measurementRunning) {
             startStopMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonOff));
-            startStopMeasureButton.setText("Stop Measure");
+            startStopMeasureButton.setText(getString(R.string.stop_measure));
             if (firstStartMeasurement) {
                 startTime = System.currentTimeMillis();
             }
@@ -340,7 +316,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             }
         } else {
             startStopMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonOn));
-            startStopMeasureButton.setText("Start Measure");
+            startStopMeasureButton.setText(getString(R.string.start_measure));
             this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             realTimeBreathingMenuItem.setEnabled(false);
             if (!b.commandSimulate) {
@@ -428,7 +404,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                         e.printStackTrace();
                     }
                 } while (measurementRunning);
-                Log.d("main", "Loop Finished");
             }
         };
         loopAddDataThread.start();
@@ -453,15 +428,16 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                         dataPointsHeartRate.remove(0);
                         dataPointsRespiration.remove(0);
                     }
-                    //Log.d(msg,"dataNumber: " + dataNumber + " datapoins: " + dataPointsHeartRate.get(dataPointsHeartRate.size()-1));
                     graphHeartRate.getSeries().appendData(dataHeartRate,
                             setGraphViewBounds(dataNumber, graphHeartRate, isTapingHeartRate) ||
                                     firstDataHeartRate, maxDataPoints, isActive);
-                    heartRateValueView.setText("Heart Rate: " + String.format("%.1f", yHeartRate) + " bpm");
+                    heartRateValueView.setText(getString(R.string.heart_rate_value,
+                            String.format(Locale.getDefault(),"%.1f", yHeartRate)));
                     graphRespiration.getSeries().appendData(dataRespiration,
                             setGraphViewBounds(dataNumber, graphRespiration, isTapingRespiration) ||
                                     firstDataHeartRate, maxDataPoints, isActive);
-                    respirationValueView.setText("Respiration rate: " + String.format("%.1f", yRespiration) + " bpm");
+                    respirationValueView.setText(getString(R.string.respiration_rate_value,
+                            String.format(Locale.getDefault(),"%.1f", yRespiration)));
                     if (firstDataHeartRate) {
                         graphHeartRate.getViewport().setMinX(0);
                         graphHeartRate.getViewport().setMaxX(60);
@@ -478,7 +454,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    Log.d(msg,"resume false");
                     graphHeartRate.fixGraphView(dataPointsHeartRate.toArray());
                     graphRespiration.fixGraphView(dataPointsRespiration.toArray());
                     resume = false;
@@ -488,7 +463,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     }
 
     public void setHeartRateData(int heartRateData) {
-        Log.d(msg,"setHeartRateData " + heartRateData);
         dataHeartRate = new DataPoint(((System.currentTimeMillis() - startTime)/1000.0),heartRateData);
         dataPointsHeartRate.add(dataHeartRate);
         if (dataPointsHeartRate.size() > maxDataPoints) {
@@ -496,7 +470,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
         graphHeartRate.getSeries().appendData(dataHeartRate, setGraphViewBounds(
                 ((System.currentTimeMillis() - startTime)/1000.0), graphHeartRate, isTapingHeartRate),maxDataPoints,isActive);
-        heartRateValueView.setText("Heart Rate: " + heartRateData + " bpm");
+        heartRateValueView.setText(getString(R.string.heart_rate_value,"" + heartRateData));
     }
 
     public void setRespirationData(int respirationData) {
@@ -507,16 +481,15 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
         graphRespiration.getSeries().appendData(dataRespiration, setGraphViewBounds(
                 ((System.currentTimeMillis() - startTime)/1000.0), graphRespiration, isTapingRespiration),maxDataPoints,false); // TODO try
-        respirationValueView.setText("Respiration rate: " + respirationData + " bpm");
+        respirationValueView.setText(getString(R.string.respiration_rate_value,"" + respirationData));
     }
 
     void resetGraph() {
-        Log.d(msg,"Reset");
         dataNumber = 0;
         graphHeartRate.resetSeries();
         graphRespiration.resetSeries();
-        heartRateValueView.setText("Heart Rate:   ");
-        respirationValueView.setText("Respiration rate:   ");
+        heartRateValueView.setText(getString(R.string.heart_rate_reset));
+        respirationValueView.setText(getString(R.string.respiration_rate_reset));
         dataPointsHeartRate = new ArrayList<>();
         dataPointsRespiration = new ArrayList<>();
         if (measurementRunning) {
@@ -530,13 +503,13 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     // ########## ########## Request Permission ########## ##########
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
     }
 
     @Override
-    public void onPermissionsGranted(int requestCode, List<String> list) {
+    public void onPermissionsGranted(int requestCode, @NonNull List<String> list) {
         // Some permissions have been granted
         if (requestCode == 2) {
             b.startDiscovery();
@@ -544,11 +517,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     }
 
     @Override
-    public void onPermissionsDenied(int requestCode, List<String> list) {
+    public void onPermissionsDenied(int requestCode, @NonNull List<String> list) {
         // Some permissions have been denied
         if (requestCode == 2) {
             b.bluetoothAutoConnectChecked = false;
-            Toast.makeText(getApplicationContext(), "Location Permissions denied", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), getString(R.string.location_permissions_denied), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -558,7 +531,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (BluetoothService.REQUEST_PERMISSION.equals(action)) {
-                Log.d(msg, "got intent request permission");
                 requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
             }
         }
@@ -569,7 +541,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             String action = intent.getAction();
             if (BluetoothService.SET_BLUETOOTH_ICON.equals(action)) {
                 String icon = intent.getStringExtra(b.ICON);
-                //Log.d(msg,"value: " + icon);
                 switch (icon) {
                     case "ic_bluetooth_white_24dp":
                         bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
@@ -589,7 +560,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (BluetoothService.TOAST.equals(action)) {
-                //String text = intent.getStringExtra(b.TEXT);
                 Toast.makeText(getApplicationContext(), intent.getStringExtra(b.TEXT), Toast.LENGTH_LONG).show();
             }
         }
@@ -601,21 +571,22 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             if (ConnectedThread.READ.equals(action)) {
                 if (measurementRunning && !b.commandSimulate) {
                     String value = intent.getStringExtra(READ_VALUE);
-                    //Toast.makeText(getApplicationContext(), value, Toast.LENGTH_SHORT).show();
                     String split[] = value.split(" ");
                     switch (split[0]) {
                         case "HR":
                             try {
                                 setHeartRateData(Integer.parseInt(split[1]));
                             } catch (NumberFormatException e) {
-                                Toast.makeText(getApplicationContext(), "Couldn't parse heart rate", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(),
+                                        getString(R.string.could_not_parse_heart_rate), Toast.LENGTH_SHORT).show();
                             }
                             break;
                         case "RR":
                             try {
                                 setRespirationData(Integer.parseInt(split[1]));
                             } catch (NumberFormatException e) {
-                                Toast.makeText(getApplicationContext(), "Couldn't parse respiration rate", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(),
+                                        getString(R.string.could_not_parse_respiration_rate), Toast.LENGTH_SHORT).show();
                             }
                             break;
                         case "RTB":
@@ -625,12 +596,12 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                                     valueIntent.putExtra(BREATHING_VALUE, Double.parseDouble(split[1]));
                                     sendBroadcast(valueIntent);
                                 } catch (NumberFormatException e) {
-                                    Toast.makeText(getApplicationContext(), "Couldn't parse real time breathing", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getApplicationContext(),
+                                            getString(R.string.could_not_parse_real_time_breathing), Toast.LENGTH_SHORT).show();
                                 }
                             }
                             break;
                         default:
-                            Log.d(msg, "Could't extract data" + split);
                     }
                 }
             }
@@ -652,7 +623,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             if (BluetoothService.START_MEAS_BUTTON_ENABLE.equals(action)) {
                 boolean value = intent.getBooleanExtra(b.ENABLE_BUTTON,true);
                 startStopMeasureButton.setEnabled(value);
-                startStopMeasureButton.setText("Start Measure");
+                startStopMeasureButton.setText(getString(R.string.start_measure));
                 realTimeBreathingMenuItem.setEnabled(value);
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
                 measurementRunning = false;

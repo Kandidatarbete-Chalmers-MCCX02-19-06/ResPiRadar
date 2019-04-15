@@ -22,9 +22,8 @@ public class InformationMainFragment extends DialogFragment {
         // Pass null as the parent view because its going in the dialog layout
         builder.setView(inflater.inflate(R.layout.dialog_main_information, null))
                 .setCancelable(false)
-                .setPositiveButton("CLOSE", new DialogInterface.OnClickListener() {
+                .setPositiveButton(getString(R.string.close_dialog_fragment), new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        //TOdo
                         dialog.dismiss();
                     }
                 });

@@ -134,7 +134,7 @@ public class RealTimeBreathActivity extends AppCompatActivity {
             if (MainActivity.startRealTimeBreathingWithRotate) {
                 onBackPressed();
             } else {
-                Toast.makeText(this, "Rotate the device to portrait orientation", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.rotate_device), Toast.LENGTH_LONG).show();
             }
         }
         return super.onOptionsItemSelected(item);
@@ -221,7 +221,6 @@ public class RealTimeBreathActivity extends AppCompatActivity {
     }
 
     void setBreathData(double breathData) {
-        Log.d("RTB", "setBData " + breathData);
         setGraphViewBounds((System.currentTimeMillis() - MainActivity.startTime)/1000.0);
         dataRealTimeBreath = new DataPoint(((System.currentTimeMillis() - MainActivity.startTime)/1000.0),breathData);
         graphRealTimeBreath.getSeries().appendData(dataRealTimeBreath, false,1000);

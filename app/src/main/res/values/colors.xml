@@ -1,37 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#008577</color>
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#D81B60</color>
 
-    <color name="colorPrimary2">#464646</color>
-    <color name="colorPrimaryDark2">#323232</color>
-    <color name="colorAccent2">#2196F3</color>
-    <!--<color name="colorAccent3">#0082FC</color>
-    <color name="colorAccent3">#40A0FC</color>-->
+    <!-- Application theme colors -->
+    <color name="colorPrimary">#464646</color>
+    <color name="colorPrimaryDark">#323232</color>
+    <color name="colorAccent">#2196F3</color>
 
-    <color name="colorPrimary3">#0091EA</color>
-    <color name="colorPrimaryDark3">#464646</color>
-    <color name="colorAccent3">#2196F3</color>
+    <!-- Settings colors -->
+    <color name="colorPrimarySettings">#2196f3</color>
+    <color name="colorPrimaryDarkSettings">#143855</color>
+    <color name="colorAccentSettings">#2196f3</color> <!--557A95 navyblue + E85A4F rödorange-->
 
-    <color name="colorPrimary4">#2196f3</color>
-    <color name="colorPrimaryDark4">#143855</color>
-    <color name="colorAccent4">#2196f3</color> <!--557A95 navyblue + E85A4F rödorange-->
-
+    <!-- Graph colors -->
     <color name="colorActivityBackground">#646464</color>
     <color name="colorGraphBackground">#828282</color>
     <color name="colorGraphGrid">#DCDCDC</color>
-
     <color name="colorGraphRespiration">#E6E6E6</color>
-    <color name="colorGraphHeartRate2">#CE443A</color>
-    <color name="colorGraphHeartRate3">#EC584E</color>
     <color name="colorGraphHeartRate">#FF5F53</color>
 
-    <color name="colorMeasureButtonOn2">#50BE6A</color>
-    <color name="colorMeasureButtonOn3">#46C87E</color>
-    <color name="colorMeasureButtonOn4">#2196F3</color>
+    <!-- Button colors -->
     <color name="colorMeasureButtonOn">#40A0FC</color>
-    <color name="colorMeasureButtonOn6">#2196f3</color>
     <color name="colorMeasureButtonOff">#FF5F53</color>
     <color name="colorMeasureButtonDisabled">#C8C8C8</color>
     <color name="colorMeasureButtonDisabledText">#AAAAAA</color>

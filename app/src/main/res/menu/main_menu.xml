@@ -5,7 +5,7 @@
     <!-- Skapar menyraden i main-aktiviteten -->
     <item
         android:id="@+id/bluetooth"
-        android:title="Bluetooth"
+        android:title="@string/bluetooth"
         android:orderInCategory="1"
         android:icon="@drawable/ic_bluetooth_disabled_gray_24dp"
         app:showAsAction="ifRoom"/>
@@ -13,17 +13,17 @@
         android:id="@+id/real_time"
         android:orderInCategory="2"
         app:showAsAction="never"
-        android:title="Real Time Breathing"/>
+        android:title="@string/real_time_breathing"/>
     <item
         android:id="@+id/scroll_to_end"
         android:orderInCategory="3"
         app:showAsAction="never"
-        android:title="Scroll To End"/>
+        android:title="@string/scroll_to_end"/>
     <item
         android:id="@+id/reset_graphs"
         android:orderInCategory="4"
         app:showAsAction="never"
-        android:title="Reset Graphs"/>
+        android:title="@string/reset_graphs"/>
     <item
         android:id="@+id/settings"
         android:title="@string/menu_settings"
@@ -34,7 +34,7 @@
         android:id="@+id/help_main"
         android:orderInCategory="6"
         app:showAsAction="never"
-        android:title="Help"/>
+        android:title="@string/help"/>
 
 
 </menu>

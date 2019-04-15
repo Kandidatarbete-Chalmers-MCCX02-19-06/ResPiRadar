@@ -23,7 +23,7 @@ public class InformationBluetoothSettingsFragment extends DialogFragment {
         // Pass null as the parent view because its going in the dialog layout
         builder.setView(inflater.inflate(R.layout.dialog_bluetooth_info, null));
         builder.setCancelable(false)
-                .setPositiveButton("CLOSE", new DialogInterface.OnClickListener() {
+                .setPositiveButton(getString(R.string.close_dialog_fragment), new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.dismiss();
                     }

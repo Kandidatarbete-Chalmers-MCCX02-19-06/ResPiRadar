@@ -38,7 +38,7 @@ public class BluetoothService extends Service {
     BluetoothDevice activeDevice; // the Bluetooth device to connect to (Raspberry Pi)
     Set<BluetoothDevice> pairedDevices; // a list of paired devices on the phone
     int chosenDeviceIndex; // the chosen device in the list
-    String raspberryPiName = "raspberrypi"; // the Bluetooth name of Raspberry Pi
+    String raspberryPiName = "raspberrypi"; // the Bluetooth name of Raspberry Pi, default: raspberrypi
     boolean autoConnect = false; // true if the app tries to auto connect to Raspberry Pi
     boolean connected = false; // to show connection state, true if connected
     boolean foundRaspberryPi = false; // if the app found Raspberry Pi
@@ -46,19 +46,20 @@ public class BluetoothService extends Service {
     int searchAttempts = 1;
     boolean startBluetooth = false; // used to start or stop Bluetooth
 
-    // Boolean indicators for BluetoothSettings
+    // Boolean indicators for BluetoothSettings. Used when BluetoothSettings starts to set the
+    // switches to the currently values.
     boolean bluetoothSettingsActive = false;
     boolean bluetoothOnChecked = false;
     boolean bluetoothListEnable = false;
-    boolean commandBluetoothList = false;
+    boolean commandBluetoothList = false; // when a bluetooth list is active
     boolean bluetoothSearchEnable = false;
     boolean bluetoothConnectEnable = false;
     boolean bluetoothSearchChecked = false;
     boolean bluetoothConnectChecked = false;
     boolean bluetoothAutoConnectChecked = false;
-    boolean commandSimulate = false;
+    boolean commandSimulate = false; // when simulation is active instead of real data
 
-    // Constants for Broadcast
+    // Constants for Broadcast to MainActivity
     public static final String REQUEST_PERMISSION = "REQUEST_PERMISSION";
     public static final String SET_BLUETOOTH_ICON = "SET_BLUETOOTH_ICON";
     static public final String TOAST = "TOAST";
@@ -115,7 +116,7 @@ public class BluetoothService extends Service {
             startBluetooth = true; // for ending threads on destroy
             if (bluetoothAdapter == null) { // Device doesn't support BluetoothService
                 Toast.makeText(getApplicationContext(),
-                        "Bluetooth Not Supported", Toast.LENGTH_LONG).show();
+                        getString(R.string.bluetooth_not_supported), Toast.LENGTH_LONG).show();
             } else {
                 if (!bluetoothAdapter.isEnabled()) { // Enable BluetoothService
                     bluetoothAdapter.enable();
@@ -289,7 +290,7 @@ public class BluetoothService extends Service {
                     break;
                 default :
                     Intent intent = new Intent(BluetoothService.TOAST);
-                    intent.putExtra(TEXT,"Error: Couldn't connect to Raspberry Pi");
+                    intent.putExtra(TEXT,getString(R.string.could_not_connect_to_rpi));
                     sendBroadcast(intent);
                     bluetoothAutoConnectChecked = false;
                     if (bluetoothSettingsActive) {
@@ -399,7 +400,7 @@ public class BluetoothService extends Service {
                 if (bluetoothSettingsActive) {
                     bluetoothAutoConnect.setChecked(false);
                 }
-                Toast.makeText(getApplicationContext(), "Did not find Raspberry Pi", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), getString(R.string.did_not_find_rpi), Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -488,7 +489,7 @@ public class BluetoothService extends Service {
                         bluetoothList.setEnabled(true);
                     }
                 } else {
-                    bluetoothList.setSummary("No device available");
+                    bluetoothList.setSummary(getString(R.string.no_device_available));
                     bluetoothList.setEnabled(false);
                 }
             }
@@ -554,7 +555,7 @@ public class BluetoothService extends Service {
                         bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_disabled_gray_24dp);
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(false);
-                            bluetoothOn.setTitle("Bluetooth Off");
+                            bluetoothOn.setTitle(getString(R.string.bluetooth_off));
                             if (commandBluetoothList) {
                                 bluetoothList.setEnabled(false);
                             }
@@ -572,7 +573,7 @@ public class BluetoothService extends Service {
                         bluetoothOnChecked = true;
                         if (bluetoothSettingsActive) {
                             bluetoothOn.setChecked(true);
-                            bluetoothOn.setTitle("Bluetooth On");
+                            bluetoothOn.setTitle(getString(R.string.bluetooth_on));
                         }
                         try {
                             bluetoothMenuItem.setIcon(R.drawable.ic_bluetooth_white_24dp);
@@ -645,7 +646,7 @@ public class BluetoothService extends Service {
                 if (!foundRaspberryPi) {
                     searchManager();
                     if (!autoConnect) {
-                        Toast.makeText(context, "Did not find Raspberry Pi", Toast.LENGTH_LONG).show();
+                        Toast.makeText(context, getString(R.string.did_not_find_rpi), Toast.LENGTH_LONG).show();
                     }
                 }
             }

@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
-            android:text="About the App"
+            android:text="@string/about_the_app"
             android:textAlignment="textStart"
             android:textColor="@android:color/black"
             android:textSize="18sp" />
