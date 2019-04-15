@@ -1,4 +1,4 @@
-package com.example.RadarHealthMonitoring;
+package com.chalmers.respiradar;
 
 import android.content.Context;
 import android.view.View;

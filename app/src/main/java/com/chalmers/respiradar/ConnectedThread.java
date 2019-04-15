@@ -1,4 +1,4 @@
-package com.example.RadarHealthMonitoring;
+package com.chalmers.respiradar;
 
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import static com.example.RadarHealthMonitoring.BluetoothService.b;
+import static com.chalmers.respiradar.BluetoothService.b;
 
 
 class ConnectedThread extends Thread {

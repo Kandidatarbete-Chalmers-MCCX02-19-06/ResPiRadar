@@ -1,4 +1,4 @@
-package com.example.RadarHealthMonitoring;
+package com.chalmers.respiradar;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,10 +19,10 @@ import android.widget.Toast;
 import com.jjoe64.graphview.Viewport;
 import com.jjoe64.graphview.series.DataPoint;
 
-import static com.example.RadarHealthMonitoring.BluetoothService.b;
-import static com.example.RadarHealthMonitoring.MainActivity.BREATHING_VALUE;
-import static com.example.RadarHealthMonitoring.MainActivity.REAL_TIME_BREATHING;
-import static com.example.RadarHealthMonitoring.MainActivity.measurementRunning;
+import static com.chalmers.respiradar.BluetoothService.b;
+import static com.chalmers.respiradar.MainActivity.BREATHING_VALUE;
+import static com.chalmers.respiradar.MainActivity.REAL_TIME_BREATHING;
+import static com.chalmers.respiradar.MainActivity.measurementRunning;
 
 public class RealTimeBreathActivity extends AppCompatActivity {
 

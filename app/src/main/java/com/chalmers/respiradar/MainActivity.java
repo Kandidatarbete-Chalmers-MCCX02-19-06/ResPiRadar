@@ -1,4 +1,4 @@
-package com.example.RadarHealthMonitoring;
+package com.chalmers.respiradar;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
@@ -32,10 +32,10 @@ import java.util.List;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
-import static com.example.RadarHealthMonitoring.BluetoothService.b;
-import static com.example.RadarHealthMonitoring.ConnectedThread.READ_VALUE;
-import static com.example.RadarHealthMonitoring.RealTimeBreathActivity.isActive;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAutoConnect;
+import static com.chalmers.respiradar.BluetoothService.b;
+import static com.chalmers.respiradar.ConnectedThread.READ_VALUE;
+import static com.chalmers.respiradar.RealTimeBreathActivity.isActive;
+import static com.chalmers.respiradar.Settings.BluetoothSettings.bluetoothAutoConnect;
 
 
 /**

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.RadarHealthMonitoring">
+    package="com.chalmers.respiradar">
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -17,21 +17,21 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".Settings"
+            android:name="com.chalmers.respiradar.Settings"
             android:label="@string/title_activity_settings"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName="com.chalmers.respiradar.MainActivity"
             android:screenOrientation="portrait"
             android:theme="@style/SettingsTheme">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.RadarHealthMonitoring.MainActivity" />
+                android:value="com.chalmers.respiradar.MainActivity" />
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
-        <activity android:name=".MainActivity"
+        <activity android:name="com.chalmers.respiradar.MainActivity"
             android:configChanges="orientation|screenSize"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -40,9 +40,9 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".RealTimeBreathActivity"
+        <activity android:name="com.chalmers.respiradar.RealTimeBreathActivity"
             android:label="Real Time Breathing"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName="com.chalmers.respiradar.MainActivity"
             android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -50,7 +50,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".BluetoothService" />
+        <service android:name="com.chalmers.respiradar.BluetoothService" />
 
     </application>
 

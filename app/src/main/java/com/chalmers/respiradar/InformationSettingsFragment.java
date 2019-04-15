@@ -1,4 +1,4 @@
-package com.example.RadarHealthMonitoring;
+package com.chalmers.respiradar;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -8,7 +8,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 
-public class InformationBluetoothSettingsFragment extends DialogFragment {
+public class InformationSettingsFragment extends DialogFragment {
 
     @NonNull
     @Override
@@ -21,7 +21,7 @@ public class InformationBluetoothSettingsFragment extends DialogFragment {
 
         // Inflate and set the layout for the dialog
         // Pass null as the parent view because its going in the dialog layout
-        builder.setView(inflater.inflate(R.layout.dialog_bluetooth_info, null));
+        builder.setView(inflater.inflate(R.layout.dialog_settings_information, null));
         builder.setCancelable(false)
                 .setPositiveButton("CLOSE", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {

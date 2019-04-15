@@ -1,4 +1,4 @@
-package com.example.RadarHealthMonitoring;
+package com.chalmers.respiradar;
 
 import android.Manifest;
 import android.app.Service;
@@ -16,15 +16,15 @@ import android.widget.Toast;
 import java.util.Set;
 import androidx.annotation.Nullable;
 
-import static com.example.RadarHealthMonitoring.MainActivity.bluetoothMenuItem;
-import static com.example.RadarHealthMonitoring.MainActivity.measurementRunning;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothAutoConnect;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothConnect;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothList;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothOn;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bluetoothSearch;
-import static com.example.RadarHealthMonitoring.Settings.BluetoothSettings.bs;
-import static com.example.RadarHealthMonitoring.Settings.s;
+import static com.chalmers.respiradar.MainActivity.bluetoothMenuItem;
+import static com.chalmers.respiradar.MainActivity.measurementRunning;
+import static com.chalmers.respiradar.Settings.BluetoothSettings.bluetoothAutoConnect;
+import static com.chalmers.respiradar.Settings.BluetoothSettings.bluetoothConnect;
+import static com.chalmers.respiradar.Settings.BluetoothSettings.bluetoothList;
+import static com.chalmers.respiradar.Settings.BluetoothSettings.bluetoothOn;
+import static com.chalmers.respiradar.Settings.BluetoothSettings.bluetoothSearch;
+import static com.chalmers.respiradar.Settings.BluetoothSettings.bs;
+import static com.chalmers.respiradar.Settings.s;
 
 public class BluetoothService extends Service {
 

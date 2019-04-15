@@ -1,4 +1,4 @@
-package com.example.RadarHealthMonitoring;
+package com.chalmers.respiradar;
 
 import android.annotation.TargetApi;
 import android.app.DialogFragment;
@@ -25,8 +25,8 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import pub.devrel.easypermissions.EasyPermissions;
 
-import static com.example.RadarHealthMonitoring.BluetoothService.START_MEAS_BUTTON_ENABLE;
-import static com.example.RadarHealthMonitoring.BluetoothService.b;
+import static com.chalmers.respiradar.BluetoothService.START_MEAS_BUTTON_ENABLE;
+import static com.chalmers.respiradar.BluetoothService.b;
 
 //import android.support.v4.app.Fragment;
 
