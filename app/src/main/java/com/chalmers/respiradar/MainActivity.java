@@ -372,14 +372,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         if (!isTaping) {
             double diff = graph.getViewport().getMaxX(false) -
                     graph.getViewport().getMinX(false);
-            if (scrollToEnd < 20) {
+            if (scrollToEnd < 2) {
                 if (value > graph.getViewport().getMinX(false) + diff) {
                     scrollToEnd ++;
                     return true;
                 }
             }
             if (value > graph.getViewport().getMinX(false) + diff && value <
-                    graph.getViewport().getMinX(false) + diff*1.1) {
+                    graph.getViewport().getMinX(false) + diff*1.2) {
                 return true;
             } else if (graph.getViewport().getMinX(true) > graph.getViewport().getMaxX(false) - 0.2*diff) {
                 graph.getViewport().setMaxX(graph.getViewport().getMaxX(false) + diff * 0.9);
@@ -457,7 +457,13 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     graphHeartRate.fixGraphView(dataPointsHeartRate.toArray());
                     graphRespiration.fixGraphView(dataPointsRespiration.toArray());
                     resume = false;
-                    scrollToEnd = 0;
+                    //scrollToEnd = 0;
+                    if (graphRespiration.getViewport().getMaxX(true) > graphRespiration.getViewport().getMaxX(false)) {
+                        double diff = graphRespiration.getViewport().getMaxX(false) -
+                                graphRespiration.getViewport().getMinX(false);
+                        graphRespiration.getViewport().setMaxX(graphRespiration.getViewport().getMaxX(true));
+                        graphRespiration.getViewport().setMinX(graphRespiration.getViewport().getMaxX(true) - diff);
+                    }
                 }
             }, 100);
     }
