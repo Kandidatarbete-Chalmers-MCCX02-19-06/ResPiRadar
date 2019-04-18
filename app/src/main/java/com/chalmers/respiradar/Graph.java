@@ -49,6 +49,10 @@ class Graph {
         graph.getViewport().setXAxisBoundsManual(true);     //set Viewport window size
         graph.getViewport().setMinX(0);
         graph.getViewport().setMaxX(60);
+        //graph.getViewport().setYAxisBoundsManual(true);
+        //graph.getViewport().setMinY(0);
+        //graph.getViewport().setMaxY(25);
+        //graph.getViewport().setYAxisBoundsManual(false);
     }
 
     /**

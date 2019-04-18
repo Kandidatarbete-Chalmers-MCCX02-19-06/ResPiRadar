@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     boolean firstDataRespiration = true;
     boolean resume = false;
     static int scrollToEnd = 100;
+    //int scollToEnd
     ArrayList<DataPoint> dataPointsHeartRate = new ArrayList<>();
     ArrayList<DataPoint> dataPointsRespiration = new ArrayList<>();
 
@@ -372,14 +373,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         if (!isTaping) {
             double diff = graph.getViewport().getMaxX(false) -
                     graph.getViewport().getMinX(false);
-            if (scrollToEnd < 2) {
+            if (scrollToEnd < 10) {
                 if (value > graph.getViewport().getMinX(false) + diff) {
                     scrollToEnd ++;
                     return true;
                 }
             }
             if (value > graph.getViewport().getMinX(false) + diff && value <
-                    graph.getViewport().getMinX(false) + diff*1.2) {
+                    graph.getViewport().getMinX(false) + diff*1.3) {
                 return true;
             } else if (graph.getViewport().getMinX(true) > graph.getViewport().getMaxX(false) - 0.2*diff) {
                 graph.getViewport().setMaxX(graph.getViewport().getMaxX(false) + diff * 0.9);
@@ -399,7 +400,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 do {
                     addData();
                     try {
-                        sleep(500);
+                        sleep(1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -413,11 +414,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
      * Add simulated data to the graps
      */
     public void addData() {
-        yHeartRate = Math.sin(dataNumber*3/30)*4+70+Math.random();
-        yRespiration = Math.sin(dataNumber/20)*4+22+Math.random();
+        yHeartRate = Math.sin(dataNumber*3/30)*4+70+Math.random()*4;
+        yRespiration = Math.sin(dataNumber/20)*4+22+Math.random()*3;
         dataHeartRate = new DataPoint(dataNumber,yHeartRate);
         dataRespiration = new DataPoint(dataNumber, yRespiration);
-        dataNumber += 0.5;
+        dataNumber += 1;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -457,12 +458,19 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     graphHeartRate.fixGraphView(dataPointsHeartRate.toArray());
                     graphRespiration.fixGraphView(dataPointsRespiration.toArray());
                     resume = false;
-                    //scrollToEnd = 0;
+                    if (b.commandSimulate) {
+                        scrollToEnd = 0;
+                    }
                     if (graphRespiration.getViewport().getMaxX(true) > graphRespiration.getViewport().getMaxX(false)) {
-                        double diff = graphRespiration.getViewport().getMaxX(false) -
-                                graphRespiration.getViewport().getMinX(false);
-                        graphRespiration.getViewport().setMaxX(graphRespiration.getViewport().getMaxX(true));
-                        graphRespiration.getViewport().setMinX(graphRespiration.getViewport().getMaxX(true) - diff);
+                        graphRespiration.getViewport().scrollToEnd();
+                    }
+                    if (!b.commandSimulate && !firstStartMeasurement) {
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                graphRespiration.getSeries().appendData(dataPointsRespiration.get(dataPointsRespiration.size() - 1), false, maxDataPoints, false);
+                            }
+                        }, 100);
                     }
                 }
             }, 100);
@@ -485,9 +493,22 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         if (dataPointsRespiration.size() > maxDataPoints) {
             dataPointsRespiration.remove(0);
         }
-        graphRespiration.getSeries().appendData(dataRespiration, setGraphViewBounds(
-                ((System.currentTimeMillis() - startTime)/1000.0), graphRespiration, isTapingRespiration),maxDataPoints,false); // TODO try
+        graphRespiration.getSeries().appendData(dataRespiration, false,maxDataPoints,false);
         respirationValueView.setText(getString(R.string.respiration_rate_value,"" + respirationData));
+        if(setGraphViewBounds(
+                ((System.currentTimeMillis() - startTime)/1000.0), graphRespiration, isTapingRespiration)) {
+            graphRespiration.getViewport().scrollToEnd();
+        }
+    }
+
+    /**
+     * Scroll the graph to the end
+     */
+    void scrollToEnd() {
+        double diff = graphRespiration.getViewport().getMaxX(false) -
+                graphRespiration.getViewport().getMinX(false);
+        graphRespiration.getViewport().setMaxX(graphRespiration.getViewport().getMaxX(true));
+        graphRespiration.getViewport().setMinX(graphRespiration.getViewport().getMaxX(true) - diff);
     }
 
     void resetGraph() {
@@ -602,8 +623,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                                     valueIntent.putExtra(BREATHING_VALUE, Double.parseDouble(split[1]));
                                     sendBroadcast(valueIntent);
                                 } catch (NumberFormatException e) {
-                                    Toast.makeText(getApplicationContext(),
-                                            getString(R.string.could_not_parse_real_time_breathing), Toast.LENGTH_SHORT).show();
+                                    //Log.e(msg,"Couldn't parse real time breathing",e);
+                                    //Toast.makeText(getApplicationContext(),
+                                    //        getString(R.string.could_not_parse_real_time_breathing), Toast.LENGTH_SHORT).show();
                                 }
                             }
                             break;

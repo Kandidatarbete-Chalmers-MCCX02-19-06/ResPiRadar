@@ -55,7 +55,7 @@ public class RealTimeBreathActivity extends AppCompatActivity {
         graphRealTimeBreath = new Graph(findViewById(R.id.graphRealTimeBreath),getApplicationContext(),
                 ContextCompat.getColor(getBaseContext(), R.color.colorGraphRespiration), false, MainActivity.screenWidth);
         graphRealTimeBreath.getViewport().setMinX(0);
-        graphRealTimeBreath.getViewport().setMaxX(10);
+        graphRealTimeBreath.getViewport().setMaxX(40);
         graphRealTimeBreath.getViewport().setOnXAxisBoundsChangedListener(new Viewport.OnXAxisBoundsChangedListener() {
             @Override
             public void onXAxisBoundsChanged(double minX, double maxX, Viewport.OnXAxisBoundsChangedListener.Reason reason) {
@@ -107,6 +107,8 @@ public class RealTimeBreathActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             graphRealTimeBreath.resetSeries(); // TODO vad göra? återställa grafen eller ändra marginal till vänsterkantet?
+                            graphRealTimeBreath.getViewport().setMinX((System.currentTimeMillis() - MainActivity.startTime)/1000.0);
+                            graphRealTimeBreath.getViewport().setMaxX((System.currentTimeMillis() - MainActivity.startTime)/1000.0 + 40);
                         }
                     }, 100);
                 }
@@ -131,11 +133,13 @@ public class RealTimeBreathActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {  // Ger en fungerande tillbaka-pil
         if (item.getItemId() == android.R.id.home) {
+            Log.d("tag", "startRealTimeBreathingWithRotate: " + MainActivity.startRealTimeBreathingWithRotate);
             if (MainActivity.startRealTimeBreathingWithRotate) {
                 onBackPressed();
             } else {
                 Toast.makeText(this, getString(R.string.rotate_device), Toast.LENGTH_LONG).show();
             }
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
