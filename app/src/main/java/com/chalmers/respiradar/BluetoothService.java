@@ -237,7 +237,7 @@ public class BluetoothService extends Service {
                             try {
                                 connectThread.start();
                             } catch (IllegalThreadStateException e) {
-                                Log.e(TAG, "Thread already started",e);
+                                //Log.e(TAG, "Thread already started",e);
                             }
                         }
                     }

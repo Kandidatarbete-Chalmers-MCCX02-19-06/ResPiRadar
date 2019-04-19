@@ -49,10 +49,6 @@ class Graph {
         graph.getViewport().setXAxisBoundsManual(true);     //set Viewport window size
         graph.getViewport().setMinX(0);
         graph.getViewport().setMaxX(60);
-        //graph.getViewport().setYAxisBoundsManual(true);
-        //graph.getViewport().setMinY(0);
-        //graph.getViewport().setMaxY(25);
-        //graph.getViewport().setYAxisBoundsManual(false);
     }
 
     /**
@@ -78,7 +74,6 @@ class Graph {
             series.setOnDataPointTapListener(new OnDataPointTapListener() {
                 @Override
                 public void onTap(Series series, DataPointInterface dataPoint) {
-                    //Context context = getApplicationContext();
                     Toast.makeText(context, String.format(Locale.getDefault(),"%.0f",
                             dataPoint.getY()) + " bpm at time " + String.format(Locale.getDefault(),"%.0f",
                             dataPoint.getX()) + " s", Toast.LENGTH_SHORT).show();

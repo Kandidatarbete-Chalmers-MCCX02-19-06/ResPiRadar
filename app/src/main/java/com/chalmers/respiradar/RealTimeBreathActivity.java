@@ -133,7 +133,6 @@ public class RealTimeBreathActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {  // Ger en fungerande tillbaka-pil
         if (item.getItemId() == android.R.id.home) {
-            Log.d("tag", "startRealTimeBreathingWithRotate: " + MainActivity.startRealTimeBreathingWithRotate);
             if (MainActivity.startRealTimeBreathingWithRotate) {
                 onBackPressed();
             } else {

@@ -29,7 +29,7 @@ class ConnectThread extends Thread {
             // MY_UUID is the app's UUID string, also used in the server code.
             tmp = device.createRfcommSocketToServiceRecord(deviceUUID);
         } catch (IOException e) {
-            Log.e(TAG, "Socket's create() method failed", e);
+            //Log.e(TAG, "Socket's create() method failed", e);
         }
         mmSocket = tmp;
         hasSocket = true;
@@ -48,12 +48,12 @@ class ConnectThread extends Thread {
         } catch (IOException connectException) {
             // Unable to connect; close the socket and return.
             isRunning = false;
-            Log.e(TAG,"failed mmSocket.connect()" + connectException);
+            //Log.e(TAG,"failed mmSocket.connect()" + connectException);
 
             try {
                 mmSocket.close();
             } catch (IOException closeException) {
-                Log.e(TAG, "Could not close the client socket", closeException);
+                //Log.e(TAG, "Could not close the client socket", closeException);
             }
             hasSocket = false;
             b.connectManager();
@@ -77,7 +77,7 @@ class ConnectThread extends Thread {
             mmSocket.close();
             b.bluetoothDisconnected(true);
         } catch (IOException e) {
-            Log.e(TAG, "Could not close the client socket", e);
+            //Log.e(TAG, "Could not close the client socket", e);
         }
         hasSocket=false;
     }

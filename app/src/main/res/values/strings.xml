@@ -105,7 +105,7 @@
 
     <string name="info_main1">
         At start, the app will automatically start Bluetooth and try to connect to Raspberry Pi if
-        it\'s available and has the following python program running:
+        it\'s available and has the following Python program running:
     </string>
     <string name="info_main2">
         https://github.com/Kandidatarbete-Chalmers-MCCX02-19-06/RaspberryPiRadarProgram
@@ -120,24 +120,24 @@
         The Bluetooth icon on the action bar will show the status of the Bluetooth connection. Click it to connect/disconnect Raspberry Pi.
     </string>
     <string name="info_main4">
-        The Raspberry Py is assumed to be named raspberrypi. If not, set the name or MAC-address in Bluetooth Settings.
+        The Raspberry Pi is assumed to be named raspberrypi. If not, set the name or MAC-address in Bluetooth Settings.
     </string>
     <string name="info_main5">
         When connected, start the measurement with the START MEASURE button. It might take some time before the first value arrives.
     </string>
     <string name="info_main6">
         The values are plotted in the graphs. The graphs can be scrolled, zoomed and taped on to get the values.
-        The graphs can be reset with Reset Graphs in the options menu.
+        The graphs can be reset with Reset Graphs in the options menu. To scroll the graphs to the end, press Scroll To End.
     </string>
     <string name="info_main7">
         Rotate the phone to landscape to se a real time breathing amplitude graph, or just click Real Time Breathing in the options menu.
     </string>
 
-    <!-- Information Main Activity -->
+    <!-- Information about the App -->
 
     <string name="info_settings1">
         This application is made in a Bachelor\'s thesis project at Chalmers University of Technology 2019.
-        The purpose is to measure heart rate and breath rate with a radar and display the results in an interactive application.
+        The purpose is to measure heart rate and respiration rate with a radar and display the results in an interactive application.
     </string>
     <string name="info_settings2">
         Developers: Albin Warnicke and Erik Angert Svensson
@@ -160,7 +160,7 @@
     </string>
     <string name="info_bluetooth3">
         Automated Connection is the method that is used every time Bluetooth starts.
-        It will automatically try to connect to Raspberry Pi, search for it and if needed try connect again.
+        It will automatically search for the Raspberry Pi and connect to it.
     </string>
     <string name="info_bluetooth4">
         Search after Raspberry Pi and Connect to Raspberry Pi is methods to manually search and connect to Raspberry Pi.
@@ -169,7 +169,7 @@
         The Command Terminal is used to get some special features from the app. The commands are case insensitive. The following commands are available:
     </string>
     <string name="info_bluetooth6">
-        \u25CF poweroff \u23E4 quit the python program and power off Raspberry Pi
+        \u25CF poweroff \u23E4 quit the Python program and power off Raspberry Pi
     </string>
     <string name="info_bluetooth7">
         \u25CF simulate \u23E4 simulate data instead of getting the data from Raspberry Pi

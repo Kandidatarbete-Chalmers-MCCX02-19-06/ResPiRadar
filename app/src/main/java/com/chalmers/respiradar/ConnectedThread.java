@@ -29,12 +29,12 @@ class ConnectedThread extends Thread {
         try {
             tmpIn = socket.getInputStream();
         } catch (IOException e) {
-            Log.e(TAG, "Error occurred when creating input stream", e);
+            //Log.e(TAG, "Error occurred when creating input stream", e);
         }
         try {
             tmpOut = socket.getOutputStream();
         } catch (IOException e) {
-            Log.e(TAG, "Error occurred when creating output stream", e);
+            //Log.e(TAG, "Error occurred when creating output stream", e);
         }
         mmInStream = tmpIn;
         mmOutStream = tmpOut;
@@ -68,7 +68,7 @@ class ConnectedThread extends Thread {
         try {
             mmOutStream.write(bytes);
         } catch (IOException e) {
-            Log.e(TAG, "Error occurred when sending data", e);
+            //Log.e(TAG, "Error occurred when sending data", e);
         }
     }
 }

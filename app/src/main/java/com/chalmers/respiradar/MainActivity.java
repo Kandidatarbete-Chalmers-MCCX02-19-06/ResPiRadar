@@ -373,7 +373,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         if (!isTaping) {
             double diff = graph.getViewport().getMaxX(false) -
                     graph.getViewport().getMinX(false);
-            if (scrollToEnd < 10) {
+            if (scrollToEnd < 5) {
                 if (value > graph.getViewport().getMinX(false) + diff) {
                     scrollToEnd ++;
                     return true;
