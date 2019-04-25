@@ -58,6 +58,12 @@ class ConnectThread extends Thread {
             hasSocket = false;
             b.connectManager();
             return;
+        } catch (NullPointerException connectException) {
+            // Should not come to here, but sometimes Bluetooth malfunctions
+            isRunning = false;
+            hasSocket = false;
+            b.connectManager();
+            return;
         }
 
         // The connection attempt succeeded. Perform work associated with the connection in a separate thread.
