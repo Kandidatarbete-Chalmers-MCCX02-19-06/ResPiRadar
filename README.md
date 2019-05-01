@@ -36,7 +36,7 @@ It is also stopped when the device is rotated to portrait orientation again.
 #### Licence
 MIT License
 
-Copyright (c) 2019 Albin Warnicke och Erik Angert Svensson
+Copyright © 2019 Albin Warnicke och Erik Angert Svensson
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
