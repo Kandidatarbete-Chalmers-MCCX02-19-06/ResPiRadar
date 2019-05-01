@@ -2,6 +2,7 @@
 ### Heart and Respiration rate from Radar on a Raspberry Pi
 This application is made in a Bachelor's thesis project at Chalmers University of Technology in 2019. 
 The purpose is to measure heart rate and respiration rate with radar and display the results in an interactive application.
+The application is currently available on Google Play at https://play.google.com/store/apps/details?id=com.chalmers.respiradar.
 
 #### How to use the application
 The application is supposed to connect to a Raspberry Pi 3 Model B+ with a mounted Radar on it. 
