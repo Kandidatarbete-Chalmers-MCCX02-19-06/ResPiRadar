@@ -8,6 +8,9 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 
+/**
+ * Dialog box to show information about the application, it's developers, licence and copyright
+ */
 public class InformationSettingsFragment extends DialogFragment {
 
     @NonNull

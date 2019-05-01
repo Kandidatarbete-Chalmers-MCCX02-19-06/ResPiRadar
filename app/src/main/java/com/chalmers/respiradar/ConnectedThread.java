@@ -2,21 +2,22 @@ package com.chalmers.respiradar;
 
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.util.Log;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 import static com.chalmers.respiradar.BluetoothService.b;
 
-
+/**
+ * Tread to read data from the Bluetooth connection
+ * Determines when disconnected
+ * Has a method to send data that can be called
+ */
 class ConnectedThread extends Thread {
 
     private final InputStream mmInStream;
     private final OutputStream mmOutStream;
     private byte[] mmBuffer; // mmBuffer store for the stream
-    private static final String TAG = "ConnectedThread";
     static final String READ = "READ";
     static final String READ_VALUE = "READ_VALUE";
 
@@ -49,11 +50,11 @@ class ConnectedThread extends Thread {
                 // Read from the InputStream.
                 numBytes = mmInStream.read(mmBuffer);
                 // Send the String data to MainActivity
-                String readBuf = new String(mmBuffer,1,numBytes); // received data
+                String readBuf = new String(mmBuffer,1,numBytes); // received data, offset is 1
                 Intent readIntent = new Intent(ConnectedThread.READ);
                 readIntent.putExtra(READ_VALUE,readBuf);
-                b.sendBroadcast(readIntent);
-            } catch (IOException e) {
+                b.sendBroadcast(readIntent); // send broadcast to Main activity
+            } catch (IOException e) { // disconnected
                 b.bluetoothDisconnected(true);
                 if (b.connectThread != null) {
                     b.connectThread.cancel();
@@ -63,7 +64,7 @@ class ConnectedThread extends Thread {
         }
     }
 
-    // Call this from the main activity to send data to the remote device.
+    // Called to send data to the remote device.
     void write(byte[] bytes) {
         try {
             mmOutStream.write(bytes);

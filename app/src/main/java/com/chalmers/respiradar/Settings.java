@@ -12,6 +12,7 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.SwitchPreference;
+import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -19,21 +20,16 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
-
 import java.util.List;
-
-import androidx.annotation.NonNull;
+//import androidx.annotation.NonNull;
 import pub.devrel.easypermissions.EasyPermissions;
 
 import static com.chalmers.respiradar.BluetoothService.START_MEAS_BUTTON_ENABLE;
 import static com.chalmers.respiradar.BluetoothService.b;
 
-//import android.support.v4.app.Fragment;
-
 /**
- * Settings är en aktivitet som skapar en panel med inställningar. Innehåller genvägar till flera
- * olika paneler med olika kategorier av inställningar. Alla paneler finns under R.xml och
- * dessa styrs av aktiviteten.
+ * Activity to show settings for Bluetooth and information about the application.
+ * All Bluetooth properties is found in the BluetoothService, the SettingsActivity is just for visual input/output.
  */
 public class Settings extends AppCompatActivity implements PreferenceFragment.OnPreferenceStartFragmentCallback {
 
@@ -51,11 +47,6 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                 .commit();  // Skapar ett nytt fragment i en ny panel
     }
 
-    @Override
-        public void onDestroy() {
-            super.onDestroy();
-        }
-
     private void setupActionBar() {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -64,16 +55,19 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {  // Ger en fungerande tillbaka-pil
+    public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             onBackPressed();
-            setTitle(getString(R.string.title_activity_settings));
+            setTitle(getString(R.string.title_activity_settings)); // Sets the title when sent back from BluetoothSettingsFragment
             return true;
         } else {
             return super.onOptionsItemSelected(item);
         }
     }
 
+    /**
+     * Manages Fragment transactions
+     */
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragment caller, Preference pref) {
         replaceCurrentFragmentsWith(pref.getFragment(), pref.getExtras(), pref.getTitleRes(),
@@ -98,8 +92,8 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
     // ########## ########## Settings Fragment ########## ##########
 
     /**
-     * Huvudpanelen för Settings. Innehåller både en lista där anslutning väljs.
-     * Innehåller även länkar till de nestade framgenten/panelerna.
+     * Fragment for Settigns.
+     * Shows info about the application and has a link to the nested BluetoothSettingsFragment.
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class SettingsFragment extends PreferenceFragment {
@@ -127,19 +121,20 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
     // ########## ########## ########## BluetoothSettings ########## ########## ##########
 
     /**
-     *  Inställningar för BluetoothService
+     *  Settings for BluetoothService and the Bluetooth connection
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class BluetoothSettings extends PreferenceFragment implements EasyPermissions.PermissionCallbacks {
 
-        static SwitchPreference bluetoothOn;
-        static SwitchPreference bluetoothAutoConnect;
-        static ListPreference bluetoothList;
-        static SwitchPreference bluetoothSearch;
-        static SwitchPreference bluetoothConnect;
-        static EditTextPreference bluetoothRaspberryPiName;
-        static EditTextPreference commandTerminal;
+        static SwitchPreference bluetoothOn; // to turn Bluetooth on or off
+        static SwitchPreference bluetoothAutoConnect; // to start automated connection
+        static ListPreference bluetoothList; // list of bonded Bluetooth devices
+        static SwitchPreference bluetoothSearch; // start searching after Raspberry Pi
+        static SwitchPreference bluetoothConnect; // connect to Raspberry Pi
+        static EditTextPreference bluetoothRaspberryPiName; // change the Raspberry Pi name or MAC-address
+        static EditTextPreference commandTerminal; // send commands in a "terminal"
 
+        // Preference keys
         private static final String key_pref_bluetooth_switch = "bluetooth_switch";
         private static final String key_pref_bluetooth_auto_connect = "bluetooth_auto_connect";
         private static final String key_pref_bluetooth_connect = "bluetooth_connect";
@@ -149,7 +144,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
         private static final String key_pref_command_terminal = "command_terminal";
         static final String RESET_GRAPH = "RESET_GRAPH";
 
-        static BluetoothSettings bs; // for static service
+        static BluetoothSettings bs; // for static fragment
 
         // ########## ########## onCreate ########## ##########
 
@@ -184,21 +179,19 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
             bluetoothAutoConnect.setChecked(b.bluetoothAutoConnectChecked);
             bluetoothSearch.setEnabled(b.bluetoothSearchEnable);
             bluetoothSearch.setChecked(b.bluetoothSearchChecked);
-            if (!b.commandBluetoothList) {
+            if (!b.commandBluetoothList) { // the Bluetooth list is only available if activated in the command terminal
                 getPreferenceScreen().removePreference(bluetoothList);
             }
             bluetoothList.setEnabled(b.bluetoothListEnable && b.commandBluetoothList);
 
             // ########## Preference Listeners ##########
-
-            // Starta BluetoothService Swithc Listener
+            // Start BluetoothService Swithc Listener
             bluetoothOn.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     return b.startBluetooth((boolean)newValue);
                 }
             });
-
             // Auto connect switch listener
             bluetoothAutoConnect.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
@@ -220,7 +213,6 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                     return false;
                 }
             });
-
             // Change Raspberry Pi bluetooth name or MAC address text preference
             bluetoothRaspberryPiName.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
@@ -230,8 +222,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                     return true;
                 }
             });
-
-            // Ändring av enhet i Bluetoothlistan Listener
+            // Change of devices in Bluetooth list Listener
             bluetoothList.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -255,8 +246,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                     return true;
                 }
             });
-
-            // Leta efter bluetoothenheter Switch Listener
+            // Search after Bluetooth devices Switch Listener
             bluetoothSearch.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -276,8 +266,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                     return false;
                 }
             });
-
-            // Anslut till enheten Switch Listener
+            // Connect to device Switch Listener
             bluetoothConnect.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -300,14 +289,13 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                     return false;
                 }
             });
-
-            // Write to  Raspberry Pi text preference
+            // Write commands text preference
             commandTerminal.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     String command = ((String)newValue).toLowerCase();
                     switch (command) {
-                        case "poweroff":
+                        case "poweroff": // write to Raspberry Pi to power off
                             if (b.connected) {
                                 byte[] sendCommand = command.getBytes();
                                 b.connectedThread.write(sendCommand);
@@ -317,7 +305,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                                 Toast.makeText(getActivity().getApplicationContext(), getString(R.string.not_connected_to_rpi), Toast.LENGTH_LONG).show();
                             }
                             break;
-                        case "list":
+                        case "list": // enable/disable the Bluetooth list of bonded devices
                             if (b.commandBluetoothList) {
                                 b.commandBluetoothList = false;
                                 b.bluetoothListEnable = false;
@@ -332,7 +320,7 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                                 }
                             }
                             break;
-                        case "simulate":
+                        case "simulate": // activate/deactivate simulation of values
                             b.commandSimulate = !b.commandSimulate;
                             Intent StartMeasButtonIntent = new Intent(START_MEAS_BUTTON_ENABLE);
                             StartMeasButtonIntent.putExtra(b.ENABLE_BUTTON,b.commandSimulate || b.connected);
@@ -373,10 +361,9 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
             }
         }
 
-        // ########## ########## Methods ########## ##########
-
-
         // ########## ########## Request Permission ########## ##########
+        // To search after Bluetooth Devices, location permission is needed
+
         @Override
         public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -402,4 +389,4 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
         }
 
     } // end of BluetoothSettings
-} // end of Settings.class
+} // end of Settings class

@@ -11,10 +11,11 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 import java.util.Set;
-import androidx.annotation.Nullable;
+//import androidx.annotation.Nullable;
 
 import static com.chalmers.respiradar.MainActivity.bluetoothMenuItem;
 import static com.chalmers.respiradar.MainActivity.measurementRunning;
@@ -26,10 +27,15 @@ import static com.chalmers.respiradar.Settings.BluetoothSettings.bluetoothSearch
 import static com.chalmers.respiradar.Settings.BluetoothSettings.bs;
 import static com.chalmers.respiradar.Settings.s;
 
+/**
+ * Service to handle all Bluetooth stuff
+ * Starts bluetooth on app startup
+ * Auto connects to the Raspberry Pi on startup
+ * Will search and try to connect up to two times if needed when auto connecting
+ */
 public class BluetoothService extends Service {
 
     static BluetoothService b; // for static service
-    private final String TAG = "BluetoothService";
     private final int REQUEST_FINE_LOCATION = 2;
     ConnectThread connectThread; // runs when try to connect with Bluetooth
     ConnectedThread connectedThread; // runs when connected to read serial data
@@ -43,7 +49,7 @@ public class BluetoothService extends Service {
     boolean connected = false; // to show connection state, true if connected
     boolean foundRaspberryPi = false; // if the app found Raspberry Pi
     int connectAttempts = 1; // number of attempts to connect. The app will try to connect two times if it failed the first time
-    int searchAttempts = 1;
+    int searchAttempts = 1; // number of attempts to search. The app will search two times if it did't found Raspberry Pi the first time
     boolean startBluetooth = false; // used to start or stop Bluetooth
 
     // Boolean indicators for BluetoothSettings. Used when BluetoothSettings starts to set the
@@ -74,7 +80,7 @@ public class BluetoothService extends Service {
     public void onCreate() {
         b = BluetoothService.this;
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // Gets the device's BluetoothService adapter
-        // Receivers
+        // Receivers for Bluetooth
         IntentFilter BTIntentChange = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(BluetoothBroadcastReceiverState, BTIntentChange);
         IntentFilter BTIntentFound = new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -87,7 +93,7 @@ public class BluetoothService extends Service {
         registerReceiver(BluetoothBroadcastReceiverBondChange, BTIntentBondChange);
         startBluetooth(true); // Autostart bluetooth on start up
 
-    } // end off onCreate
+    }
 
     @Override
     public void onDestroy() {
@@ -96,7 +102,7 @@ public class BluetoothService extends Service {
         unregisterReceiver(BluetoothBroadcastReceiverSearch);
         unregisterReceiver(BluetoothBroadcastReceiverSearchFinished);
         unregisterReceiver(BluetoothBroadcastReceiverBondChange);
-        startBluetooth(false);
+        startBluetooth(false); // power off Bluetooth
     }
 
     @Nullable
@@ -109,7 +115,8 @@ public class BluetoothService extends Service {
 
     /**
      * Starts or disables BluetoothService
-     * Starts at app start up
+     * Starts at app startup
+     * @param start start or stop Bluetooth
      */
     boolean startBluetooth(boolean start) {
         if (start) {
@@ -169,11 +176,11 @@ public class BluetoothService extends Service {
     /**
      * Auto connects to Raspberry Pi
      * Search and bonds to Raspberry Pi if needed
-     * Attempts to search and connect two times
+     * Attempts to search and connect two times if needed
      */
     void autoConnect() {
-        autoConnect = true; // eventually remove
-        connectAttempts = 1;
+        autoConnect = true;
+        connectAttempts = 1; // first attempt
         searchAttempts = 1;
         bluetoothAutoConnectChecked = true;
         if (bluetoothSettingsActive) {
@@ -210,7 +217,8 @@ public class BluetoothService extends Service {
 
     /**
      * Connects to Raspberry Pi with bluetooth rfcomm serial communication
-     * @param connect used to differ auto connect to regular connect with boolean autoConnect
+     * Starts a new thread when connecting
+     * @param connect used to separate auto connect to regular connect with boolean autoConnect
      */
     void connectBluetooth(boolean connect) {
         if (connect) {
@@ -307,6 +315,7 @@ public class BluetoothService extends Service {
 
     /**
      * Method to be called when connected
+     * Changes icons and variables
      */
     synchronized void bluetoothConnected() {
         b.bluetoothConnectChecked = true;
@@ -340,6 +349,7 @@ public class BluetoothService extends Service {
 
     /**
      * Method to be called when disconnected
+     * Changes icons and variables
      * @param uiThread Runs on the uiThread i true, needed for update ui components from another thread
      */
     synchronized void bluetoothDisconnected(boolean uiThread) {
@@ -374,7 +384,7 @@ public class BluetoothService extends Service {
     /**
      * Start searching for Raspberry Pi with bluetooth
      * Needs Fine Location, will requests it if needed
-     * When auto connect, has two attempts to search with searchManager
+     * When auto connecting, has two attempts to search with searchManager
      * Bonds when found and connects if autoConnect
      */
     void startDiscovery() {
@@ -454,7 +464,6 @@ public class BluetoothService extends Service {
      */
     boolean isRaspberryPi(BluetoothDevice device) {
         if (device != null) {
-            Log.d(TAG, device.getAddress());
             if (device.getName() != null) {
                 return (device.getName().equals(raspberryPiName) ||
                         device.getAddress().equals(raspberryPiName));
@@ -467,7 +476,7 @@ public class BluetoothService extends Service {
     }
 
     /**
-     * Fixar listan med Bluetoothenheter
+     * Updates the Bluetooth list
      */
     void updateBluetoothList() {
         if (bluetoothSettingsActive) {
@@ -536,6 +545,7 @@ public class BluetoothService extends Service {
     // ########## ACTION_STATE_CHANGED ##########
     /**
      * Create a BroadcastReceiver for ACTION_STATE_CHANGED.
+     * Receiving Bluetooth states as on, off and turning on and off
      */
     public BroadcastReceiver BluetoothBroadcastReceiverState = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -589,12 +599,13 @@ public class BluetoothService extends Service {
     };
 
     // ########## ACTION_FOUND ##########
+    /**
+     * Receiving information when a device is discovered
+     */
     public BroadcastReceiver BluetoothBroadcastReceiverAction = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                // Discovery has found a device. Get the BluetoothDevice
-                // object and its info from the Intent.
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 if (isRaspberryPi(device)) { // Raspberry Pi detected
                     Toast.makeText(context, "Found " + device.getName(), Toast.LENGTH_SHORT).show();
@@ -621,6 +632,9 @@ public class BluetoothService extends Service {
     };
 
     // ########## ACTION_DISCOVERY ##########
+    /**
+     * Discovery started
+     */
     public BroadcastReceiver BluetoothBroadcastReceiverSearch = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -634,6 +648,9 @@ public class BluetoothService extends Service {
         }
     };
 
+    /**
+     * Discovery finished
+     */
     public BroadcastReceiver BluetoothBroadcastReceiverSearchFinished = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -656,6 +673,7 @@ public class BluetoothService extends Service {
     // ########## ACTION_BOND_STATE_CHANGED ##########
     /**
      * Broadcast Receiver that detects bond state changes (Pairing status changes)
+     * Will try to connect to the bonded device when auto connecting
      */
     public BroadcastReceiver BluetoothBroadcastReceiverBondChange = new BroadcastReceiver() {
         @Override

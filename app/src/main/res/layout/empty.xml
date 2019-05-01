@@ -4,4 +4,6 @@
     android:layout_height="match_parent"
     android:id="@+id/empty">
 
+    <!-- Empty layout for settings fragment -->
+
 </android.support.constraint.ConstraintLayout>

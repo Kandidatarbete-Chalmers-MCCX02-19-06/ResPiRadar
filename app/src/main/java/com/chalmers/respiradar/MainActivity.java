@@ -10,6 +10,7 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -23,15 +24,12 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.jjoe64.graphview.Viewport;
 import com.jjoe64.graphview.series.DataPoint;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-
-import androidx.annotation.NonNull;
+//import androidx.annotation.NonNull;
 import pub.devrel.easypermissions.EasyPermissions;
 
 import static com.chalmers.respiradar.BluetoothService.b;
@@ -41,32 +39,48 @@ import static com.chalmers.respiradar.Settings.BluetoothSettings.bluetoothAutoCo
 
 
 /**
- * Main Activity for the Application
- * Visualize respiration rate and heart rate in two graphs
- * Starts a Bluetooth Service to automatically connect to a Raspberry Pi with a radar and
+ * Main Activity for the Application.
+ * Visualize respiration rate and heart rate in two graphs.
+ * Plots real time breathing amplitude when the device is rotated to landscape orientation.
+ * Starts a Bluetooth Service to automatically connect to a Raspberry Pi with a radar.
+ * Receive heart rate values, respiration rate and real time breathing amplitude.
+ * Can simulate data in demonstration purpose if the Raspberry Pi is not available.
  */
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
 
-    private static final String msg = "MainActivity";
     static final String REAL_TIME_BREATHING = "REAL_TIME_BREATHING";
     static final String BREATHING_VALUE = "BREATHING_VALUE";
+    private final int REQUEST_FINE_LOCATION = 2;
     static boolean measurementRunning = false;
-    static MenuItem bluetoothMenuItem;
-    MenuItem realTimeBreathingMenuItem;
-    int maxDataPoints = 1000;
+    boolean firstStartMeasurement = true;
+    static long startTime; // the time then the measurement starts
     Button startStopMeasureButton;
     TextView heartRateValueView;
     TextView respirationValueView;
     Intent intentBluetooth;
-    static long startTime;
-    boolean firstStartMeasurement = true;
+    static MenuItem bluetoothMenuItem;
+    MenuItem realTimeBreathingMenuItem;
+    static Display display;
     static int screenWidth;
-
+    static boolean startRealTimeBreathingWithRotate = false; // true if RealTimeBreathingActivity was started when rotating the device
     boolean waitSetScreenOrientationRunning = false;
     Handler handler = new Handler();
-
-    static boolean startRealTimeBreathingWithRotate = false;
-
+    //Graphs
+    private Graph graphHeartRate;
+    private Graph graphRespiration;
+    double yHeartRate;
+    double yRespiration;
+    DataPoint dataHeartRate;
+    DataPoint dataRespiration;
+    private double dataNumber = 0; // simulated data number
+    int maxDataPoints = 1000;
+    // fix the graph view bug
+    ArrayList<DataPoint> dataPointsHeartRate = new ArrayList<>(); // saves the data to be used later if the graph has to be fixed
+    ArrayList<DataPoint> dataPointsRespiration = new ArrayList<>();
+    boolean firstDataHeartRate = true;
+    boolean firstDataRespiration = true;
+    boolean resume = false; // when the activity is resumed
+    static int scrollToEnd = 100; // to set amount of values to scroll to the end
     // Booleans for taping
     boolean isTapingHeartRate = false;
     boolean tapWaitLoopRunningHeartRate = false;
@@ -75,48 +89,23 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     boolean tapWaitLoopRunningRespiration = false;
     boolean newTapRespiration = false;
 
-    // fix the graph view bug
-    boolean firstDataHeartRate = true;
-    boolean firstDataRespiration = true;
-    boolean resume = false;
-    static int scrollToEnd = 100;
-    //int scollToEnd
-    ArrayList<DataPoint> dataPointsHeartRate = new ArrayList<>();
-    ArrayList<DataPoint> dataPointsRespiration = new ArrayList<>();
-
-    private final int REQUEST_FINE_LOCATION = 2;
-
-    private double dataNumber = 0;
-    private Graph graphHeartRate;
-    private Graph graphRespiration;
-    double yHeartRate;
-    double yRespiration;
-    DataPoint dataHeartRate;
-    DataPoint dataRespiration;
-
-    static Display display;
-
-    /*HandlerThread handlerThread;
-    Looper looper;
-    static Handler handler;*/
-
     /**
      * On start up: creates the graphs and starts the BluetoothService service that auto connects to
-     * a Raspberry Pi with bluetooth
+     * a Raspberry Pi with bluetooth.
      * The MainActivity hosts the graphs, a button to start measuring heartRate and respiration rate,
-     * an options menu with settings, a reset button and a button/indicator that shows the connection state
+     * an options menu with settings, a reset button and a button/indicator that shows the connection state.
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        PreferenceManager.setDefaultValues(this, R.xml.settings, false); // så systemet inte sätter default
+        PreferenceManager.setDefaultValues(this, R.xml.settings, false); // to not default the preferences on startup
         startStopMeasureButton = findViewById(R.id.startStopMeasureButton); // Start button
         heartRateValueView = findViewById(R.id.heartRateValueView);
         respirationValueView = findViewById(R.id.respirationValueView);
-        screenWidth =  getResources().getDisplayMetrics().widthPixels;
-
-        /* Graphs */
+        screenWidth =  getResources().getDisplayMetrics().widthPixels; // used to set padding and text size in the graphs
+        display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay(); // to get screen orientation
+        // Graphs
         graphHeartRate = new Graph(findViewById(R.id.graphHeartRate),getApplicationContext(),
                 getResources().getColor(R.color.colorGraphHeartRate), true, screenWidth);
         graphRespiration = new Graph(findViewById(R.id.graphRespiration),getApplicationContext(),
@@ -124,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         graphHeartRate.getViewport().setOnXAxisBoundsChangedListener(new Viewport.OnXAxisBoundsChangedListener() {
             @Override
             public void onXAxisBoundsChanged(double minX, double maxX, Viewport.OnXAxisBoundsChangedListener.Reason reason) {
+                // tap listener, used to manually set the view bounds and pause the automatic set of view bounds
                 isTapingHeartRate = true;
                 if (!tapWaitLoopRunningHeartRate) {
                     tapWaitLoopHeartRate();
@@ -143,10 +133,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 }
             }
         });
-        /* BluetoothService */
+        // BluetoothService and receivers
         intentBluetooth = new Intent(this, BluetoothService.class);
         startService(intentBluetooth);
-
         IntentFilter intentFilterRequestPermission = new IntentFilter(BluetoothService.REQUEST_PERMISSION);
         registerReceiver(PermissionBroadcastReceiver, intentFilterRequestPermission);
         IntentFilter intentFilterBluetoothIcon = new IntentFilter(BluetoothService.SET_BLUETOOTH_ICON);
@@ -159,25 +148,24 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         registerReceiver(ResetGraphBroadcastReceiver, intentFilterResetGraph);
         IntentFilter intentFilterStartMeasButton = new IntentFilter(BluetoothService.START_MEAS_BUTTON_ENABLE);
         registerReceiver(StartMeasButtonBroadcastReceiver, intentFilterStartMeasButton);
-
-        display = ((WindowManager)
-                getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
     }
 
     @Override
     public void onResume() {
         if(isActive) {
-            fixGraphOnReturn();
+            fixGraphOnReturn(); // fixes some issues with the graphs when rotating the screen
             resume = true;
         }
         if (measurementRunning) {
+            // Sets the screen rotation to portrait if not already done.
+            // Waits 3 seconds before detecting new orientations.
             if (display.getRotation() == Surface.ROTATION_0) {
                 this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
             } else {
                 waitSetScreenOrientationRunning = true;
                 handler.postDelayed(new Runnable() {
                     @Override
-                    public void run() {
+                    public void run() { // wait 3 sec before detecting screen orientation
                         if (measurementRunning) {
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
                         }
@@ -193,7 +181,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     @Override
     public void onDestroy() {
         super.onDestroy();
-        stopService(intentBluetooth);
+        stopService(intentBluetooth); // power off Bluetooth
         measurementRunning = false;
         unregisterReceiver(PermissionBroadcastReceiver);
         unregisterReceiver(BluetoothIconBroadcastReceiver);
@@ -204,7 +192,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     }
 
     /**
-     * Creates a options menu with settings, a reset button and a button/indicator that shows the connection state
+     * Creates a options menu.
+     * Includes link to settings, a reset button, a scroll-graphs-to-the-end button, help button and
+     * a button/indicator to control the Bluetooth connection and see the Bluetooth state.
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -225,11 +215,13 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.settings:
+            case R.id.settings: // to settings activity
                 Intent intentSettings = new Intent(this, Settings.class);
                 this.startActivity(intentSettings);
                 return true;
-            case R.id.bluetooth:
+            case R.id.bluetooth: // Bluetooth button/indicator
+                // Can start Bluetooth and connect/search/disconnect
+                // Indicates the status on Bluetooth, on/off/searching/connecting/connected
                 if (!b.bluetoothOnChecked) {
                     b.startBluetooth(true);
                 } else {
@@ -250,21 +242,22 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     }
                 }
                 return true;
-            case R.id.reset_graphs:
+            case R.id.reset_graphs: // resets the graphs
                 resetGraph();
                 return true;
-            case R.id.help_main:
+            case R.id.help_main: // help dialog box
                 DialogFragment newFragment = new InformationMainFragment();
                 newFragment.show(getSupportFragmentManager(), "help_main");
                 return true;
-            case R.id.real_time:
+            case R.id.real_time: // Starts an activity to show real time breathing amplitude
+                // Can also be started rotating the device to landscape orientation
                 if (measurementRunning) {
                     startRealTimeBreathingWithRotate = false;
                     Intent intentRealTimeBreath = new Intent(this, RealTimeBreathActivity.class);
                     this.startActivity(intentRealTimeBreath);
                 }
                 return true;
-            case R.id.scroll_to_end:
+            case R.id.scroll_to_end: // scrolls the graphs to the end
                 scrollToEnd = 0;
                 return true;
             default:
@@ -272,10 +265,13 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
     }
 
+    /**
+     * Called when orientation of the screen is changed.
+     * Starts real time breathing activity if landscape.
+     */
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        // Checks the orientation of the screen
         if (measurementRunning) {
             if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 startRealTimeBreathingWithRotate = true;
@@ -297,7 +293,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
      * @param view from the button
      */
     public void measureOnClick(View view) {
-        if (!measurementRunning) {
+        if (!measurementRunning) { // starts measuring
             startStopMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonOff));
             startStopMeasureButton.setText(getString(R.string.stop_measure));
             if (firstStartMeasurement) {
@@ -315,7 +311,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 byte[] sendCommand = command.getBytes();
                 b.connectedThread.write(sendCommand);
             }
-        } else {
+        } else { // stops measuring
             startStopMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonOn));
             startStopMeasureButton.setText(getString(R.string.start_measure));
             this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -329,6 +325,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         measurementRunning = !measurementRunning;
     }
 
+    /**
+     * Loop that runs when the graph has been tapped on.
+     * Waits 100 ms before the graph can automatically change the view bounds.
+     * Loops as long new tap is made.
+     */
     void tapWaitLoopHeartRate() {
         Thread tapWaitLoopThread = new Thread() {
             @Override
@@ -349,6 +350,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         tapWaitLoopThread.start();
     }
 
+    /**
+     * Loop that runs when the graph has been tapped on.
+     * Waits 100 ms before the graph can automatically change the view bounds.
+     * Loops as long new tap is made.
+     */
     void tapWaitLoopRespiration() {
         Thread tapWaitLoopThread = new Thread() {
             @Override
@@ -369,6 +375,13 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         tapWaitLoopThread.start();
     }
 
+    /**
+     * Sets the graph view bounds to reasonable size values.
+     * @param value current x-value
+     * @param graph the graph to change view bounds on
+     * @param isTaping if just tapped
+     * @return if view bounds should change or not
+     */
     boolean setGraphViewBounds(double value, Graph graph, boolean isTaping) {
         if (!isTaping) {
             double diff = graph.getViewport().getMaxX(false) -
@@ -392,6 +405,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     /**
      * Creates a new thread to create simulated data to the graphs every 500 ms
+     * Only used when simulation is activated
      */
     void loopAddData() {
         Thread loopAddDataThread = new Thread() {
@@ -411,7 +425,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     }
 
     /**
-     * Add simulated data to the graps
+     * Add simulated data to the graphs
+     * Uses sinus waves and noise
      */
     public void addData() {
         yHeartRate = Math.sin(dataNumber*3/30)*4+70+Math.random()*4;
@@ -451,6 +466,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         });
     }
 
+    /**
+     * Fixes the graphs on return to the activity.
+     * On return, especially if the screen orientation has been changed, the graphs might change size.
+     * To fix this issue, the graphs is reset but the data is restored.
+     */
     void fixGraphOnReturn() {
         handler.postDelayed(new Runnable() {
                 @Override
@@ -468,7 +488,24 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                         handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                graphRespiration.getSeries().appendData(dataPointsRespiration.get(dataPointsRespiration.size() - 1), false, maxDataPoints, false);
+                                if (dataPointsRespiration.size() > 0) {
+                                    graphRespiration.getSeries().appendData(dataPointsRespiration.get(dataPointsRespiration.size() - 1),
+                                            false, maxDataPoints, false);
+                                }
+                            }
+                        }, 100);
+                    }
+                    if (graphHeartRate.getViewport().getMaxX(true) > graphHeartRate.getViewport().
+                            getMaxX(false)) {graphHeartRate.getViewport().scrollToEnd();
+                    }
+                    if (!b.commandSimulate && !firstStartMeasurement) {
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (dataPointsHeartRate.size() > 0) {
+                                    graphHeartRate.getSeries().appendData(dataPointsHeartRate.get(dataPointsHeartRate.size() - 1),
+                                            false, maxDataPoints, false);
+                                }
                             }
                         }, 100);
                     }
@@ -476,17 +513,28 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             }, 100);
     }
 
+    /**
+     * Sets the heart rate from real data using current time
+     * @param heartRateData heart rate
+     */
     public void setHeartRateData(int heartRateData) {
         dataHeartRate = new DataPoint(((System.currentTimeMillis() - startTime)/1000.0),heartRateData);
         dataPointsHeartRate.add(dataHeartRate);
         if (dataPointsHeartRate.size() > maxDataPoints) {
             dataPointsHeartRate.remove(0);
         }
-        graphHeartRate.getSeries().appendData(dataHeartRate, setGraphViewBounds(
-                ((System.currentTimeMillis() - startTime)/1000.0), graphHeartRate, isTapingHeartRate),maxDataPoints,isActive);
+        graphHeartRate.getSeries().appendData(dataHeartRate, false,maxDataPoints,isActive);
         heartRateValueView.setText(getString(R.string.heart_rate_value,"" + heartRateData));
+        if(setGraphViewBounds(
+                ((System.currentTimeMillis() - startTime)/1000.0), graphHeartRate, isTapingHeartRate)) {
+            graphHeartRate.getViewport().scrollToEnd();
+        }
     }
 
+    /**
+     * Sets the respiration rate from real data using current time
+     * @param respirationData respiration rate
+     */
     public void setRespirationData(int respirationData) {
         dataRespiration = new DataPoint(((System.currentTimeMillis() - startTime)/1000.0),respirationData);
         dataPointsRespiration.add(dataRespiration);
@@ -502,15 +550,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     }
 
     /**
-     * Scroll the graph to the end
+     * Resets the graphs to origin.
+     * All data i the series is lost.
      */
-    void scrollToEnd() {
-        double diff = graphRespiration.getViewport().getMaxX(false) -
-                graphRespiration.getViewport().getMinX(false);
-        graphRespiration.getViewport().setMaxX(graphRespiration.getViewport().getMaxX(true));
-        graphRespiration.getViewport().setMinX(graphRespiration.getViewport().getMaxX(true) - diff);
-    }
-
     void resetGraph() {
         dataNumber = 0;
         graphHeartRate.resetSeries();
@@ -529,6 +571,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     }
 
     // ########## ########## Request Permission ########## ##########
+    // To search after Bluetooth Devices, location permission is needed
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -554,6 +598,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     // ########## ########## Broadcast Receivers ########## ##########
 
+    /**
+     * Receives permission access from Bluetooth Service
+     */
     public BroadcastReceiver PermissionBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -563,6 +610,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
     };
 
+    /**
+     * Receives changes of the Bluetooth state to change the Bluetooth icon
+     */
     public BroadcastReceiver BluetoothIconBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -583,6 +633,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
     };
 
+    /**
+     * Receives strings to Toast
+     */
     public BroadcastReceiver ToastBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -592,6 +645,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
     };
 
+    /**
+     * Receives data from Bluetooth
+     */
     public BroadcastReceiver ReadDataBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -636,6 +692,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
     };
 
+    /**
+     * Receives reset commands from Bluetooth Settings
+     */
     public BroadcastReceiver ResetGraphBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -645,6 +704,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
     };
 
+    /**
+     * Receives changes of Bluetooth state or simulation activation to activate or unactivate the start button
+     */
     public BroadcastReceiver StartMeasButtonBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();

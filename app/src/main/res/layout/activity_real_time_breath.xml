@@ -8,13 +8,13 @@
     android:layout_height="match_parent"
     android:background="@color/colorActivityBackground">
 
-    <!-- Grafen för andningen -->
+    <!-- Graph for real time breathing -->
 
     <com.jjoe64.graphview.GraphView
         android:id="@+id/graphRealTimeBreath"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="8dp"
         android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

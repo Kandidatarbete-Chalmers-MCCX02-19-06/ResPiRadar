@@ -8,6 +8,9 @@ import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 
+/**
+ * Dialog box to show information to help the user use the application and all it's features
+ */
 public class InformationMainFragment extends DialogFragment {
 
     @NonNull

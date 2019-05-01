@@ -3,15 +3,18 @@ package com.chalmers.respiradar;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.util.Log;
 import java.io.IOException;
 import java.util.UUID;
 import static com.chalmers.respiradar.BluetoothService.b;
 
+/**
+ * Thread to connect to Raspberry Pi
+ * Determines when connected
+ * Creates a Bluetooth socket from a Bluetooth device
+ */
 class ConnectThread extends Thread {
-    private static final String TAG = "ConnectThread";
     private final BluetoothSocket mmSocket;
-    private boolean isRunning;
+    private boolean isRunning; // if the thread is running
     private boolean hasSocket;
 
     ConnectThread(BluetoothDevice device) {
@@ -26,7 +29,6 @@ class ConnectThread extends Thread {
         }
         try {
             // Get a BluetoothSocket to connect with the given BluetoothDevice.
-            // MY_UUID is the app's UUID string, also used in the server code.
             tmp = device.createRfcommSocketToServiceRecord(deviceUUID);
         } catch (IOException e) {
             //Log.e(TAG, "Socket's create() method failed", e);
@@ -66,7 +68,7 @@ class ConnectThread extends Thread {
             return;
         }
 
-        // The connection attempt succeeded. Perform work associated with the connection in a separate thread.
+        // The connection attempt succeeded.
         isRunning = false;
         b.bluetoothConnected();
         b.connectedThread = new ConnectedThread(mmSocket);
@@ -84,13 +86,15 @@ class ConnectThread extends Thread {
             b.bluetoothDisconnected(true);
         } catch (IOException e) {
             //Log.e(TAG, "Could not close the client socket", e);
+        } catch (NullPointerException e) {
+            //Log.e(TAG, "Could not close the client socket", e);
         }
         hasSocket=false;
     }
 
     boolean isRunning() {
         return isRunning;
-    } // only for run
+    }
 
     boolean hasSocket() {
         return hasSocket;

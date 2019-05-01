@@ -9,7 +9,7 @@
     <!-- Settings colors -->
     <color name="colorPrimarySettings">#2196f3</color>
     <color name="colorPrimaryDarkSettings">#143855</color>
-    <color name="colorAccentSettings">#2196f3</color> <!--557A95 navyblue + E85A4F rödorange-->
+    <color name="colorAccentSettings">#2196f3</color>
 
     <!-- Graph colors -->
     <color name="colorActivityBackground">#646464</color>

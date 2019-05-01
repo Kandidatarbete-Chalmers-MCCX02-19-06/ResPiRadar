@@ -3,7 +3,6 @@ package com.chalmers.respiradar;
 import android.content.Context;
 import android.view.View;
 import android.widget.Toast;
-
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.Viewport;
 import com.jjoe64.graphview.series.DataPoint;
@@ -15,7 +14,7 @@ import com.jjoe64.graphview.series.Series;
 import java.util.Locale;
 
 /**
- * Skapar graferna
+ * Class to create graphs
  */
 class Graph {
 
@@ -26,9 +25,14 @@ class Graph {
     private boolean tapListener;
 
     /**
-     * Konstruktor
-     * @param view
-     * @param context
+     * Constructor for graph
+     * Can manually scroll and zoom in x-direction
+     * x-bounds are initially 0 to 60
+     * @param view the graphView object from the layout
+     * @param context application context
+     * @param color color for the graph
+     * @param screenWidth screen width of the device to set correct padding and textsize
+     * @param tapListener if there should be a tap listener
      */
     Graph(View view, final Context context, int color, boolean tapListener, int screenWidth) {
         this.context = context;
@@ -52,13 +56,17 @@ class Graph {
     }
 
     /**
-     * Getter för Serierna
-     * @return series
+     * Getter for the series
+     * @return graphs series
      */
     LineGraphSeries<DataPoint> getSeries() {
         return series;
     }
 
+    /**
+     * Reset the graphs
+     * Empties the series
+     */
     void resetSeries() {
         graph.getViewport().setMinX(0);
         graph.getViewport().setMaxX(60);
@@ -66,6 +74,10 @@ class Graph {
         graph.addSeries(newSeries());
     }
 
+    /**
+     * Creates a new series
+     * @return new series
+     */
     private LineGraphSeries<DataPoint> newSeries() {
         series = new LineGraphSeries<>();  //skapar en första mätserie
         series.setThickness(13);
@@ -87,6 +99,12 @@ class Graph {
         return graph.getViewport();
     }
 
+    /**
+     * Fixes issues with the graph size
+     * Removes the old series and replaces it with a new
+     * All old data points is restored in the  new series
+     * @param dataPoints array with data points
+     */
     void fixGraphView(Object[] dataPoints) {
         graph.removeAllSeries();
         graph.addSeries(newSeries());

@@ -8,6 +8,9 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 
+/**
+ * Dialog box to show information to help the user use the Bluetooth settings
+ */
 public class InformationBluetoothSettingsFragment extends DialogFragment {
 
     @NonNull

@@ -8,7 +8,7 @@
     android:background="@color/colorActivityBackground"
     tools:context=".MainActivity">
 
-    <!-- Startknappen för mätningarna -->
+    <!-- Start button for measurement -->
     <Button
         android:id="@+id/startStopMeasureButton"
         android:layout_width="0dp"
@@ -25,7 +25,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Värdet på pulen -->
+    <!-- Heart Rate value -->
     <TextView
         android:id="@+id/heartRateValueView"
         android:layout_width="wrap_content"
@@ -42,7 +42,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Värdet på andingsfrekvensen -->
+    <!-- Respiration Rate value -->
     <TextView
         android:id="@+id/respirationValueView"
         android:layout_width="wrap_content"
@@ -57,7 +57,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Grafen för andningen -->
+    <!-- Respiration Graph -->
     <com.jjoe64.graphview.GraphView
         android:id="@+id/graphRespiration"
         android:layout_width="0dp"
@@ -68,7 +68,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/heartRateValueView" />
 
-    <!-- Grafen för heartRaten -->
+    <!-- Heart Rate Graph -->
     <com.jjoe64.graphview.GraphView
         android:id="@+id/graphHeartRate"
         android:layout_width="0dp"
