@@ -52,7 +52,7 @@ class Graph {
         graph.getViewport().setScalable(true);      //för zoomning
         graph.getViewport().setXAxisBoundsManual(true);     //set Viewport window size
         graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(60);
+        graph.getViewport().setMaxX(120);
     }
 
     /**
@@ -69,7 +69,7 @@ class Graph {
      */
     void resetSeries() {
         graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(60);
+        graph.getViewport().setMaxX(120);
         graph.removeAllSeries();
         graph.addSeries(newSeries());
     }

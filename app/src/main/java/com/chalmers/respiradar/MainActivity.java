@@ -456,9 +456,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                             String.format(Locale.getDefault(),"%.1f", yRespiration)));
                     if (firstDataHeartRate) {
                         graphHeartRate.getViewport().setMinX(0);
-                        graphHeartRate.getViewport().setMaxX(60);
+                        graphHeartRate.getViewport().setMaxX(120);
                         graphRespiration.getViewport().setMinX(0);
-                        graphRespiration.getViewport().setMaxX(60);
+                        graphRespiration.getViewport().setMaxX(120);
                     }
                     firstDataHeartRate = false;
                 }
