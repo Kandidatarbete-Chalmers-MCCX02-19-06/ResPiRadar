@@ -328,6 +328,16 @@ public class Settings extends AppCompatActivity implements PreferenceFragment.On
                             Intent readIntent = new Intent(BluetoothSettings.RESET_GRAPH);
                             s.sendBroadcast(readIntent);
                             break;
+                        case "write": // write current data to files on the Raspberry Pi
+                            if (b.connected) {
+                                byte[] sendCommand = command.getBytes();
+                                b.connectedThread.write(sendCommand);
+                                preference.setSummary((String)newValue);
+                                Toast.makeText(getActivity().getApplicationContext(), getString(R.string.start_writing_to_file), Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(getActivity().getApplicationContext(), getString(R.string.not_connected_to_rpi), Toast.LENGTH_LONG).show();
+                            }
+                            break;
                         default:
                             Toast.makeText(getActivity().getApplicationContext(), getString(R.string.not_a_command), Toast.LENGTH_LONG).show();
                             break;

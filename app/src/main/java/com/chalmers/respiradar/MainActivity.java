@@ -22,6 +22,8 @@ import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.jjoe64.graphview.Viewport;
@@ -74,6 +76,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     DataPoint dataRespiration;
     private double dataNumber = 0; // simulated data number
     int maxDataPoints = 1000;
+    ImageButton heartButton; // button to display the reliability of the measured heart rate
+    String heartRateReliability = "None"; // Current state of heart rate reliability
     // fix the graph view bug
     ArrayList<DataPoint> dataPointsHeartRate = new ArrayList<>(); // saves the data to be used later if the graph has to be fixed
     ArrayList<DataPoint> dataPointsRespiration = new ArrayList<>();
@@ -105,6 +109,10 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         respirationValueView = findViewById(R.id.respirationValueView);
         screenWidth =  getResources().getDisplayMetrics().widthPixels; // used to set padding and text size in the graphs
         display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay(); // to get screen orientation
+        //heartView = findViewById(R.id.heart);
+        heartButton = findViewById(R.id.heart_button);
+        heartButton.setEnabled(false);
+        heartButton.setVisibility(View.INVISIBLE);
         // Graphs
         graphHeartRate = new Graph(findViewById(R.id.graphHeartRate),getApplicationContext(),
                 getResources().getColor(R.color.colorGraphHeartRate), true, screenWidth);
@@ -316,6 +324,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             startStopMeasureButton.setText(getString(R.string.start_measure));
             this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             realTimeBreathingMenuItem.setEnabled(false);
+            heartButton.setEnabled(false);
+            heartButton.setVisibility(View.INVISIBLE);
             if (!b.commandSimulate) {
                 String command = "stopMeasure";
                 byte[] sendCommand = command.getBytes();
@@ -570,6 +580,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         firstDataRespiration = true;
     }
 
+    /**
+     * Displays the current state of reliability of the measured heart rate
+     * @param view from the button
+     */
+    public void heartButtonOnClick(View view) {
+        Toast.makeText(getApplicationContext(), getString(R.string.heart_rate_reliability) + " " + heartRateReliability, Toast.LENGTH_SHORT).show();
+    }
+
     // ########## ########## Request Permission ########## ##########
     // To search after Bluetooth Devices, location permission is needed
 
@@ -663,6 +681,50 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                                 Toast.makeText(getApplicationContext(),
                                         getString(R.string.could_not_parse_heart_rate), Toast.LENGTH_SHORT).show();
                             }
+                            heartRateReliability = split[2];
+                            switch (split[2]) { // determine the reliability of the measured heart rate
+                                case "Outstanding":
+                                    heartButton.setImageResource(R.drawable.heart_blue);
+                                    if (!heartButton.isEnabled()) {
+                                        heartButton.setEnabled(true);
+                                        heartButton.setVisibility(View.VISIBLE);
+                                    }
+                                    break;
+                                case "Perfect":
+                                    heartButton.setImageResource(R.drawable.heart_green);
+                                    if (!heartButton.isEnabled()) {
+                                        heartButton.setEnabled(true);
+                                        heartButton.setVisibility(View.VISIBLE);
+                                    }
+                                    break;
+                                case "Good":
+                                    heartButton.setImageResource(R.drawable.heart_red);
+                                    if (!heartButton.isEnabled()) {
+                                        heartButton.setEnabled(true);
+                                        heartButton.setVisibility(View.VISIBLE);
+                                    }
+                                    break;
+                                case "Doubtful":
+                                    heartButton.setImageResource(R.drawable.heart_gray);
+                                    if (!heartButton.isEnabled()) {
+                                        heartButton.setEnabled(true);
+                                        heartButton.setVisibility(View.VISIBLE);
+                                    }
+                                    break;
+                                case "Bad":
+                                    heartButton.setImageResource(R.drawable.heart_dark_gray);
+                                    if (!heartButton.isEnabled()) {
+                                        heartButton.setEnabled(true);
+                                        heartButton.setVisibility(View.VISIBLE);
+                                    }
+                                    break;
+                                default:
+                                    if (heartButton.isEnabled()) {
+                                        heartButton.setEnabled(false);
+                                        heartButton.setVisibility(View.INVISIBLE);
+                                    }
+
+                            }
                             break;
                         case "RR":
                             try {
@@ -723,6 +785,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 } else {
                     startStopMeasureButton.setBackgroundColor(getResources().getColor(R.color.colorMeasureButtonDisabled));
                     startStopMeasureButton.setTextColor(getResources().getColor(R.color.colorMeasureButtonDisabledText));
+                    heartButton.setEnabled(false);
+                    heartButton.setVisibility(View.INVISIBLE);
                 }
             }
         }

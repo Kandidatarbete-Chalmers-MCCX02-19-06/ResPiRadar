@@ -6,6 +6,7 @@
     <string name="could_not_parse_heart_rate">Couldn\'t parse heart rate</string>
     <string name="could_not_parse_respiration_rate">Couldn\'t parse respiration rate</string>
     <string name="could_not_parse_real_time_breathing">Couldn\'t parse real time breathing</string>
+    <string name="heart_rate_reliability">Reliability of heart rate is</string>
 
     <string name="time_s">Time (s)</string>
     <string name="heart_rate_bpm">Heart Rate (bpm)</string>
@@ -41,6 +42,9 @@
     </string>
     <string name="power_off_rpi">
         Power off Raspberry Pi
+    </string>
+    <string name="start_writing_to_file">
+        Start writing data to file
     </string>
     <string name="not_a_command">
         Not a regular command

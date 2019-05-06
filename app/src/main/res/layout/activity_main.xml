@@ -146,4 +146,22 @@
         app:layout_constraintTop_toTopOf="@+id/graphRespiration"
         app:layout_constraintVertical_bias="0.45" />
 
+    <ImageButton
+        android:id="@+id/heart_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="8dp"
+        android:background="#00FFFFFF"
+        android:onClick="heartButtonOnClick"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/graphRespiration"
+        app:layout_constraintEnd_toStartOf="@+id/heartRateValueView"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/graphHeartRate"
+        app:srcCompat="@drawable/heart_red" />
+
 </android.support.constraint.ConstraintLayout>
