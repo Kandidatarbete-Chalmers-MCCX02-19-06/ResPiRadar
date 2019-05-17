@@ -17,6 +17,7 @@ The application will automatically try to search and connect to a Raspberry Pi.
 The Bluetooth button in the action bar can be used to connect/disconnect and to indicate the Bluetooth status. 
 It flashed blue when it tries to connect. Press the START MEASURE button to start the measuring if connected. 
 The graphs can be scrolled and zoomed in the x-direction and also be tapped on to show values. 
+A heart icon shows the reliability of the measured heart rate. 
 Rotate the device to landscape orientation to view real-time breathing amplitude. 
 In settings, there are different Bluetooth settings that can be changed and controlled. 
 There is also a virtual command terminal that can be used to get some special features from the application.
