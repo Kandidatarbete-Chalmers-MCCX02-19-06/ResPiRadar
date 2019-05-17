@@ -1,10 +1,21 @@
 # ResPiRadar
-### Heart and Respiration rate from Radar on a Raspberry Pi
+<img src="/app/src/main/ic_launcher_heart-web.png" alt="ResPiRadar icon"
+	title="ResPiRadar icon" width="100" height="100" />
+## Heart and Respiration rate from Radar on a Raspberry Pi  
 This application is made in a Bachelor's thesis project at Chalmers University of Technology in 2019. 
 The purpose is to measure heart rate and respiration rate with radar and display the results in an interactive application.
 The application is currently available on Google Play at https://play.google.com/store/apps/details?id=com.chalmers.respiradar.
 
-#### How to use the application
+### Screenshots
+<img src="/images/app_mainactivity.png" alt="Main activity"
+	title="Main activity" width="200" height="316" /> 
+<img src="/images/app_settings.png" alt="Settings activity"
+	title="Settings activity" width="200" height="316" /> 
+<img src="/images/app_realtimebreathing.png" alt="Real time breathing amplitude activity"
+	title="Real time breathing amplitude activity" width="329" height="187" />
+  
+
+### How to use the application
 The application is supposed to connect to a Raspberry Pi 3 Model B+ with a mounted Radar on it. 
 The radar, A111 from Acconeer is a 60 GHz pulsed coherent radar system on a sensor board with an associated connector board 
 (R112 and XC112 from Acconeer). The Python program that runs on the Raspberry Pi is available at 
@@ -25,7 +36,7 @@ The Raspberry Pi can be turned off from the application using the command `power
 and can show a list of bonded Bluetooth devices with `list`.
 The application can also simulate data with `simulate` to demonstrate the application if the Raspberry Pi is not available.
 
-#### About the code
+### About the code
 The MainActivity hosts the graphs to show heart rate and respiration rate. 
 The BluetoothService is started simultaneously as the MainActivity and controls everything linked to Bluetooth.
 The Bluetooth Service will automatically start Bluetooth on startup. 
@@ -35,7 +46,7 @@ The Bluetooth settings are actually just for visual and control, all variables a
 When the device is rotated to landscape orientation and the measurement is running, a new activity, RealTimeBreahting is started. 
 It is also stopped when the device is rotated to portrait orientation again. 
 
-#### Licence
+### Licence
 MIT License
 
 Copyright © 2019 Albin Warnicke and Erik Angert Svensson
