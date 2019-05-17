@@ -79,7 +79,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="0dp"
-                    android:text="@string/info_main3" />
+                    android:text="@string/info_main3"
+                    android:drawableEnd="@drawable/ic_bluetooth_black_24dp"
+                    android:drawablePadding="8dp"/>
 
                 <View
                     android:id="@+id/divider3"
@@ -127,6 +129,22 @@
 
                 <View
                     android:id="@+id/divider9"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="?android:attr/listDivider" />
+
+                <TextView
+                    android:id="@+id/textView31"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/heart_icon_info_main"
+                    android:drawableEnd="@drawable/heart_red"
+                    android:drawablePadding="8dp"/>
+
+                <View
+                    android:id="@+id/divider10"
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginTop="12dp"

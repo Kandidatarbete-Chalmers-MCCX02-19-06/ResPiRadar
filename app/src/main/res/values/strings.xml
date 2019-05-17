@@ -133,6 +133,10 @@
         The values are plotted in the graphs. The graphs can be scrolled, zoomed and taped on to get the values.
         The graphs can be reset with Reset Graphs in the options menu. To scroll the graphs to the end, press Scroll To End.
     </string>
+    <string name="heart_icon_info_main">
+        A heart icon to the left of the displayed heart rate shows the reliability of the measured heart rate.
+        Tap on it to get more detailed information.
+    </string>
     <string name="info_main7">
         Rotate the phone to landscape to se a real time breathing amplitude graph, or just click Real Time Breathing in the options menu.
     </string>

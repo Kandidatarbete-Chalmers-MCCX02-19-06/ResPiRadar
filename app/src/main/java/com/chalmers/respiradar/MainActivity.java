@@ -683,35 +683,45 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                             }
                             heartRateReliability = split[2];
                             switch (split[2]) { // determine the reliability of the measured heart rate
-                                case "Outstanding":
+                                case "ExceptionalHigh":
+                                    heartRateReliability = "Exceptional High";
                                     heartButton.setImageResource(R.drawable.heart_blue);
                                     if (!heartButton.isEnabled()) {
                                         heartButton.setEnabled(true);
                                         heartButton.setVisibility(View.VISIBLE);
                                     }
                                     break;
-                                case "Perfect":
+                                case "VeryHigh":
+                                    heartRateReliability = "Very High";
                                     heartButton.setImageResource(R.drawable.heart_green);
                                     if (!heartButton.isEnabled()) {
                                         heartButton.setEnabled(true);
                                         heartButton.setVisibility(View.VISIBLE);
                                     }
                                     break;
-                                case "Good":
+                                case "High":
                                     heartButton.setImageResource(R.drawable.heart_red);
                                     if (!heartButton.isEnabled()) {
                                         heartButton.setEnabled(true);
                                         heartButton.setVisibility(View.VISIBLE);
                                     }
                                     break;
-                                case "Doubtful":
+                                case "Medium":
+                                    heartButton.setImageResource(R.drawable.heart_red);
+                                    if (!heartButton.isEnabled()) {
+                                        heartButton.setEnabled(true);
+                                        heartButton.setVisibility(View.VISIBLE);
+                                    }
+                                    break;
+                                case "Low":
                                     heartButton.setImageResource(R.drawable.heart_gray);
                                     if (!heartButton.isEnabled()) {
                                         heartButton.setEnabled(true);
                                         heartButton.setVisibility(View.VISIBLE);
                                     }
                                     break;
-                                case "Bad":
+                                case "VeryLow":
+                                    heartRateReliability = "Very Low";
                                     heartButton.setImageResource(R.drawable.heart_dark_gray);
                                     if (!heartButton.isEnabled()) {
                                         heartButton.setEnabled(true);
