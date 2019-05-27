@@ -197,6 +197,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         unregisterReceiver(ToastBroadcastReceiver);
         unregisterReceiver(ResetGraphBroadcastReceiver);
         unregisterReceiver(StartMeasButtonBroadcastReceiver);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR); // to reset screen orientation
     }
 
     /**
