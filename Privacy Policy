@@ -1,0 +1,1 @@
+The app uses Bluetooth to connect to the Raspberry Pi. Bluetooth can be used to find out the location, but this app doesn't use the location. No data is collected by the app.
